@@ -1,4 +1,4 @@
-package bots
+package tfcc
 
 import (
 	. "github.com/CuteReimu/mirai-sdk-http"
@@ -8,10 +8,10 @@ import (
 )
 
 func init() {
-	AddCmdListener(&showTips{})
-	AddCmdListener(&ping{})
-	AddCmdListener(&randDice{})
-	AddCmdListener(&roll{})
+	addCmdListener(&showTips{})
+	addCmdListener(&ping{})
+	addCmdListener(&randDice{})
+	addCmdListener(&roll{})
 }
 
 type showTips struct{}
@@ -41,7 +41,7 @@ func (t *showTips) Execute(msg *GroupMessage, _ string) []SingleMessage {
 		}
 		return true
 	})
-	return MessageChain(&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")})
+	return []SingleMessage{&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
 }
 
 type ping struct{}
@@ -60,7 +60,7 @@ func (p *ping) CheckAuth(int64, int64) bool {
 
 func (p *ping) Execute(_ *GroupMessage, content string) []SingleMessage {
 	if len(content) == 0 {
-		return MessageChain(&Plain{Text: "pong"})
+		return []SingleMessage{&Plain{Text: "pong"}}
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func (r *randDice) CheckAuth(int64, int64) bool {
 
 func (r *randDice) Execute(_ *GroupMessage, content string) []SingleMessage {
 	if len(content) == 0 {
-		return MessageChain(&Dice{Value: rand.Int31n(6) + 1})
+		return []SingleMessage{&Dice{Value: rand.Int31n(6) + 1}}
 	}
 	return nil
 }
@@ -102,7 +102,7 @@ func (r *roll) CheckAuth(int64, int64) bool {
 
 func (r *roll) Execute(message *GroupMessage, content string) []SingleMessage {
 	if len(content) == 0 {
-		return MessageChain(&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.Intn(100))})
+		return []SingleMessage{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.Intn(100))}}
 	}
 	return nil
 }

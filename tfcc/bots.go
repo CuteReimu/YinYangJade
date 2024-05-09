@@ -1,15 +1,17 @@
-package bots
+package tfcc
 
 import (
+	"github.com/CuteReimu/bilibili/v2"
 	. "github.com/CuteReimu/mirai-sdk-http"
-	"github.com/spf13/viper"
-	"log"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync"
 )
 
 var B *Bot
+
+var bili = bilibili.New()
 
 // CmdHandler 这是聊天指令处理器的接口，当你想要新增自己的聊天指令处理器时，实现这个接口即可
 type CmdHandler interface {
@@ -23,16 +25,8 @@ type CmdHandler interface {
 	Execute(msg *GroupMessage, content string) []SingleMessage
 }
 
-func Init() {
-	var err error
-	host := viper.GetString("host")
-	port := viper.GetInt("port")
-	verifyKey := viper.GetString("verifyKey")
-	qq := viper.GetInt64("qq")
-	B, err = Connect(host, port, WsChannelAll, verifyKey, qq, false)
-	if err != nil {
-		log.Fatalln(err)
-	}
+func Init(b *Bot) {
+	B = b
 	B.ListenGroupMessage(cmdHandleFunc)
 }
 
@@ -40,6 +34,9 @@ func Init() {
 var cmdMap sync.Map
 
 func cmdHandleFunc(message *GroupMessage) bool {
+	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
+		return true
+	}
 	chain := message.MessageChain
 	if len(chain) == 0 {
 		return true
@@ -87,7 +84,7 @@ func cmdHandleFunc(message *GroupMessage) bool {
 	return true
 }
 
-func AddCmdListener(handler CmdHandler) {
+func addCmdListener(handler CmdHandler) {
 	name := handler.Name()
 	v, _ := cmdMap.Load(name)
 	hList, _ := v.([]CmdHandler)

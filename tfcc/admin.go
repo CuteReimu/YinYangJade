@@ -1,7 +1,6 @@
 package tfcc
 
 import (
-	"github.com/CuteReimu/YinYangJade/bots"
 	. "github.com/CuteReimu/mirai-sdk-http"
 	"log/slog"
 	"strconv"
@@ -9,9 +8,8 @@ import (
 )
 
 func init() {
-	bots.AddCmdListener(&delAdmin{})
-	bots.AddCmdListener(&addAdmin{})
-	bots.AddCmdListener(&listAllAdmin{})
+	addCmdListener(&delAdmin{})
+	addCmdListener(&addAdmin{})
 }
 
 type delAdmin struct{}
@@ -41,10 +39,10 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 			return nil
 		}
 		if IsSuperAdmin(qq) {
-			return MessageChain(&Plain{Text: "你不能删除自己"})
+			return []SingleMessage{&Plain{Text: "你不能删除自己"}}
 		}
 		if !IsAdmin(qq) {
-			return MessageChain(&Plain{Text: s + "并不是管理员"})
+			return []SingleMessage{&Plain{Text: s + "并不是管理员"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
@@ -52,13 +50,13 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 		return nil
 	}
 	for _, qq := range qqNumbers {
-		DelAdmin(qq)
+		RemoveAdmin(qq)
 	}
 	ret := "已删除管理员"
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain(&Plain{Text: ret})
+	return []SingleMessage{&Plain{Text: ret}}
 }
 
 type addAdmin struct{}
@@ -88,7 +86,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 			return nil
 		}
 		if IsSuperAdmin(qq) || IsAdmin(qq) {
-			return MessageChain(&Plain{Text: s + "已经是管理员了"})
+			return []SingleMessage{&Plain{Text: s + "已经是管理员了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
@@ -102,30 +100,5 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain(&Plain{Text: ret})
-}
-
-type listAllAdmin struct{}
-
-func (g *listAllAdmin) Name() string {
-	return "查看管理员"
-}
-
-func (g *listAllAdmin) ShowTips(int64, int64) string {
-	return "查看管理员"
-}
-
-func (g *listAllAdmin) CheckAuth(int64, int64) bool {
-	return true
-}
-
-func (g *listAllAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
-	if len(content) != 0 {
-		return nil
-	}
-	list := ListAdmin()
-	if len(list) > 0 {
-		return MessageChain(&Plain{Text: "管理员列表：\n" + strings.Join(list, "\n")})
-	}
-	return nil
+	return []SingleMessage{&Plain{Text: ret}}
 }

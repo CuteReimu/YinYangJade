@@ -1,83 +1,72 @@
 package tfcc
 
 import (
-	"github.com/CuteReimu/YinYangJade/db"
-	"github.com/spf13/viper"
-	"strconv"
+	"log/slog"
+	"slices"
 )
 
-const adminPrefix = "tfcc-admin:"
-
 func IsSuperAdmin(qq int64) bool {
-	return qq == viper.GetInt64("qq.super_admin_qq")
+	return qq == tfccConfig.GetInt64("qq.super_admin_qq")
 }
 
 func IsAdmin(qq int64) bool {
-	if IsSuperAdmin(qq) {
-		return true
+	return qq == tfccConfig.GetInt64("qq.super_admin_qq") || slices.Contains(permData.GetIntSlice("admin"), int(qq))
+}
+
+func AddAdmin(qq int64) bool {
+	admins := permData.GetIntSlice("admin")
+	if slices.Contains(admins, int(qq)) {
+		return false
 	}
-	buf := db.Get([]byte(adminPrefix + strconv.FormatInt(qq, 10)))
-	return buf != nil
+	permData.Set("admin", append(admins, int(qq)))
+	err := permData.WriteConfig()
+	if err != nil {
+		slog.Error("write config failed", "error", err)
+	}
+	return true
 }
 
-func AddAdmin(qq int64) {
-	db.Set([]byte(adminPrefix+strconv.FormatInt(qq, 10)), []byte{'1'})
+func RemoveAdmin(qq int64) bool {
+	admins := permData.GetIntSlice("admin")
+	index := slices.Index(admins, int(qq))
+	if index < 0 {
+		return false
+	}
+	permData.Set("admin", append(admins[:index], admins[index+1:]...))
+	err := permData.WriteConfig()
+	if err != nil {
+		slog.Error("write config failed", "error", err)
+	}
+	return true
 }
-
-func DelAdmin(qq int64) {
-	db.Del([]byte(adminPrefix + strconv.FormatInt(qq, 10)))
-}
-
-// ListAdmin 因为这个接口一般用来展示，所以返回[]string
-func ListAdmin() (list []string) {
-	list = append(list, strconv.FormatInt(viper.GetInt64("qq.super_admin_qq"), 10))
-	db.PrefixScanKeyValue([]byte(adminPrefix), func(key, value []byte) error {
-		if len(key) > len(adminPrefix) {
-			list = append(list, string(key)[len(adminPrefix):])
-		}
-		return nil
-	})
-	return
-}
-
-const whitelistPrefix = "whitelist:"
 
 func IsWhitelist(qq int64) bool {
-	buf := db.Get([]byte(whitelistPrefix + strconv.FormatInt(qq, 10)))
-	return buf != nil && string(buf) == "1"
+	return slices.Contains(permData.GetIntSlice("white_list"), int(qq))
 }
 
-func AddWhitelist(qq int64) {
-	db.Set([]byte(whitelistPrefix+strconv.FormatInt(qq, 10)), []byte{'1'})
+func AddWhitelist(qq int64) bool {
+	whitelist := permData.GetIntSlice("white_list")
+	if slices.Contains(whitelist, int(qq)) {
+		return false
+	}
+	permData.Set("white_list", append(whitelist, int(qq)))
+	err := permData.WriteConfig()
+	if err != nil {
+		slog.Error("write config failed", "error", err)
+	}
+	return true
 }
 
-func DelWhitelist(qq int64) {
-	db.Del([]byte(whitelistPrefix + strconv.FormatInt(qq, 10)))
-}
-
-func DisableAllWhitelist() (count int) {
-	db.PrefixUpdateKey([]byte(whitelistPrefix), func([]byte) ([]byte, error) {
-		count++
-		return []byte{'0'}, nil
-	})
-	return
-}
-
-func EnableAllWhitelist() (count int) {
-	db.PrefixUpdateKey([]byte(whitelistPrefix), func([]byte) ([]byte, error) {
-		count++
-		return []byte{'1'}, nil
-	})
-	return
-}
-
-// ListWhitelist 因为这个接口一般用来展示，所以返回[]string
-func ListWhitelist() (list []string) {
-	db.PrefixScanKeyValue([]byte(whitelistPrefix), func(key, val []byte) error {
-		if len(key) > len(whitelistPrefix) && val != nil && string(val) == "1" {
-			list = append(list, string(key)[len(whitelistPrefix):])
-		}
-		return nil
-	})
-	return
+func RemoveWhitelist(qq int64) bool {
+	whitelist := permData.GetIntSlice("white_list")
+	index := slices.Index(whitelist, int(qq))
+	if index < 0 {
+		return false
+	}
+	permData.Set("white_list", append(whitelist[:index], whitelist[index+1:]...))
+	err := permData.WriteConfig()
+	if err != nil {
+		slog.Error("write config failed", "error", err)
+	}
+	return true
 }
