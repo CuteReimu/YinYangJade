@@ -27,8 +27,9 @@ func (d *delAdmin) CheckAuth(_ int64, senderId int64) bool {
 }
 
 func (d *delAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
-	var qqNumbers []int64
-	for _, s := range strings.Split(content, " ") {
+	ss := strings.Split(content, " ")
+	qqNumbers := make([]int64, 0, len(ss))
+	for _, s := range ss {
 		s = strings.TrimSpace(s)
 		if len(s) == 0 {
 			continue
@@ -74,8 +75,9 @@ func (a *addAdmin) CheckAuth(_ int64, senderId int64) bool {
 }
 
 func (a *addAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
-	var qqNumbers []int64
-	for _, s := range strings.Split(content, " ") {
+	ss := strings.Split(content, " ")
+	qqNumbers := make([]int64, 0, len(ss))
+	for _, s := range ss {
 		s = strings.TrimSpace(s)
 		if len(s) == 0 {
 			continue

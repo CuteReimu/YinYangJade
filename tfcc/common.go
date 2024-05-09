@@ -2,7 +2,7 @@ package tfcc
 
 import (
 	. "github.com/CuteReimu/mirai-sdk-http"
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 )
@@ -81,7 +81,7 @@ func (r *randDice) CheckAuth(int64, int64) bool {
 
 func (r *randDice) Execute(_ *GroupMessage, content string) []SingleMessage {
 	if len(content) == 0 {
-		return []SingleMessage{&Dice{Value: rand.Int31n(6) + 1}}
+		return []SingleMessage{&Dice{Value: rand.Int32N(6) + 1}}
 	}
 	return nil
 }
@@ -102,7 +102,7 @@ func (r *roll) CheckAuth(int64, int64) bool {
 
 func (r *roll) Execute(message *GroupMessage, content string) []SingleMessage {
 	if len(content) == 0 {
-		return []SingleMessage{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.Intn(100))}}
+		return []SingleMessage{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}}
 	}
 	return nil
 }
