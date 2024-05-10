@@ -195,7 +195,7 @@ func saveImage(message MessageChain) error {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			if err = os.WriteFile(filepath.Join("dictionary-images", img.ImageId), resp.Body(), 0644); err != nil {
+			if err = os.WriteFile(filepath.Join("dictionary-images", img.ImageId), resp.Body(), 0600); err != nil {
 				slog.Error("write image failed", "error", err)
 				return errors.New("保存图片失败")
 			}
