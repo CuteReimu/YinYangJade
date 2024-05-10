@@ -39,114 +39,147 @@ func Init(b *Bot) {
 var addDbQQList = make(map[int64]string)
 
 func handleGroupMessage(message *GroupMessage) bool {
-	if len(message.MessageChain) != 2 {
+	if len(message.MessageChain) <= 1 {
 		return true
 	}
 	if !slices.Contains(config.GetIntSlice("qq_groups"), int(message.Sender.Group.Id)) {
 		return true
 	}
-	plain, ok := message.MessageChain[1].(*Plain)
-	if !ok {
-		return true
+	if len(message.MessageChain) == 2 {
+		if plain, ok := message.MessageChain[1].(*Plain); ok {
+			perm := message.Sender.Permission == PermAdministrator || message.Sender.Permission == PermOwner ||
+				config.GetInt64("admin") == message.Sender.Id
+			if plain.Text == "ping" {
+				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "pong"})
+				return true
+			} else if plain.Text == "roll" {
+				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))})
+				return true
+			} else if strings.HasPrefix(plain.Text, "roll ") {
+				upperLimit, _ := strconv.Atoi(strings.TrimSpace(plain.Text[len("roll"):]))
+				if upperLimit > 0 {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
+				}
+				return true
+			} else if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
+				key := dealKey(plain.Text[len("添加词条"):])
+				if strings.Contains(key, ".") {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条名称中不能包含 . 符号"})
+					return true
+				}
+				if len(key) > 0 {
+					m := qunDb.GetStringMapString("data")
+					if _, ok = m[key]; ok {
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条已存在"})
+					} else {
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要添加的内容"})
+						addDbQQList[message.Sender.Id] = key
+					}
+				}
+				return true
+			} else if perm && strings.HasPrefix(plain.Text, "修改词条 ") {
+				key := dealKey(plain.Text[len("修改词条"):])
+				if len(key) > 0 {
+					m := qunDb.GetStringMapString("data")
+					if _, ok = m[key]; !ok {
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
+					} else {
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要修改的内容"})
+						addDbQQList[message.Sender.Id] = key
+					}
+				}
+				return true
+			} else if perm && strings.HasPrefix(plain.Text, "删除词条 ") {
+				key := dealKey(plain.Text[len("删除词条"):])
+				if len(key) > 0 {
+					m := qunDb.GetStringMapString("data")
+					if _, ok = m[key]; !ok {
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
+					} else {
+						delete(m, key)
+						qunDb.Set("data", m)
+						if err := qunDb.WriteConfig(); err != nil {
+							slog.Error("write data failed", "error", err)
+						}
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "删除词条成功"})
+					}
+				}
+				return true
+			} else if strings.HasPrefix(plain.Text, "查询词条 ") || strings.HasPrefix(plain.Text, "搜索词条 ") {
+				key := dealKey(plain.Text[len("搜索词条"):])
+				if len(key) > 0 {
+					var res []string
+					m := qunDb.GetStringMapString("data")
+					for k := range m {
+						if strings.Contains(k, key) {
+							res = append(res, k)
+						}
+					}
+					if len(res) > 0 {
+						slices.Sort(res)
+						num := len(res)
+						if num > 10 {
+							res = res[:10]
+							res[9] += fmt.Sprintf("\n等%d个词条", num)
+						}
+						for i := range res {
+							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
+						}
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
+					} else {
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索不到词条(" + key + ")"})
+					}
+				}
+				return true
+			}
+		}
 	}
-	perm := message.Sender.Permission == PermAdministrator || message.Sender.Permission == PermOwner
-	if plain.Text == "ping" {
-		sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "pong"})
-	} else if plain.Text == "roll" {
-		sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))})
-	} else if strings.HasPrefix(plain.Text, "roll ") {
-		upperLimit, _ := strconv.Atoi(strings.TrimSpace(plain.Text[4:]))
-		if upperLimit > 0 {
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
-		}
-	} else if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
-		key := dealKey(plain.Text[4:])
-		if len(key) > 0 {
-			if qunDb.IsSet("data." + key) {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条已存在"})
-			} else {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要添加的内容"})
-				addDbQQList[message.Sender.Id] = key
+	if key, ok := addDbQQList[message.Sender.Id]; ok { // 添加词条
+		delete(addDbQQList, message.Sender.Id)
+		var ms MessageChain
+		for _, m := range message.MessageChain {
+			if _, ok = m.(*Source); !ok {
+				ms = append(ms, m)
 			}
 		}
-	} else if perm && strings.HasPrefix(plain.Text, "修改词条 ") {
-		key := dealKey(plain.Text[4:])
-		if len(key) > 0 {
-			if !qunDb.IsSet("data." + key) {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
-			} else {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要添加的内容"})
-				addDbQQList[message.Sender.Id] = key
-			}
+		buf, err := json.Marshal(ms)
+		if err != nil {
+			slog.Error("json marshal failed", "error", err)
+			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败"})
+			return true
 		}
-	} else if perm && strings.HasPrefix(plain.Text, "删除词条 ") {
-		key := dealKey(plain.Text[4:])
-		if len(key) > 0 {
-			m := qunDb.GetStringMapString("data")
-			if _, ok = m[key]; !ok {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
-			} else {
-				delete(m, key)
-				qunDb.Set("data", m)
-				if err := qunDb.WriteConfig(); err != nil {
-					slog.Error("write data failed", "error", err)
-				}
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "删除词条成功"})
-			}
+		if err = saveImage(ms); err != nil {
+			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败，" + err.Error()})
+			return true
 		}
-	} else if strings.HasPrefix(plain.Text, "查询词条 ") || strings.HasPrefix(plain.Text, "搜索词条 ") {
-		key := dealKey(plain.Text[4:])
-		if len(key) > 0 {
-			var res []string
-			m := qunDb.GetStringMapString("data")
-			for k := range m {
-				if strings.Contains(k, key) {
-					res = append(res, k)
+		m := qunDb.GetStringMapString("data")
+		m[key] = string(buf)
+		qunDb.Set("data", m)
+		if err = qunDb.WriteConfig(); err != nil {
+			slog.Error("write data failed", "error", err)
+		}
+		sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条成功"})
+	} else { // 调用词条
+		if len(message.MessageChain) == 2 {
+			if plain, ok := message.MessageChain[1].(*Plain); ok {
+				m := qunDb.GetStringMapString("data")
+				s := m[dealKey(plain.Text)]
+				if len(s) > 0 {
+					var ms MessageChain
+					if err := json.Unmarshal([]byte(s), &ms); err != nil {
+						slog.Error("json unmarshal failed", "error", err, "s", s)
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "调用词条失败"})
+						return true
+					}
+					sendGroupMessage(message.Sender.Group.Id, ms...)
 				}
 			}
-			if len(res) > 0 {
-				slices.Sort(res)
-				num := len(res)
-				if num > 10 {
-					res = res[:10]
-					res[9] += fmt.Sprintf("\n等%d个词条", num)
-				}
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
-			} else {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索不到词条(" + key + ")"})
-			}
-		}
-	} else {
-		if key, ok := addDbQQList[message.Sender.Id]; ok { // 添加词条
-			var ms []SingleMessage
-			for _, m := range message.MessageChain {
-				if _, ok = m.(*Source); !ok {
-					ms = append(ms, m)
-				}
-			}
-			buf, err := json.Marshal(ms)
-			if err != nil {
-				slog.Error("json marshal failed", "error", err)
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败"})
-				return true
-			}
-			if err = saveImage(ms); err != nil {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败，" + err.Error()})
-				return true
-			}
-			qunDb.Set("data."+key, string(buf))
-			if err = qunDb.WriteConfig(); err != nil {
-				slog.Error("write data failed", "error", err)
-			}
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条成功"})
-		} else { // 调用词条
-			qunDb.GetString("data." + dealKey(message.MessageChain[1].(*Plain).Text))
 		}
 	}
 	return true
 }
 
-func saveImage(message []SingleMessage) error {
+func saveImage(message MessageChain) error {
 	for _, m := range message {
 		if img, ok := m.(*Image); ok && len(img.Url) > 0 {
 			resp, err := restyClient.R().Get(img.Url)

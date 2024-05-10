@@ -27,7 +27,7 @@ func (d *delWhitelist) CheckAuth(_ int64, senderId int64) bool {
 	return IsAdmin(senderId)
 }
 
-func (d *delWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (d *delWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -41,12 +41,12 @@ func (d *delWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage 
 			return nil
 		}
 		if !IsWhitelist(qq) {
-			return []SingleMessage{&Plain{Text: s + "并不是白名单"}}
+			return MessageChain{&Plain{Text: s + "并不是白名单"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
 	if len(qqNumbers) == 0 {
-		return []SingleMessage{&Plain{Text: "指令格式如下：\n删除白名单 对方QQ号"}}
+		return MessageChain{&Plain{Text: "指令格式如下：\n删除白名单 对方QQ号"}}
 	}
 	for _, qq := range qqNumbers {
 		RemoveWhitelist(qq)
@@ -55,7 +55,7 @@ func (d *delWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage 
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return []SingleMessage{&Plain{Text: ret}}
+	return MessageChain{&Plain{Text: ret}}
 }
 
 type addWhitelist struct{}
@@ -72,7 +72,7 @@ func (a *addWhitelist) CheckAuth(_ int64, senderId int64) bool {
 	return IsAdmin(senderId)
 }
 
-func (a *addWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (a *addWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -86,12 +86,12 @@ func (a *addWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage 
 			return nil
 		}
 		if IsWhitelist(qq) {
-			return []SingleMessage{&Plain{Text: s + "已经是白名单了"}}
+			return MessageChain{&Plain{Text: s + "已经是白名单了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
 	if len(qqNumbers) == 0 {
-		return []SingleMessage{&Plain{Text: "指令格式如下：\n增加白名单 对方QQ号"}}
+		return MessageChain{&Plain{Text: "指令格式如下：\n增加白名单 对方QQ号"}}
 	}
 	for _, qq := range qqNumbers {
 		AddWhitelist(qq)
@@ -100,7 +100,7 @@ func (a *addWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage 
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return []SingleMessage{&Plain{Text: ret}}
+	return MessageChain{&Plain{Text: ret}}
 }
 
 type checkWhitelist struct{}
@@ -117,14 +117,14 @@ func (e *checkWhitelist) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (e *checkWhitelist) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (e *checkWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	qq, err := strconv.ParseInt(content, 10, 64)
 	if err != nil {
-		return []SingleMessage{&Plain{Text: "指令格式如下：\n查看白名单 对方QQ号"}}
+		return MessageChain{&Plain{Text: "指令格式如下：\n查看白名单 对方QQ号"}}
 	}
 	if IsWhitelist(qq) {
-		return []SingleMessage{&Plain{Text: content + "是白名单"}}
+		return MessageChain{&Plain{Text: content + "是白名单"}}
 	} else {
-		return []SingleMessage{&Plain{Text: content + "不是白名单"}}
+		return MessageChain{&Plain{Text: content + "不是白名单"}}
 	}
 }

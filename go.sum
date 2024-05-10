@@ -10,6 +10,8 @@ github.com/CuteReimu/mirai-sdk-http v0.0.0-20240509080917-a9a81ac786b5 h1:+X1k6C
 github.com/CuteReimu/mirai-sdk-http v0.0.0-20240509080917-a9a81ac786b5/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
 github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510083656-2348d625ecfe h1:gRczrn5mNggID1VgfooEa/e4+ar4RyrtWMawXgHpgYo=
 github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510083656-2348d625ecfe/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
+github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510120721-3759ea0566b1 h1:gjr+nv6h/7M89HnBbFqWjTqhdSFC8sDmw5VOw/mHFwU=
+github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510120721-3759ea0566b1/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

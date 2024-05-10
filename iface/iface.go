@@ -13,5 +13,5 @@ type CmdHandler interface {
 	// CheckAuth 如果他有权限执行这个指令，则返回True，否则返回False
 	CheckAuth(groupCode int64, senderId int64) bool
 	// Execute content参数是除开指令名（第一个空格前的部分）以外剩下的所有内容。返回值是要发送的群聊消息为空就是不发送消息。
-	Execute(msg *GroupMessage, content string) []SingleMessage
+	Execute(msg *GroupMessage, content string) MessageChain
 }

@@ -26,7 +26,7 @@ func (d *delAdmin) CheckAuth(_ int64, senderId int64) bool {
 	return IsSuperAdmin(senderId)
 }
 
-func (d *delAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -40,10 +40,10 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 			return nil
 		}
 		if IsSuperAdmin(qq) {
-			return []SingleMessage{&Plain{Text: "你不能删除自己"}}
+			return MessageChain{&Plain{Text: "你不能删除自己"}}
 		}
 		if !IsAdmin(qq) {
-			return []SingleMessage{&Plain{Text: s + "并不是管理员"}}
+			return MessageChain{&Plain{Text: s + "并不是管理员"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
@@ -57,7 +57,7 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return []SingleMessage{&Plain{Text: ret}}
+	return MessageChain{&Plain{Text: ret}}
 }
 
 type addAdmin struct{}
@@ -74,7 +74,7 @@ func (a *addAdmin) CheckAuth(_ int64, senderId int64) bool {
 	return IsSuperAdmin(senderId)
 }
 
-func (a *addAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -88,7 +88,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 			return nil
 		}
 		if IsSuperAdmin(qq) || IsAdmin(qq) {
-			return []SingleMessage{&Plain{Text: s + "已经是管理员了"}}
+			return MessageChain{&Plain{Text: s + "已经是管理员了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
@@ -102,5 +102,5 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) []SingleMessage {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return []SingleMessage{&Plain{Text: ret}}
+	return MessageChain{&Plain{Text: ret}}
 }

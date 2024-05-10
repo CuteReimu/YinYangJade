@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/CuteReimu/YinYangJade/fengsheng"
 	"github.com/CuteReimu/YinYangJade/maplebot"
@@ -75,17 +74,6 @@ func main() {
 		slog.Error("connect failed", "error", err)
 		os.Exit(1)
 	}
-	b.ListenGroupMessage(func(message *miraihttp.GroupMessage) bool {
-		if len(message.MessageChain) > 1 {
-			buf, err := json.Marshal(message.MessageChain[1:])
-			if err != nil {
-				slog.Error("json marshal failed", "error", err)
-			} else {
-				slog.Debug(fmt.Sprintf("[%s] %s -> %s", message.Sender.Group.String(), message.Sender.String(), string(buf)))
-			}
-		}
-		return true
-	})
 	tfcc.Init(b)
 	fengsheng.Init(b)
 	maplebot.Init(b)

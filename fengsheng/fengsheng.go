@@ -34,14 +34,14 @@ func (g *getMyScore) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (g *getMyScore) Execute(msg *GroupMessage, content string) []SingleMessage {
+func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
 	}
 	name := permData.GetString(fmt.Sprintf("playerMap.%d", msg.Sender.Id))
 	if len(name) == 0 {
-		return []SingleMessage{&Plain{Text: "请先绑定"}}
+		return MessageChain{&Plain{Text: "请先绑定"}}
 	}
 	resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/getscore")
 	if err != nil {
@@ -52,7 +52,7 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) []SingleMessage 
 		slog.Error("请求失败", "status", resp.StatusCode())
 		return nil
 	}
-	return []SingleMessage{&Plain{Text: resp.String()}}
+	return MessageChain{&Plain{Text: resp.String()}}
 }
 
 type getScore struct{}
@@ -69,7 +69,7 @@ func (g *getScore) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (g *getScore) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
 		return nil
@@ -83,7 +83,7 @@ func (g *getScore) Execute(_ *GroupMessage, content string) []SingleMessage {
 		slog.Error("请求失败", "status", resp.StatusCode())
 		return nil
 	}
-	return []SingleMessage{&Plain{Text: resp.String()}}
+	return MessageChain{&Plain{Text: resp.String()}}
 }
 
 type rankList struct{}
@@ -100,7 +100,7 @@ func (r *rankList) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *rankList) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
@@ -114,7 +114,7 @@ func (r *rankList) Execute(_ *GroupMessage, content string) []SingleMessage {
 		slog.Error("请求失败", "status", resp.StatusCode())
 		return nil
 	}
-	return []SingleMessage{&Image{Base64: base64.StdEncoding.EncodeToString(resp.Body())}}
+	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(resp.Body())}}
 }
 
 type winRate struct{}
@@ -131,7 +131,7 @@ func (r *winRate) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *winRate) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (r *winRate) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
@@ -145,7 +145,7 @@ func (r *winRate) Execute(_ *GroupMessage, content string) []SingleMessage {
 		slog.Error("请求失败", "status", resp.StatusCode())
 		return nil
 	}
-	return []SingleMessage{&Image{Base64: base64.StdEncoding.EncodeToString(resp.Body())}}
+	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(resp.Body())}}
 }
 
 type register struct{}
@@ -165,13 +165,13 @@ func (r *register) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *register) Execute(msg *GroupMessage, content string) []SingleMessage {
+func (r *register) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
-		return []SingleMessage{&Plain{Text: "命令格式：\n注册 名字"}}
+		return MessageChain{&Plain{Text: "命令格式：\n注册 名字"}}
 	}
 	if oldName := permData.GetString(fmt.Sprintf("playerMap.%d", msg.Sender.Id)); len(oldName) > 0 {
-		return []SingleMessage{&Plain{Text: "你已经注册过：" + oldName}}
+		return MessageChain{&Plain{Text: "你已经注册过：" + oldName}}
 	}
 	resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/register")
 	if err != nil {
@@ -188,11 +188,11 @@ func (r *register) Execute(msg *GroupMessage, content string) []SingleMessage {
 		if len(msg) == 0 {
 			msg = "用户名重复"
 		}
-		return []SingleMessage{&Plain{Text: msg}}
+		return MessageChain{&Plain{Text: msg}}
 	}
 	permData.Set(fmt.Sprintf("playerMap.%d", msg.Sender.Id), name)
 	if err = permData.WriteConfig(); err != nil {
 		slog.Error("write data failed", "error", err)
 	}
-	return []SingleMessage{&Plain{Text: "注册成功"}}
+	return MessageChain{&Plain{Text: "注册成功"}}
 }

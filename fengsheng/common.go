@@ -28,7 +28,7 @@ func (t *showTips) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (t *showTips) Execute(msg *GroupMessage, _ string) []SingleMessage {
+func (t *showTips) Execute(msg *GroupMessage, _ string) MessageChain {
 	var ret []string
 	for _, h := range cmdMap {
 		if h.CheckAuth(msg.Sender.Group.Id, msg.Sender.Id) {
@@ -37,7 +37,7 @@ func (t *showTips) Execute(msg *GroupMessage, _ string) []SingleMessage {
 			}
 		}
 	}
-	return []SingleMessage{&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
+	return MessageChain{&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
 }
 
 type ping struct{}
@@ -54,9 +54,9 @@ func (p *ping) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (p *ping) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (p *ping) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return []SingleMessage{&Plain{Text: "pong"}}
+		return MessageChain{&Plain{Text: "pong"}}
 	}
 	return nil
 }
@@ -75,9 +75,9 @@ func (r *randDice) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *randDice) Execute(_ *GroupMessage, content string) []SingleMessage {
+func (r *randDice) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return []SingleMessage{&Dice{Value: rand.Int32N(6) + 1}}
+		return MessageChain{&Dice{Value: rand.Int32N(6) + 1}}
 	}
 	return nil
 }
@@ -96,9 +96,9 @@ func (r *roll) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *roll) Execute(message *GroupMessage, content string) []SingleMessage {
+func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return []SingleMessage{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}}
+		return MessageChain{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}}
 	}
 	return nil
 }

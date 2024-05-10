@@ -3,11 +3,12 @@ package fengsheng
 import (
 	"encoding/json"
 	"fmt"
-	miraihttp "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/mirai-sdk-http"
 	"github.com/spf13/viper"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -59,6 +60,9 @@ func checkQunDb() {
 	m := qunDb.GetStringMapString("data")
 loop:
 	for k, v := range m {
+		if strings.Contains(k, ".") {
+			panic("词条名称中不能包含 . 符号: " + k)
+		}
 		var a []any
 		err := json.Unmarshal([]byte(v), &a)
 		if err != nil {
@@ -68,15 +72,39 @@ loop:
 			b := b0.(map[string]any)
 			switch b["type"].(string) {
 			case "Image":
-				a[i] = &miraihttp.Image{
+				if b["path"] != nil && len(b["path"].(string)) > 0 {
+					continue
+				}
+				imageId, ok := b["imageId"].(string)
+				if !ok {
+					panic("imageId 错误: " + k)
+				}
+				a[i] = &Image{
 					Type: "Image",
-					Path: filepath.Join("..", "YinYangJade", "chat-images", b["imageId"].(string)),
+					Path: filepath.Join("..", "YinYangJade", "chat-images", imageId),
+				}
+			case "Face":
+				if b["faceId"] != nil && b["faceId"].(float64) != 0 {
+					continue
+				}
+				faceId, ok := b["id"].(float64)
+				if !ok {
+					panic("faceId 错误: " + k)
+				}
+				a[i] = &Face{
+					Type:   "Face",
+					FaceId: int32(faceId),
 				}
 			case "PlainText":
-				a[i] = &miraihttp.Plain{
-					Type: "Plain",
-					Text: b["content"].(string),
+				content, ok := b["content"].(string)
+				if !ok {
+					panic("content 错误: " + k)
 				}
+				a[i] = &Plain{
+					Type: "Plain",
+					Text: content,
+				}
+			case "Plain":
 			default:
 				fmt.Println("Unknown type: ", b["type"], ", in: ", k)
 				continue loop

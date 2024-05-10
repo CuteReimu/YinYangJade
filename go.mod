@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20240510083811-38ba0f68c7cc
-	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510083656-2348d625ecfe
+	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510120721-3759ea0566b1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/spf13/viper v1.18.2
 )
