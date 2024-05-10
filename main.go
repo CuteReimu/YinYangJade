@@ -65,7 +65,6 @@ func init() {
 }
 
 func main() {
-	maplebot.Init(nil)
 	var err error
 	host := mainConfig.GetString("host")
 	port := mainConfig.GetInt("port")
