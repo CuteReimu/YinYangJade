@@ -9,5 +9,5 @@
 
 - [东方Project沙包聚集地机器人](tfcc)
 - [空洞骑士群机器人](https://github.com/CuteReimu/hollow-knight-speedrun-bot)
-- [GMSR群机器人](https://github.com/CuteReimu/maple-bots)
-- [风声群机器人](https://github.com/CuteReimu/fengsheng-bot)
+- [GMSR群机器人](maplebot)
+- [风声群机器人](fengsheng)

@@ -2,10 +2,14 @@ github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f h
 github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f/go.mod h1:4a58ifQTEe2uwwsaqbh3i2un5/CBPg+At/qHpt18Tmk=
 github.com/CuteReimu/bilibili/v2 v2.0.0-20240506095507-e10c80647a7a h1:HfXfB144F/CNsUfBtqzxpPrZ4iuECeiDlVFYuCCAtXo=
 github.com/CuteReimu/bilibili/v2 v2.0.0-20240506095507-e10c80647a7a/go.mod h1:QxWXOFVXGVx6syElVpyp39X2gRhKXI00gpogPKZ7R6Q=
+github.com/CuteReimu/bilibili/v2 v2.0.0-20240510083811-38ba0f68c7cc h1:v6dU0uXyOXudXbwe4K+GGg+6dVOM2giXjWRn7Eskd5I=
+github.com/CuteReimu/bilibili/v2 v2.0.0-20240510083811-38ba0f68c7cc/go.mod h1:qVOTw55hHZ0OJK7Pb+/u/86KJ/QjXGJLCBy/IFMkqoY=
 github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878 h1:DdooD0YHFR3Aoay37mJpUUcKSQ3WUytbfVYYTmocvUI=
 github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878/go.mod h1:+ic3kSXScM0/rxJdO/gGydQKuOO9Y1f/t0ajl1xRfeY=
 github.com/CuteReimu/mirai-sdk-http v0.0.0-20240509080917-a9a81ac786b5 h1:+X1k6C3FgqRVhKRgW6Wqoyhe+VOvY9uZcEffEVU5P3E=
 github.com/CuteReimu/mirai-sdk-http v0.0.0-20240509080917-a9a81ac786b5/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
+github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510083656-2348d625ecfe h1:gRczrn5mNggID1VgfooEa/e4+ar4RyrtWMawXgHpgYo=
+github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510083656-2348d625ecfe/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

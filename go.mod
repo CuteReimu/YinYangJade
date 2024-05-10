@@ -3,8 +3,8 @@ module github.com/CuteReimu/YinYangJade
 go 1.22
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.0.0-20240506095507-e10c80647a7a
-	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240509080917-a9a81ac786b5
+	github.com/CuteReimu/bilibili/v2 v2.0.0-20240510083811-38ba0f68c7cc
+	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510083656-2348d625ecfe
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/spf13/viper v1.18.2
 )

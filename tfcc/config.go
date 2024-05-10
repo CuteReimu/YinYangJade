@@ -2,6 +2,7 @@ package tfcc
 
 import (
 	"github.com/spf13/viper"
+	"os"
 	"path/filepath"
 )
 
@@ -12,6 +13,13 @@ var (
 )
 
 func initConfig() {
+	if err := os.MkdirAll(filepath.Join("config", "org.tfcc.bot"), 0755); err != nil {
+		panic(err)
+	}
+	if err := os.MkdirAll(filepath.Join("data", "org.tfcc.bot"), 0755); err != nil {
+		panic(err)
+	}
+
 	tfccConfig.AddConfigPath(filepath.Join("config", "org.tfcc.bot"))
 	tfccConfig.SetConfigName("TFCCConfig")
 	tfccConfig.SetConfigType("yml")

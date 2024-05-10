@@ -1,26 +1,40 @@
-package tfcc
+package fengsheng
 
 import (
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/mirai-sdk-http"
+	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 )
+
+var restyClient = resty.New()
+
+func init() {
+	restyClient.SetRedirectPolicy(resty.NoRedirectPolicy())
+	restyClient.SetTimeout(20 * time.Second)
+	restyClient.SetHeaders(map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
+		"user-agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69",
+		"connection":   "close",
+	})
+}
 
 var B *Bot
 
 func Init(b *Bot) {
 	initConfig()
-	initBilibili()
 	B = b
 	B.ListenGroupMessage(cmdHandleFunc)
+	B.ListenGroupMessage(handleDictionary)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
 
 func cmdHandleFunc(message *GroupMessage) bool {
-	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
+	if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
 		return true
 	}
 	chain := message.MessageChain
