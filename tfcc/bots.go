@@ -1,7 +1,6 @@
 package tfcc
 
 import (
-	"github.com/CuteReimu/bilibili/v2"
 	. "github.com/CuteReimu/mirai-sdk-http"
 	"log/slog"
 	"slices"
@@ -10,8 +9,6 @@ import (
 )
 
 var B *Bot
-
-var bili = bilibili.New()
 
 // CmdHandler 这是聊天指令处理器的接口，当你想要新增自己的聊天指令处理器时，实现这个接口即可
 type CmdHandler interface {
@@ -26,6 +23,8 @@ type CmdHandler interface {
 }
 
 func Init(b *Bot) {
+	initConfig()
+	initBilibili()
 	B = b
 	B.ListenGroupMessage(cmdHandleFunc)
 }

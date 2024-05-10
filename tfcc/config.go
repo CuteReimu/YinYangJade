@@ -11,7 +11,7 @@ var (
 	permData     = viper.New()
 )
 
-func init() {
+func initConfig() {
 	tfccConfig.AddConfigPath(filepath.Join("config", "org.tfcc.bot"))
 	tfccConfig.SetConfigName("TFCCConfig")
 	tfccConfig.SetConfigType("yml")
