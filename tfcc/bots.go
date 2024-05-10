@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
-	"sync"
 )
 
 var B *Bot
@@ -29,8 +28,7 @@ func Init(b *Bot) {
 	B.ListenGroupMessage(cmdHandleFunc)
 }
 
-// cmd -> []CmdHandler
-var cmdMap sync.Map
+var cmdMap map[string]CmdHandler
 
 func cmdHandleFunc(message *GroupMessage) bool {
 	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
@@ -66,18 +64,16 @@ func cmdHandleFunc(message *GroupMessage) bool {
 	if len(cmd) == 0 || strings.Contains(content, "\n") || strings.Contains(content, "\r") {
 		return true
 	}
-	if fList, ok := cmdMap.Load(cmd); ok {
-		for _, h := range fList.([]CmdHandler) {
-			if h.CheckAuth(message.Sender.Group.Id, message.Sender.Id) {
-				groupMsg := h.Execute(message, content)
-				if len(groupMsg) > 0 {
-					_, err := B.SendGroupMessage(message.Sender.Group.Id, 0, groupMsg)
-					if err != nil {
-						slog.Error("发送群消息失败", "error", err)
-					}
+	if h, ok := cmdMap[cmd]; ok {
+		if h.CheckAuth(message.Sender.Group.Id, message.Sender.Id) {
+			groupMsg := h.Execute(message, content)
+			if len(groupMsg) > 0 {
+				_, err := B.SendGroupMessage(message.Sender.Group.Id, 0, groupMsg)
+				if err != nil {
+					slog.Error("发送群消息失败", "error", err)
 				}
-				return true
 			}
+			return true
 		}
 	}
 	return true
@@ -85,7 +81,8 @@ func cmdHandleFunc(message *GroupMessage) bool {
 
 func addCmdListener(handler CmdHandler) {
 	name := handler.Name()
-	v, _ := cmdMap.Load(name)
-	hList, _ := v.([]CmdHandler)
-	cmdMap.Store(name, append(hList, handler))
+	if _, ok := cmdMap[name]; ok {
+		panic("repeat command: " + name)
+	}
+	cmdMap[name] = handler
 }
