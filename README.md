@@ -17,7 +17,7 @@
 > 
 > 考虑到原先写成Kotlin插件的形式，每次更新都需要重启[mirai](https://github.com/mamoe/mirai)并重新登录。
 > 而重新登录很不稳定，因此改为使用[mirai-api-http](https://github.com/project-mirai/mirai-api-http)插件，把所有功能都独立成单独的进程，通过ws接口进行通信。
-> 这样每次更新代码时，只需要重启机器人的进程，而不需重启mirai和重新登录了。
+> 这样每次更新代码时，只需要重启机器人的进程，而不需重启[mirai](https://github.com/mamoe/mirai)和重新登录了。
 
 ## 开始
 

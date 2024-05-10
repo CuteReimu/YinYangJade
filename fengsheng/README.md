@@ -20,4 +20,4 @@ fengshengUrl: 'http://127.0.0.1:9094'
 image_expire_hours: 24
 ```
 
-根据自己的需要修改配置文件后，重启 Mirai 即可。
+根据自己的需要修改配置文件后，重启即可。
