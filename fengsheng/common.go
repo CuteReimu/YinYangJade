@@ -3,6 +3,7 @@ package fengsheng
 import (
 	. "github.com/CuteReimu/mirai-sdk-http"
 	"math/rand/v2"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -37,6 +38,7 @@ func (t *showTips) Execute(msg *GroupMessage, _ string) MessageChain {
 			}
 		}
 	}
+	slices.Sort(ret)
 	return MessageChain{&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
 }
 

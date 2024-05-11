@@ -23,8 +23,7 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if len(message.MessageChain) == 2 {
 		if plain, ok := message.MessageChain[1].(*Plain); ok {
-			perm := message.Sender.Permission == PermAdministrator || message.Sender.Permission == PermOwner ||
-				fengshengConfig.GetInt64("qq.super_admin_qq") == message.Sender.Id
+			perm := IsWhitelist(message.Sender.Id)
 			if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
 				key := dealKey(plain.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {

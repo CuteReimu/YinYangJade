@@ -34,10 +34,14 @@ func cmdHandleFunc(message *GroupMessage) bool {
 		}
 	}
 	if at, ok := chain[0].(*At); ok && at.Target == B.QQ {
-		if len(chain) > 1 {
-			chain = chain[1:]
-		} else {
-			chain[0] = &Plain{Text: "查看帮助"}
+		chain = chain[1:]
+		if len(chain) > 0 {
+			if plain, ok := chain[0].(*Plain); ok && len(strings.TrimSpace(plain.Text)) == 0 {
+				chain = chain[1:]
+			}
+		}
+		if len(chain) == 0 {
+			chain = append(chain, &Plain{Text: "查看帮助"})
 		}
 	}
 	var cmd, content string
