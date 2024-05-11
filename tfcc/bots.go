@@ -15,6 +15,7 @@ func Init(b *Bot) {
 	initBilibili()
 	B = b
 	B.ListenGroupMessage(cmdHandleFunc)
+	B.ListenGroupMessage(bilibiliAnalysis)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)

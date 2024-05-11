@@ -3,10 +3,12 @@ module github.com/CuteReimu/YinYangJade
 go 1.22
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.0.0-20240510083811-38ba0f68c7cc
+	github.com/CuteReimu/bilibili/v2 v2.0.0-20240511150430-e6f6b61547ba
 	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240511064814-0558d81e7b0f
-	github.com/go-resty/resty/v2 v2.13.0
+	github.com/dlclark/regexp2 v1.11.0
+	github.com/go-resty/resty/v2 v2.13.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.18.2
 	github.com/tidwall/gjson v1.17.1
 	github.com/vicanso/go-charts/v2 v2.6.5
@@ -27,7 +29,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
