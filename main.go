@@ -13,6 +13,8 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -37,6 +39,14 @@ func init() {
 			case slog.TimeKey:
 				if t, ok := a.Value.Any().(time.Time); ok {
 					a.Value = slog.StringValue(t.Format("15:04:05.000"))
+				}
+			case slog.SourceKey:
+				if s, ok := a.Value.Any().(*slog.Source); ok {
+					if index := strings.LastIndex(s.File, "@"); index >= 0 {
+						if index += strings.Index(s.File[index:], string(filepath.Separator)); index >= 0 {
+							s.File = s.File[index+1:]
+						}
+					}
 				}
 			default:
 				if e, ok := a.Value.Any().(error); ok {

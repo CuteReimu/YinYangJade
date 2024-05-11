@@ -45,6 +45,27 @@ func handleGroupMessage(message *GroupMessage) bool {
 	if !slices.Contains(config.GetIntSlice("qq_groups"), int(message.Sender.Group.Id)) {
 		return true
 	}
+	if len(message.MessageChain) >= 3 {
+		if plain, ok := message.MessageChain[1].(*Plain); ok && strings.TrimSpace(plain.Text) == "查询" {
+			if at, ok := message.MessageChain[2].(*At); ok {
+				data := findRoleData.GetStringMapString("data")
+				name := data[strconv.FormatInt(at.Target, 10)]
+				if len(name) == 0 {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "该玩家还未绑定"})
+				} else {
+					go func() {
+						defer func() {
+							if err := recover(); err != nil {
+								slog.Error("panic recovered", "error", err)
+							}
+						}()
+						sendGroupMessage(message.Sender.Group.Id, findRole(name)...)
+					}()
+				}
+			}
+			return true
+		}
+	}
 	if len(message.MessageChain) == 2 {
 		if plain, ok := message.MessageChain[1].(*Plain); ok {
 			perm := message.Sender.Permission == PermAdministrator || message.Sender.Permission == PermOwner ||
@@ -59,6 +80,64 @@ func handleGroupMessage(message *GroupMessage) bool {
 				upperLimit, _ := strconv.Atoi(strings.TrimSpace(plain.Text[len("roll"):]))
 				if upperLimit > 0 {
 					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
+				}
+				return true
+			} else if plain.Text == "查询我" {
+				data := findRoleData.GetStringMapString("data")
+				name := data[strconv.FormatInt(message.Sender.Id, 10)]
+				if len(name) == 0 {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你还未绑定"})
+				} else {
+					go func() {
+						defer func() {
+							if err := recover(); err != nil {
+								slog.Error("panic recovered", "error", err)
+							}
+						}()
+						sendGroupMessage(message.Sender.Group.Id, findRole(name)...)
+					}()
+				}
+				return true
+			} else if strings.HasPrefix(plain.Text, "查询 ") {
+				name := strings.TrimSpace(plain.Text[len("查询"):])
+				if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
+					go func() {
+						defer func() {
+							if err := recover(); err != nil {
+								slog.Error("panic recovered", "error", err)
+							}
+						}()
+						sendGroupMessage(message.Sender.Group.Id, findRole(name)...)
+					}()
+					return true
+				}
+			} else if strings.HasPrefix(plain.Text, "绑定 ") {
+				data := findRoleData.GetStringMapString("data")
+				if data[strconv.FormatInt(message.Sender.Id, 10)] != "" {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你已经绑定过了，如需更换请先解绑"})
+				} else {
+					name := strings.TrimSpace(plain.Text[len("绑定"):])
+					if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
+						data[strconv.FormatInt(message.Sender.Id, 10)] = name
+						findRoleData.Set("data", data)
+						if err := findRoleData.WriteConfig(); err != nil {
+							slog.Error("write config failed", "error", err)
+						}
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "绑定成功"})
+					}
+				}
+				return true
+			} else if plain.Text == "解绑" {
+				data := findRoleData.GetStringMapString("data")
+				if data[strconv.FormatInt(message.Sender.Id, 10)] != "" {
+					delete(data, strconv.FormatInt(message.Sender.Id, 10))
+					findRoleData.Set("data", data)
+					if err := findRoleData.WriteConfig(); err != nil {
+						slog.Error("write config failed", "error", err)
+					}
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "解绑成功"})
+				} else {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你还未绑定"})
 				}
 				return true
 			} else if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
@@ -207,6 +286,9 @@ func saveImage(message MessageChain) error {
 }
 
 func sendGroupMessage(group int64, messages ...SingleMessage) {
+	if len(messages) == 0 {
+		return
+	}
 	_, err := B.SendGroupMessage(group, 0, messages)
 	if err != nil {
 		slog.Error("send group message failed", "error", err)

@@ -4,16 +4,20 @@ go 1.22
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20240510083811-38ba0f68c7cc
-	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240510120721-3759ea0566b1
+	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240511064814-0558d81e7b0f
+	github.com/go-resty/resty/v2 v2.13.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/spf13/viper v1.18.2
+	github.com/tidwall/gjson v1.17.1
+	github.com/vicanso/go-charts/v2 v2.6.5
 )
 
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f // indirect
 	github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-resty/resty/v2 v2.13.0 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
@@ -32,11 +36,12 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/wcharczuk/go-chart/v2 v2.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
