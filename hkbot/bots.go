@@ -60,12 +60,14 @@ func doTimer() {
 		return
 	}
 	var result1 []string
+	var changed bool
 	pushedMessages := hkData.GetStringSlice("pushedMessages")
 	for _, v := range data.Data {
 		if slices.Contains(pushedMessages, v.Id) {
 			continue
 		}
 		pushedMessages = append(pushedMessages, v.Id)
+		changed = true
 		s := re.ReplaceAllString(v.Text, "")
 		if strings.Contains(s, "beat the WR") || strings.Contains(s, "got a new top 3 PB") {
 			result1 = append(result1, translate(s))
@@ -73,11 +75,18 @@ func doTimer() {
 	}
 	if len(pushedMessages) > 100 {
 		pushedMessages = pushedMessages[len(pushedMessages)-100:]
+		changed = true
 	}
 	for _, groupId := range hkConfig.GetIntSlice("speedrun_push_qq_group") {
 		_, err := B.SendGroupMessage(int64(groupId), 0, MessageChain{&Plain{Text: strings.Join(result1, "\n")}})
 		if err != nil {
 			slog.Error("send group message failed", "error", err)
+		}
+	}
+	if changed {
+		hkData.Set("pushedMessages", pushedMessages)
+		if err = hkData.WriteConfig(); err != nil {
+			slog.Error("write hkData failed", "error", err)
 		}
 	}
 }
