@@ -8,7 +8,7 @@
 这是以下几个机器人项目的合集，采用[mirai](https://github.com/mamoe/mirai)框架的[mirai-api-http](https://github.com/project-mirai/mirai-api-http)接口。
 
 - [东方Project沙包聚集地机器人](tfcc)
-- [空洞骑士群机器人](https://github.com/CuteReimu/hollow-knight-speedrun-bot)
+- [空洞骑士speedrun推送小助手](hkbot)
 - [GMSR群机器人](maplebot)
 - [风声群机器人](fengsheng)
 
