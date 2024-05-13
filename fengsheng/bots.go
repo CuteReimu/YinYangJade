@@ -3,26 +3,11 @@ package fengsheng
 import (
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/mirai-sdk-http"
-	"github.com/go-resty/resty/v2"
-	"github.com/tidwall/gjson"
 	"log/slog"
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 )
-
-var restyClient = resty.New()
-
-func init() {
-	restyClient.SetRedirectPolicy(resty.NoRedirectPolicy())
-	restyClient.SetTimeout(20 * time.Second)
-	restyClient.SetHeaders(map[string]string{
-		"Content-Type": "application/x-www-form-urlencoded",
-		"user-agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69",
-		"connection":   "close",
-	})
-}
 
 var B *Bot
 
@@ -71,7 +56,7 @@ func cmdHandleFunc(message *GroupMessage) bool {
 			}
 		}
 	}
-	if len(cmd) == 0 || strings.Contains(content, "\n") || strings.Contains(content, "\r") {
+	if len(cmd) == 0 {
 		return true
 	}
 	if h, ok := cmdMap[cmd]; ok {
@@ -118,17 +103,10 @@ func searchAt(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/getscore")
-						if err != nil {
-							slog.Error("请求失败", "error", err)
-							return
-						}
-						if resp.StatusCode() != 200 {
-							slog.Error("请求失败", "status", resp.StatusCode())
-							return
-						}
-						result := gjson.GetBytes(resp.Body(), "result").String()
-						if len(result) == 0 {
+						result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+						if returnError != nil {
+							slog.Error("请求失败", "error", returnError.error)
+							sendGroupMessage(message.Sender.Group.Id, returnError.message...)
 							return
 						}
 						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: result})

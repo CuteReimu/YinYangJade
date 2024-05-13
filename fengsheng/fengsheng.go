@@ -3,7 +3,6 @@ package fengsheng
 import (
 	"encoding/base64"
 	. "github.com/CuteReimu/mirai-sdk-http"
-	"github.com/tidwall/gjson"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -19,6 +18,8 @@ func init() {
 	addCmdListener(&addNotifyOnEnd{})
 	addCmdListener(&atPlayer{})
 	addCmdListener(&updateTitle{})
+	addCmdListener(&removeTitle{})
+	addCmdListener(&resetPwd{})
 }
 
 type getMyScore struct{}
@@ -49,18 +50,10 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Plain{Text: "请先绑定"}}
 	}
-	resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/getscore")
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		return nil
-	}
-	if resp.StatusCode() != 200 {
-		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
-	}
-	result := gjson.GetBytes(resp.Body(), "result").String()
-	if len(result) == 0 {
-		return nil
+	result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
 	}
 	return MessageChain{&Plain{Text: result}}
 }
@@ -84,18 +77,10 @@ func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return nil
 	}
-	resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/getscore")
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		return nil
-	}
-	if resp.StatusCode() != 200 {
-		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
-	}
-	result := gjson.GetBytes(resp.Body(), "result").String()
-	if len(result) == 0 {
-		return nil
+	result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
 	}
 	return MessageChain{&Plain{Text: result}}
 }
@@ -189,26 +174,17 @@ func (r *register) Execute(msg *GroupMessage, content string) MessageChain {
 	if oldName := data[strconv.FormatInt(msg.Sender.Id, 10)]; len(oldName) > 0 {
 		return MessageChain{&Plain{Text: "你已经注册过：" + oldName}}
 	}
-	resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/register")
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		return nil
+	result, returnError := httpGetBool("/register", map[string]string{"name": name})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
 	}
-	if resp.StatusCode() != 200 {
-		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
-	}
-	body := resp.Body()
-	if !gjson.GetBytes(body, "result").Bool() {
-		msg := gjson.GetBytes(body, "error").String()
-		if len(msg) == 0 {
-			msg = "用户名重复"
-		}
-		return MessageChain{&Plain{Text: msg}}
+	if !result {
+		return MessageChain{&Plain{Text: "用户名重复"}}
 	}
 	data[strconv.FormatInt(msg.Sender.Id, 10)] = name
 	permData.Set("playerMap", data)
-	if err = permData.WriteConfig(); err != nil {
+	if err := permData.WriteConfig(); err != nil {
 		slog.Error("write data failed", "error", err)
 	}
 	return MessageChain{&Plain{Text: "注册成功"}}
@@ -232,23 +208,15 @@ func (a *addNotifyOnStart) Execute(msg *GroupMessage, content string) MessageCha
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
-	resp, err := restyClient.R().SetQueryParam("qq", strconv.FormatInt(msg.Sender.Id, 10)).
-		Get(fengshengConfig.GetString("fengshengUrl") + "/addnotify")
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		return nil
+	result, returnError := httpGetBool("/addnotify", map[string]string{
+		"qq": strconv.FormatInt(msg.Sender.Id, 10),
+	})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
 	}
-	if resp.StatusCode() != 200 {
-		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
-	}
-	body := resp.Body()
-	if !gjson.GetBytes(body, "result").Bool() {
-		msg := gjson.GetBytes(body, "error").String()
-		if len(msg) == 0 {
-			msg = "太多人预约了，不能再添加了"
-		}
-		return MessageChain{&Plain{Text: msg}}
+	if !result {
+		return MessageChain{&Plain{Text: "太多人预约了，不能再添加了"}}
 	}
 	return MessageChain{&Plain{Text: "好的，开了喊你"}}
 }
@@ -271,24 +239,16 @@ func (a *addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
-	resp, err := restyClient.R().SetQueryParam("qq", strconv.FormatInt(msg.Sender.Id, 10)).
-		SetQueryParam("when", "1").
-		Get(fengshengConfig.GetString("fengshengUrl") + "/addnotify")
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		return nil
+	result, returnError := httpGetBool("/addnotify", map[string]string{
+		"qq":   strconv.FormatInt(msg.Sender.Id, 10),
+		"when": "1",
+	})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
 	}
-	if resp.StatusCode() != 200 {
-		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
-	}
-	body := resp.Body()
-	if !gjson.GetBytes(body, "result").Bool() {
-		msg := gjson.GetBytes(body, "error").String()
-		if len(msg) == 0 {
-			msg = "太多人预约了，不能再添加了"
-		}
-		return MessageChain{&Plain{Text: msg}}
+	if !result {
+		return MessageChain{&Plain{Text: "太多人预约了，不能再添加了"}}
 	}
 	return MessageChain{&Plain{Text: "好的，结束喊你"}}
 }
@@ -354,24 +314,103 @@ func (u *updateTitle) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Plain{Text: "请先注册"}}
 	}
-	resp, err := restyClient.R().SetQueryParam("name", name).
-		SetQueryParam("title", title).
-		Get(fengshengConfig.GetString("fengshengUrl") + "/updatetitle")
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		return nil
+	result, returnError := httpGetBool("/updatetitle", map[string]string{"name": name, "title": title})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
 	}
-	if resp.StatusCode() != 200 {
-		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
-	}
-	body := resp.Body()
-	if !gjson.GetBytes(body, "result").Bool() {
-		msg := gjson.GetBytes(body, "error").String()
-		if len(msg) == 0 {
-			msg = "你的段位太低，请提升段位后再来使用此功能"
-		}
-		return MessageChain{&Plain{Text: msg}}
+	if !result {
+		return MessageChain{&Plain{Text: "你的段位太低，请提升段位后再来使用此功能"}}
 	}
 	return MessageChain{&Plain{Text: "修改称号成功"}}
+}
+
+type removeTitle struct{}
+
+func (u *removeTitle) Name() string {
+	return "删除称号"
+}
+
+func (u *removeTitle) ShowTips(_ int64, senderId int64) string {
+	data := permData.GetStringMapString("playerMap")
+	if _, ok := data[strconv.FormatInt(senderId, 10)]; ok {
+		return "删除称号"
+	}
+	return ""
+}
+
+func (u *removeTitle) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (u *removeTitle) Execute(msg *GroupMessage, content string) MessageChain {
+	title := strings.TrimSpace(content)
+	if len(title) > 0 {
+		return nil
+	}
+	data := permData.GetStringMapString("playerMap")
+	name := data[strconv.FormatInt(msg.Sender.Id, 10)]
+	if len(name) == 0 {
+		return MessageChain{&Plain{Text: "请先注册"}}
+	}
+	result, returnError := httpGetBool("/updatetitle", map[string]string{"name": name, "title": ""})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if !result {
+		return MessageChain{&Plain{Text: "你的段位太低，请提升段位后再来使用此功能"}}
+	}
+	return MessageChain{&Plain{Text: "称号已删除"}}
+}
+
+type resetPwd struct{}
+
+func (u *resetPwd) Name() string {
+	return "重置密码"
+}
+
+func (u *resetPwd) ShowTips(_ int64, senderId int64) string {
+	data := permData.GetStringMapString("playerMap")
+	if _, ok := data[strconv.FormatInt(senderId, 10)]; ok {
+		return "重置密码"
+	}
+	if IsAdmin(senderId) {
+		return "重置密码 名字"
+	}
+	return ""
+}
+
+func (u *resetPwd) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
+	name := strings.TrimSpace(content)
+	data := permData.GetStringMapString("playerMap")
+	var result string
+	var returnError *errorWithMessage
+	if len(name) == 0 {
+		playerName := data[strconv.FormatInt(msg.Sender.Id, 10)]
+		if len(playerName) == 0 {
+			if !IsAdmin(msg.Sender.Id) {
+				return nil
+			}
+			return MessageChain{&Plain{Text: "重置密码 名字"}}
+		}
+		result, returnError = httpGetString("/resetpwd", map[string]string{"name": playerName})
+	} else {
+		if !IsAdmin(msg.Sender.Id) {
+			return nil
+		}
+		result, returnError = httpGetString("/resetpwd", map[string]string{"name": name})
+	}
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return MessageChain{&Plain{Text: result}}
 }

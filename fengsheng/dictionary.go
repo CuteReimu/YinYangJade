@@ -174,6 +174,9 @@ func saveImage(message MessageChain) error {
 }
 
 func sendGroupMessage(group int64, messages ...SingleMessage) {
+	if len(messages) == 0 {
+		return
+	}
 	_, err := B.SendGroupMessage(group, 0, messages)
 	if err != nil {
 		slog.Error("send group message failed", "error", err)

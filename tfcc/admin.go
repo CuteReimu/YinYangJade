@@ -10,6 +10,7 @@ import (
 func init() {
 	addCmdListener(&delAdmin{})
 	addCmdListener(&addAdmin{})
+	addCmdListener(&listAllAdmin{})
 }
 
 type delAdmin struct{}
@@ -103,4 +104,30 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
 	return MessageChain{&Plain{Text: ret}}
+}
+
+type listAllAdmin struct{}
+
+func (l *listAllAdmin) Name() string {
+	return "查看管理员"
+}
+
+func (l *listAllAdmin) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (l *listAllAdmin) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (l *listAllAdmin) Execute(*GroupMessage, string) MessageChain {
+	superAdmin := tfccConfig.GetInt64("qq.super_admin_qq")
+	admin := permData.GetIntSlice("admin")
+	s := make([]string, 0, len(admin)+2)
+	s = append(s, "管理员列表：")
+	s = append(s, strconv.FormatInt(superAdmin, 10))
+	for _, qq := range admin {
+		s = append(s, strconv.Itoa(qq))
+	}
+	return MessageChain{&Plain{Text: strings.Join(s, "\n")}}
 }
