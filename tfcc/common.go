@@ -11,7 +11,6 @@ import (
 func init() {
 	addCmdListener(&showTips{})
 	addCmdListener(&ping{})
-	addCmdListener(&randDice{})
 	addCmdListener(&roll{})
 }
 
@@ -59,27 +58,6 @@ func (p *ping) CheckAuth(int64, int64) bool {
 func (p *ping) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return MessageChain{&Plain{Text: "pong"}}
-	}
-	return nil
-}
-
-type randDice struct{}
-
-func (r *randDice) Name() string {
-	return "随机骰子"
-}
-
-func (r *randDice) ShowTips(int64, int64) string {
-	return ""
-}
-
-func (r *randDice) CheckAuth(int64, int64) bool {
-	return true
-}
-
-func (r *randDice) Execute(_ *GroupMessage, content string) MessageChain {
-	if len(content) == 0 {
-		return MessageChain{&Dice{Value: rand.Int32N(6) + 1}}
 	}
 	return nil
 }
