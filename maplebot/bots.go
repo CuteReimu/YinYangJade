@@ -140,6 +140,41 @@ func handleGroupMessage(message *GroupMessage) bool {
 					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你还未绑定"})
 				}
 				return true
+			} else if strings.HasPrefix(plain.Text, "模拟升星 ") || strings.HasPrefix(plain.Text, "模拟上星 ") ||
+				strings.HasPrefix(plain.Text, "升星期望 ") || strings.HasPrefix(plain.Text, "上星期望 ") {
+				content := strings.TrimSpace(plain.Text[len("模拟升星"):])
+				result1 := calculateStarForce1(content)
+				if len(result1) > 0 {
+					sendGroupMessage(message.Sender.Group.Id, result1...)
+				} else if itemLevel, err := strconv.Atoi(content); err == nil {
+					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, false, false)...)
+				}
+			} else if strings.HasPrefix(plain.Text, "模拟升星必成活动 ") || strings.HasPrefix(plain.Text, "模拟上星必成活动 ") ||
+				strings.HasPrefix(plain.Text, "升星期望必成活动 ") || strings.HasPrefix(plain.Text, "上星期望必成活动 ") {
+				content := strings.TrimSpace(plain.Text[len("模拟升星必成活动"):])
+				if itemLevel, err := strconv.Atoi(content); err == nil {
+					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, false, true)...)
+				}
+			} else if strings.HasPrefix(plain.Text, "模拟升星七折活动 ") || strings.HasPrefix(plain.Text, "模拟上星七折活动 ") ||
+				strings.HasPrefix(plain.Text, "升星期望七折活动 ") || strings.HasPrefix(plain.Text, "上星期望七折活动 ") {
+				content := strings.TrimSpace(plain.Text[len("模拟升星七折活动"):])
+				if itemLevel, err := strconv.Atoi(content); err == nil {
+					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, false)...)
+				}
+			} else if strings.HasPrefix(plain.Text, "模拟升星超必活动 ") || strings.HasPrefix(plain.Text, "模拟升星超级必成 ") ||
+				strings.HasPrefix(plain.Text, "模拟上星超必活动 ") || strings.HasPrefix(plain.Text, "模拟上星超必活动 ") ||
+				strings.HasPrefix(plain.Text, "升星期望超必活动 ") || strings.HasPrefix(plain.Text, "升星期望超级必成 ") ||
+				strings.HasPrefix(plain.Text, "上星期望超必活动 ") || strings.HasPrefix(plain.Text, "上星期望超级必成 ") {
+				content := strings.TrimSpace(plain.Text[len("模拟升星超必活动"):])
+				if itemLevel, err := strconv.Atoi(content); err == nil {
+					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, true)...)
+				}
+			} else if strings.HasPrefix(plain.Text, "模拟升星超级必成活动 ") || strings.HasPrefix(plain.Text, "模拟上星超级必成活动 ") ||
+				strings.HasPrefix(plain.Text, "升星期望超级必成活动 ") || strings.HasPrefix(plain.Text, "上星期望超级必成活动 ") {
+				content := strings.TrimSpace(plain.Text[len("模拟升星超级必成活动"):])
+				if itemLevel, err := strconv.Atoi(content); err == nil {
+					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, true)...)
+				}
 			} else if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
 				key := dealKey(plain.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
