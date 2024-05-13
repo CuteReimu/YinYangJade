@@ -4,8 +4,10 @@ import (
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/mirai-sdk-http"
 	"github.com/go-resty/resty/v2"
+	"github.com/tidwall/gjson"
 	"log/slog"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -29,6 +31,7 @@ func Init(b *Bot) {
 	B = b
 	B.ListenGroupMessage(cmdHandleFunc)
 	B.ListenGroupMessage(handleDictionary)
+	B.ListenGroupMessage(searchAt)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
@@ -92,4 +95,47 @@ func addCmdListener(handler iface.CmdHandler) {
 		panic("repeat command: " + name)
 	}
 	cmdMap[name] = handler
+}
+
+func searchAt(message *GroupMessage) bool {
+	if len(message.MessageChain) <= 1 {
+		return true
+	}
+	if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
+		return true
+	}
+	if len(message.MessageChain) >= 3 {
+		if plain, ok := message.MessageChain[1].(*Plain); ok && strings.TrimSpace(plain.Text) == "查询" {
+			if at, ok := message.MessageChain[2].(*At); ok {
+				data := permData.GetStringMapString("playerMap")
+				name := data[strconv.FormatInt(at.Target, 10)]
+				if len(name) == 0 {
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "该玩家还未绑定"})
+				} else {
+					go func() {
+						defer func() {
+							if err := recover(); err != nil {
+								slog.Error("panic recovered", "error", err)
+							}
+						}()
+						resp, err := restyClient.R().SetQueryParam("name", name).Get(fengshengConfig.GetString("fengshengUrl") + "/getscore")
+						if err != nil {
+							slog.Error("请求失败", "error", err)
+							return
+						}
+						if resp.StatusCode() != 200 {
+							slog.Error("请求失败", "status", resp.StatusCode())
+							return
+						}
+						result := gjson.GetBytes(resp.Body(), "result").String()
+						if len(result) == 0 {
+							return
+						}
+						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: result})
+					}()
+				}
+			}
+		}
+	}
+	return true
 }
