@@ -1,6 +1,7 @@
 package tfcc
 
 import (
+	"fmt"
 	. "github.com/CuteReimu/mirai-sdk-http"
 	"math/rand/v2"
 	"slices"
@@ -12,6 +13,7 @@ func init() {
 	addCmdListener(&showTips{})
 	addCmdListener(&ping{})
 	addCmdListener(&roll{})
+	addCmdListener(&randDraw{})
 }
 
 type showTips struct{}
@@ -81,4 +83,48 @@ func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
 		return MessageChain{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}}
 	}
 	return nil
+}
+
+type randDraw struct{}
+
+func (r *randDraw) Name() string {
+	return "抽签"
+}
+
+func (r *randDraw) ShowTips(groupCode int64, senderId int64) string {
+	return "抽签 选手数量"
+}
+
+func (r *randDraw) CheckAuth(groupCode int64, senderId int64) bool {
+	return IsAdmin(senderId)
+}
+
+func (r *randDraw) Execute(msg *GroupMessage, content string) MessageChain {
+	count, err := strconv.Atoi(content)
+	if err != nil {
+		return MessageChain{&Plain{Text: "指令格式如下：\n抽签 选手数量"}}
+	}
+	if count%2 != 0 {
+		return MessageChain{&Plain{Text: "选手数量必须为偶数"}}
+	}
+	if count > 32 {
+		return MessageChain{&Plain{Text: "选手数量太多"}}
+	}
+	if count <= 0 {
+		return MessageChain{&Plain{Text: "选手数量太少"}}
+	}
+	a := make([]int, 0, count)
+	for i := count; i > 0; i-- {
+		a = append(a, i)
+	}
+	ret := make([]string, 0, count/2)
+	for i := 0; i < count/2; i++ {
+		a1 := a[len(a)-1]
+		a = a[:len(a)-1]
+		index := rand.IntN(len(a))
+		a2 := a[index]
+		a = append(a[:index], a[index+1:]...)
+		ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", a1, a2))
+	}
+	return MessageChain{&Plain{Text: strings.Join(ret, "\n")}}
 }
