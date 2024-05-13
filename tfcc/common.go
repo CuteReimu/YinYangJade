@@ -21,7 +21,7 @@ func (t *showTips) Name() string {
 }
 
 func (t *showTips) ShowTips(int64, int64) string {
-	return "查看帮助"
+	return ""
 }
 
 func (t *showTips) CheckAuth(int64, int64) bool {
