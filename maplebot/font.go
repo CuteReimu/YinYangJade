@@ -1,14 +1,12 @@
 package maplebot
 
 import (
-	"github.com/golang/freetype/truetype"
+	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
 )
-
-var defaultFont *truetype.Font
 
 func init() {
 	var fontDir string
@@ -47,9 +45,11 @@ func init() {
 		slog.Warn("Failed to read font file.", "err", err)
 		return
 	}
-	defaultFont, err = truetype.Parse(fontBytes)
+	err = InstallFont("simsun", fontBytes)
 	if err != nil {
-		slog.Warn("Failed to parse font file.", "err", err)
+		slog.Warn("Failed to install font.", "err", err)
 		return
 	}
+	font, _ := GetFont("simsun")
+	SetDefaultFont(font)
 }

@@ -172,7 +172,6 @@ func calculateCube(s string) MessageChain {
 	p, err := TableOptionRender(TableChartOption{
 		Header: []string{fmt.Sprintf("%d级%s", nameLevel.level, s), "建议使用", "期望消耗"},
 		Data:   ss,
-		Font:   defaultFont,
 	})
 	if err != nil {
 		slog.Error("生成表格失败", "error", err)
