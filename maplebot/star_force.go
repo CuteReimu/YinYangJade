@@ -189,7 +189,6 @@ func calculateStarForce1(content string) MessageChain {
 	var (
 		mesos        float64
 		booms, count int
-		cost         []float64
 	)
 	testCount := 1000
 	if des >= 24 {
@@ -200,7 +199,6 @@ func calculateStarForce1(content string) MessageChain {
 		mesos += m
 		booms += b
 		count += c
-		cost = append(cost, m)
 	}
 	data := []any{
 		formatInt64(int64(math.Round(mesos / float64(testCount)))),
@@ -247,7 +245,6 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 		boomProtect                        = itemLevel >= 160
 		mesos17, mesos22                   float64
 		booms17, count17, booms22, count22 int
-		cost                               []float64
 	)
 	for range 1000 {
 		if maxStar > 17 {
@@ -260,7 +257,6 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 		mesos22 += m
 		booms22 += b
 		count22 += c
-		cost = append(cost, m)
 	}
 	var data17 []any
 	if maxStar > 17 {
