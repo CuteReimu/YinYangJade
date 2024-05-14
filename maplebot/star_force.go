@@ -147,9 +147,9 @@ func formatInt64(i int64) string {
 	switch {
 	case i < 1000000:
 		return strconv.FormatInt(i, 10)
-	case i < 100000000:
+	case i < 1000000000:
 		return fmt.Sprintf("%.2fM", float64(i)/1000000.0)
-	case i < 100000000000:
+	case i < 1000000000000:
 		return fmt.Sprintf("%.2fB", float64(i)/1000000000.0)
 	default:
 		return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
@@ -186,8 +186,8 @@ func calculateStarForce1(content string) MessageChain {
 	if des > maxStar {
 		return MessageChain{&Plain{Text: fmt.Sprintf("%d级装备最多升到%d星", itemLevel, maxStar)}}
 	}
-	if des > 23 {
-		return MessageChain{&Plain{Text: "最多测试到23星"}}
+	if des > 24 {
+		return MessageChain{&Plain{Text: fmt.Sprintf("还想升%d星？梦里什么都有", des)}}
 	}
 	boomProtect := strings.Contains(content, "保护")
 	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
@@ -197,7 +197,11 @@ func calculateStarForce1(content string) MessageChain {
 		booms, count int
 		cost         []float64
 	)
-	for range 1000 {
+	testCount := 1000
+	if des >= 24 {
+		testCount = 20
+	}
+	for range testCount {
 		m, b, c := performExperiment(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
 		mesos += m
 		booms += b
@@ -205,9 +209,9 @@ func calculateStarForce1(content string) MessageChain {
 		cost = append(cost, m)
 	}
 	data := []any{
-		formatInt64(int64(math.Round(mesos / 1000))),
-		strconv.FormatFloat(float64(booms)/1000.0, 'f', -1, 64),
-		strconv.FormatInt(int64(math.Round(float64(count)/1000.0)), 10),
+		formatInt64(int64(math.Round(mesos / float64(testCount)))),
+		strconv.FormatFloat(float64(booms)/float64(testCount), 'f', -1, 64),
+		strconv.FormatInt(int64(math.Round(float64(count)/float64(testCount))), 10),
 	}
 	var activity []string
 	if thirtyOff {
@@ -224,10 +228,10 @@ func calculateStarForce1(content string) MessageChain {
 	if boomProtect {
 		s += "（点保护）"
 	}
-	s += "\n共测试了1000次\n"
+	s += fmt.Sprintf("\n共测试了%d次\n", testCount)
 	s += fmt.Sprintf("%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+	image := drawStarForce(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos/float64(testCount), testCount)
 	if image != nil {
 		s += "\n花费分布图：\n"
 		return MessageChain{&Plain{Text: s}, image}
@@ -298,7 +302,7 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 	}
 	s += fmt.Sprintf("%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+	image := drawStarForce(0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos22/1000, 1000)
 	if image != nil {
 		s += "\n花费分布图：\n"
 		return MessageChain{&Plain{Text: s}, image}
@@ -306,47 +310,59 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 	return MessageChain{&Plain{Text: s}}
 }
 
-func drawStarForce(cur, dir, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool) *Image {
+func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool, totalMesos float64, testCount int) *Image {
 	var labels []string
 	var values []float64
-	add := func(cur, dir int) {
-		labels = append(labels, fmt.Sprintf("%d-%d", cur, dir))
+	add := func(cur1, des1 int) {
+		if des1 == des {
+			var value float64
+			for _, v := range values {
+				value += v
+			}
+			value = totalMesos - value
+			if value > 0 {
+				labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
+				values = append(values, value)
+			}
+			return
+		}
+		labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
 		var a float64
-		for range 1000 {
-			m, _, _ := performExperiment(cur, dir, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+		for range testCount {
+			m, _, _ := performExperiment(cur1, des1, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
 			a += m
 		}
-		values = append(values, a/1000)
+		values = append(values, a/float64(testCount))
 	}
-	if dir <= 17 {
+	if des <= 17 {
 		if cur < 12 {
 			add(cur, 12)
 		}
-		for i := max(cur, 12); i < dir; i++ {
+		for i := max(cur, 12); i < des; i++ {
 			add(i, i+1)
 		}
 	} else {
 		if cur < 15 {
 			add(cur, 15)
 		}
-		for i := max(cur, 15); i < dir; i++ {
+		for i := max(cur, 15); i < des; i++ {
 			add(i, i+1)
 		}
 	}
 	if len(values) <= 1 {
 		return nil
 	}
-	minValue := slices.Min(values)
+	maxValue := slices.Max(values)
 	var (
 		exp     string
 		divisor = 1.0
 	)
 	switch {
-	case minValue < 10000:
-	case minValue < 10000000:
+	case maxValue < 10000:
+	case maxValue < 1000000000:
 		exp = "M"
 		divisor = 1000000
-	case minValue < 10000000000:
+	case maxValue < 1000000000000:
 		exp = "B"
 		divisor = 1000000000
 	default:
@@ -359,7 +375,7 @@ func drawStarForce(cur, dir, itemLevel int, boomProtect, thirtyOff, fiveTenFifte
 	p, err := PieRender(
 		values,
 		TitleOptionFunc(TitleOption{
-			Text: fmt.Sprintf("%d to %d Mesos cost", cur, dir),
+			Text: fmt.Sprintf("%d to %d Mesos cost", cur, des),
 		}),
 		LegendOptionFunc(LegendOption{
 			Show: FalseFlag(),

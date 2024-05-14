@@ -10,6 +10,7 @@ var (
 	config       = viper.New()
 	qunDb        = viper.New()
 	findRoleData = viper.New()
+	levelExpData = viper.New()
 )
 
 func initConfig() {
@@ -45,6 +46,14 @@ func initConfig() {
 	findRoleData.SetConfigType("yml")
 	_ = findRoleData.SafeWriteConfigAs(filepath.Join("data", "net.cutereimu.maplebots", "FindRoleData.yml"))
 	if err := findRoleData.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
+	levelExpData.AddConfigPath(filepath.Join("data", "net.cutereimu.maplebots"))
+	levelExpData.SetConfigName("LevelExpData")
+	levelExpData.SetConfigType("yml")
+	_ = levelExpData.SafeWriteConfigAs(filepath.Join("data", "net.cutereimu.maplebots", "LevelExpData.yml"))
+	if err := levelExpData.ReadInConfig(); err != nil {
 		panic(err)
 	}
 }

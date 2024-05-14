@@ -8,8 +8,10 @@ import (
 	"github.com/tidwall/gjson"
 	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
+	"math"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -107,7 +109,44 @@ func findRole(name string) MessageChain {
 			values = values[trimLen:]
 		}
 		if slices.ContainsFunc(values, func(f float64) bool { return f != 0 }) {
-			p, err := HorizontalBarRender([][]float64{values}, YAxisDataOptionFunc(labels))
+			if levelEnd := strings.Index(levelExp, "("); levelEnd >= 0 {
+				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelExp[:levelEnd]))); totalExp > 0 {
+					if expPercentStart := strings.Index(levelExp, "("); expPercentStart >= 0 {
+						if expPercentEnd := strings.Index(levelExp, "%"); expPercentEnd >= 0 {
+							if expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64); err == nil {
+								var sumExp float64
+								for _, v := range values {
+									sumExp += v
+								}
+								if sumExp > 0 {
+									aveExp := sumExp / float64(len(values))
+									sumExp = 0
+									for _, v := range values {
+										if v >= aveExp/20 && v <= aveExp*20 {
+											sumExp += v
+										}
+									}
+									aveExp = sumExp / float64(len(values))
+									days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
+									s += fmt.Sprintf("预计还有%d天升级\n", days)
+								}
+							}
+						}
+					}
+				}
+			}
+			maxValue := slices.Max(values) / 6
+			digits := int(math.Floor(math.Log10(maxValue))) + 1
+			factor := math.Pow(10, float64(digits-2)) * 5
+			maxValue = math.Ceil(maxValue/factor) * factor * 6
+			p, err := BarRender(
+				[][]float64{values},
+				PaddingOptionFunc(Box{Top: 30, Left: 10, Right: 54, Bottom: 10}),
+				XAxisDataOptionFunc(labels),
+				MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
+				MarkPointOptionFunc(0, SeriesMarkDataTypeMax, SeriesMarkDataTypeMin),
+				YAxisOptionFunc(YAxisOption{Min: NewFloatPoint(0), Max: &maxValue}),
+			)
 			if err != nil {
 				slog.Error("render chart failed", "error", err)
 			} else if buf, err := p.Bytes(); err != nil {
