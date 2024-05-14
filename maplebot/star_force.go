@@ -144,16 +144,10 @@ func performExperiment(currentStar, desiredStar, itemLevel int, boomProtect, thi
 }
 
 func formatInt64(i int64) string {
-	switch {
-	case i < 1000000:
-		return strconv.FormatInt(i, 10)
-	case i < 1000000000:
-		return fmt.Sprintf("%.2fM", float64(i)/1000000.0)
-	case i < 1000000000000:
+	if i < 1000000000000 {
 		return fmt.Sprintf("%.2fB", float64(i)/1000000000.0)
-	default:
-		return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
 	}
+	return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
 }
 
 func calculateStarForce1(content string) MessageChain {
@@ -354,20 +348,12 @@ func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifte
 	}
 	maxValue := slices.Max(values)
 	var (
-		exp     string
-		divisor = 1.0
+		exp     = "T"
+		divisor = 1000000000000.0
 	)
-	switch {
-	case maxValue < 10000:
-	case maxValue < 1000000000:
-		exp = "M"
-		divisor = 1000000
-	case maxValue < 1000000000000:
+	if maxValue < 1000000000000 {
 		exp = "B"
 		divisor = 1000000000
-	default:
-		exp = "T"
-		divisor = 1000000000000
 	}
 	for i := range values {
 		values[i] /= divisor
