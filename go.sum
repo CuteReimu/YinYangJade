@@ -4,8 +4,10 @@ github.com/CuteReimu/bilibili/v2 v2.0.0-20240511150430-e6f6b61547ba h1:+b3226+rm
 github.com/CuteReimu/bilibili/v2 v2.0.0-20240511150430-e6f6b61547ba/go.mod h1:qVOTw55hHZ0OJK7Pb+/u/86KJ/QjXGJLCBy/IFMkqoY=
 github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878 h1:DdooD0YHFR3Aoay37mJpUUcKSQ3WUytbfVYYTmocvUI=
 github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878/go.mod h1:+ic3kSXScM0/rxJdO/gGydQKuOO9Y1f/t0ajl1xRfeY=
-github.com/CuteReimu/mirai-sdk-http v0.0.0-20240511064814-0558d81e7b0f h1:SrTrzrcv/DtINOWxiHpDFhVVGgYb/74wP8/Hnqk/JUo=
-github.com/CuteReimu/mirai-sdk-http v0.0.0-20240511064814-0558d81e7b0f/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
+github.com/CuteReimu/mirai-sdk-http v0.0.0-20240515081634-dd13d1b33bb0 h1:P5Jpr24ZHim1Qfc5/yQbKHATP9y4jfOw95Lsf9Y80rs=
+github.com/CuteReimu/mirai-sdk-http v0.0.0-20240515081634-dd13d1b33bb0/go.mod h1:0Q7BJVn4uz1ftk+u19K3E10L1uRscl6NhSOxBbbTubk=
+github.com/CuteReimu/threp v1.0.1 h1:/LVRfQrykNu7RgyAvxSqMiaMythiqXl4I+VePovFkVM=
+github.com/CuteReimu/threp v1.0.1/go.mod h1:PcGoWcIX0Fc2L4S6xo+9oTLJ/HbSXm2W05dR6OYooZo=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

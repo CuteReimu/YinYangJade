@@ -4,7 +4,8 @@ go 1.22
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20240511150430-e6f6b61547ba
-	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240511064814-0558d81e7b0f
+	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240515081634-dd13d1b33bb0
+	github.com/CuteReimu/threp v1.0.1
 	github.com/dlclark/regexp2 v1.11.0
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
@@ -12,6 +13,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/tidwall/gjson v1.17.1
 	github.com/vicanso/go-charts/v2 v2.6.5
+	github.com/wcharczuk/go-chart/v2 v2.1.0
 )
 
 require (
@@ -39,7 +41,6 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/wcharczuk/go-chart/v2 v2.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/image v0.10.0 // indirect
