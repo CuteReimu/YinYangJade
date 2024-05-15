@@ -175,6 +175,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 				if itemLevel, err := strconv.Atoi(content); err == nil {
 					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, true)...)
 				}
+			} else if plain.Text == "洗魔方" {
+				sendGroupMessage(message.Sender.Group.Id, calculateCubeAll()...)
 			} else if strings.HasPrefix(plain.Text, "洗魔方 ") {
 				sendGroupMessage(message.Sender.Group.Id, calculateCube(strings.TrimSpace(plain.Text[len("洗魔方"):]))...)
 			} else if perm && strings.HasPrefix(plain.Text, "添加词条 ") {

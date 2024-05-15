@@ -1,12 +1,14 @@
 package maplebot
 
 import (
+	"cmp"
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	. "github.com/CuteReimu/mirai-sdk-http"
 	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
 	"math"
 	"slices"
@@ -65,11 +67,11 @@ var (
 		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
 		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
 	)
-	hatSelections = []string{
+	hatSelections = append(defaultSelections,
 		"secCooldown+2", "secCooldown+3", "secCooldown+4", "secCooldown+5", "secCooldown+6",
 		"secCooldown+2&lineStat+2",
 		"secCooldown+2&lineStat+1", "secCooldown+3&lineStat+1", "secCooldown+4&lineStat+1",
-	}
+	)
 	gloveSelections160 = append(defaultSelections160,
 		"lineCritDamage+1", "lineCritDamage+2", "lineCritDamage+3",
 		"lineCritDamage+1&lineStat+1", "lineCritDamage+1&lineStat+2", "lineCritDamage+2&lineStat+1",
@@ -127,39 +129,114 @@ func getSelection(name string, itemLevel int) []string {
 	}
 }
 
+func calculateCubeAll() MessageChain {
+	names := make([]string, 0, 10)
+	for s, nameLevel := range nameMap {
+		if slices.Contains([]string{"weapon", "secondary", "emblem", "overall"}, nameLevel.name) {
+			continue
+		}
+		if slices.Contains([]string{"戒指", "项链", "耳环"}, s) {
+			continue
+		}
+		names = append(names, s)
+	}
+	selections := defaultSelections160[2:]
+	ss := make([][]string, len(names))
+	styles := make(map[string][]*Style, len(names))
+	costs := make(map[string]int64, len(names))
+	for i, s := range names {
+		nameLevel := nameMap[s]
+		ss[i] = append(ss[i], fmt.Sprintf("%d%s", nameLevel.level, s))
+		for _, it := range selections {
+			if nameLevel.level < 160 && it == "percStat+39" {
+				ss[i] = append(ss[i], "")
+				continue
+			}
+			_, red := runCalculator(nameLevel.name, "red", 3, nameLevel.level, 3, it)
+			_, black := runCalculator(nameLevel.name, "black", 3, nameLevel.level, 3, it)
+			var (
+				cost int64
+			)
+			if red <= black {
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 255, A: 48}})
+				cost = red
+			} else {
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{A: 48}})
+				cost = black
+			}
+			ss[i] = append(ss[i], formatInt64(cost))
+			if it == "percStat+27" {
+				costs[s] = cost
+			}
+		}
+	}
+	slices.SortFunc(ss, func(a, b []string) int {
+		aName, bName := a[0][3:], b[0][3:]
+		if nameMap[aName].level != nameMap[bName].level {
+			return nameMap[aName].level - nameMap[bName].level
+		}
+		return cmp.Compare(costs[aName], costs[bName])
+	})
+	header := make([]string, 0, len(selections)+1)
+	header = append(header, "部位")
+	for _, it := range selections {
+		var target string
+		for _, stat := range strings.Split(it, "&") {
+			arr := strings.Split(stat, "+")
+			target += fmt.Sprintf(statMap[arr[0]], arr[1])
+		}
+		header = append(header, target)
+	}
+	p, err := TableOptionRender(TableChartOption{
+		Header: header,
+		Data:   ss,
+		CellStyle: func(cell TableCell) *Style {
+			if cell.Column > 0 && cell.Row > 0 && len(cell.Text) > 0 {
+				return styles[ss[cell.Row-1][0]][cell.Column-1]
+			}
+			return nil
+		},
+	})
+	if err != nil {
+		slog.Error("生成表格失败", "error", err)
+		return nil
+	}
+	buf, err := p.Bytes()
+	if err != nil {
+		slog.Error("生成表格失败", "error", err)
+		return nil
+	}
+	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(buf)}}
+}
+
 func calculateCube(s string) MessageChain {
 	nameLevel, ok := nameMap[s]
 	if !ok {
 		return nil
 	}
+	selections := getSelection(s, nameLevel.level)
+	styles := make([]*Style, 0, len(selections)+1)
 	_, eToLR := runCalculator(nameLevel.name, "red", 1, nameLevel.level, 3, "")
 	_, eToLB := runCalculator(nameLevel.name, "black", 1, nameLevel.level, 3, "")
-	var (
-		eToLCube string
-		eToLCost int64
-	)
+	var eToLCost int64
 	if eToLR < eToLB {
-		eToLCube = "红"
+		styles = append(styles, &Style{FillColor: drawing.Color{R: 255, A: 48}})
 		eToLCost = eToLR
 	} else {
-		eToLCube = "黑"
+		styles = append(styles, &Style{FillColor: drawing.Color{A: 48}})
 		eToLCost = eToLB
 	}
-	selections := getSelection(s, nameLevel.level)
 	ss := make([][]string, 0, len(selections)+1)
-	ss = append(ss, []string{"紫洗绿", eToLCube + "魔方", formatInt64(eToLCost)})
+	ss = append(ss, []string{"紫洗绿", formatInt64(eToLCost)})
 	for _, it := range selections {
 		_, red := runCalculator(nameLevel.name, "red", 3, nameLevel.level, 3, it)
 		_, black := runCalculator(nameLevel.name, "black", 3, nameLevel.level, 3, it)
-		var (
-			color string
-			cost  int64
-		)
+		var cost int64
 		if red <= black {
-			color = "红"
+			styles = append(styles, &Style{FillColor: drawing.Color{R: 255, A: 48}})
 			cost = red
 		} else {
-			color = "黑"
+			styles = append(styles, &Style{FillColor: drawing.Color{A: 48}})
 			cost = black
 		}
 		var target string
@@ -167,11 +244,18 @@ func calculateCube(s string) MessageChain {
 			arr := strings.Split(stat, "+")
 			target += fmt.Sprintf(statMap[arr[0]], arr[1])
 		}
-		ss = append(ss, []string{target, color + "魔方", formatInt64(cost)})
+		ss = append(ss, []string{target, formatInt64(cost)})
 	}
 	p, err := TableOptionRender(TableChartOption{
-		Header: []string{fmt.Sprintf("%d级%s", nameLevel.level, s), "建议使用", "期望消耗"},
+		Width:  400,
+		Header: []string{fmt.Sprintf("%d级%s", nameLevel.level, s), "（底色表示魔方颜色）"},
 		Data:   ss,
+		CellStyle: func(cell TableCell) *Style {
+			if cell.Column > 0 && cell.Row > 0 && len(cell.Text) > 0 {
+				return styles[cell.Row-1]
+			}
+			return nil
+		},
 	})
 	if err != nil {
 		slog.Error("生成表格失败", "error", err)
