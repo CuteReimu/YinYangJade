@@ -104,10 +104,10 @@ func findRole(name string) MessageChain {
 				values = append(values, float64(datasets[i].Int()))
 			}
 		}
-		if trimLen := len(labels) - 14; trimLen > 0 {
-			labels = labels[trimLen:]
-			values = values[trimLen:]
-		}
+		//if trimLen := len(labels) - 14; trimLen > 0 {
+		//	labels = labels[trimLen:]
+		//	values = values[trimLen:]
+		//}
 		if slices.ContainsFunc(values, func(f float64) bool { return f != 0 }) {
 			if levelEnd := strings.Index(levelExp, "("); levelEnd >= 0 {
 				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelExp[:levelEnd]))); totalExp > 0 {
@@ -135,30 +135,39 @@ func findRole(name string) MessageChain {
 					}
 				}
 			}
-			maxValue := slices.Max(values) / 6
+			maxValue := slices.Max(values)
 			digits := int(math.Floor(math.Log10(maxValue))) + 1
-			factor := math.Pow(10, float64(digits-2)) * 5
-			maxValue = math.Ceil(maxValue/factor) * factor * 6
+			factor := math.Pow(10, float64(digits-1))
+			highest := math.Ceil(maxValue / factor)
+			if highest < 2 {
+				factor /= 5
+			} else if highest < 5 {
+				factor /= 2
+			}
+			maxValue = math.Ceil(maxValue/factor) * factor
 			p, err := BarRender(
 				[][]float64{values},
 				ThemeOptionFunc(ThemeDark),
 				PaddingOptionFunc(Box{Top: 30, Left: 10, Right: 54, Bottom: 10}),
 				XAxisDataOptionFunc(labels),
 				MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
-				YAxisOptionFunc(YAxisOption{Min: NewFloatPoint(0), Max: &maxValue}),
+				YAxisOptionFunc(YAxisOption{Min: NewFloatPoint(0), Max: &maxValue, DivideCount: int(maxValue / factor)}),
 				func(opt *ChartOption) {
+					opt.XAxis.TextRotation = -math.Pi / 4
+					opt.XAxis.LabelOffset = Box{Top: -5, Left: 7}
+					opt.XAxis.FontSize = 7.5
 					opt.ValueFormatter = func(f float64) string {
 						switch {
 						case f < 1000.0:
-							return fmt.Sprintf("%.0f", f)
+							return fmt.Sprintf("%g", f)
 						case f < 1000000.0:
-							return fmt.Sprintf("%.0fK", float64(f)/1000.0)
+							return fmt.Sprintf("%gK", float64(f)/1000.0)
 						case f < 1000000000.0:
-							return fmt.Sprintf("%.0fM", float64(f)/1000000.0)
+							return fmt.Sprintf("%gM", float64(f)/1000000.0)
 						case f < 1000000000000.0:
-							return fmt.Sprintf("%.0fB", float64(f)/1000000000.0)
+							return fmt.Sprintf("%gB", float64(f)/1000000000.0)
 						default:
-							return fmt.Sprintf("%.0fT", float64(f)/1000000000000.0)
+							return fmt.Sprintf("%gT", float64(f)/1000000000000.0)
 						}
 					}
 				},
