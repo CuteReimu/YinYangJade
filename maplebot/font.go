@@ -25,7 +25,7 @@ func init() {
 		if err != nil {
 			return err
 		}
-		if filepath.Base(path) == "SIMHEI.TTF" {
+		if filepath.Base(path) == "simhei.ttf" {
 			fontFilePath = path
 			return filepath.SkipAll
 		}
