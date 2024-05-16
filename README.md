@@ -67,4 +67,9 @@ qq: 123456789
 
 # 和上面的那个verifyKey保持一致
 verifykey: ABCDEFGHIJK
+
+# 自动退出除了以下群之外的所有群，为空则是不启用此功能
+check_qq_groups:
+  - 123456789
+  - 987654321
 ```

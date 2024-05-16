@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -89,7 +90,35 @@ func main() {
 	fengsheng.Init(b)
 	maplebot.Init(b)
 	hkbot.Init(b)
+	checkQQGroups(b)
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
+}
+
+func checkQQGroups(b *miraihttp.Bot) {
+	go func() {
+		for range time.Tick(30 * time.Second) {
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						slog.Error("panic recover", "error", r)
+					}
+				}()
+				groups := mainConfig.GetIntSlice("check_qq_groups")
+				groupList, err := b.GroupList()
+				if err != nil {
+					slog.Error("get group list failed", "error", err)
+					return
+				}
+				for _, group := range groupList {
+					if !slices.Contains(groups, int(group.Id)) {
+						if err = b.Quit(group.Id); err != nil {
+							slog.Error("quit group failed", "error", err)
+						}
+					}
+				}
+			}()
+		}
+	}()
 }
