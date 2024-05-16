@@ -106,19 +106,19 @@ var (
 
 func getSelection(name string, itemLevel int) []string {
 	switch name {
-	case "纹章":
+	case "emblem":
 		return eSelections // 纹章现在只算100的
-	case "武器", "副手":
+	case "weapon", "secondary":
 		if itemLevel < 160 {
 			return wsSelections
 		} else {
 			return wsSelections160
 		}
-	case "首饰":
+	case "accessory":
 		return accessorySelections // 首饰现在只算150的
-	case "帽子":
+	case "hat":
 		return hatSelections // 帽子现在只算150的
-	case "手套":
+	case "gloves":
 		return gloveSelections160 // 手套现在只算200的
 	default:
 		if itemLevel < 160 {
@@ -215,7 +215,7 @@ func calculateCube(s string) MessageChain {
 	if !ok {
 		return nil
 	}
-	selections := getSelection(s, nameLevel.level)
+	selections := getSelection(nameLevel.name, nameLevel.level)
 	styles := make([]*Style, 0, len(selections)+1)
 	_, eToLR := runCalculator(nameLevel.name, "red", 1, nameLevel.level, 3, "")
 	_, eToLB := runCalculator(nameLevel.name, "black", 1, nameLevel.level, 3, "")
