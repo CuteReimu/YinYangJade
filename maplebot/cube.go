@@ -161,7 +161,7 @@ func calculateCubeAll() MessageChain {
 				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
 				cost = red
 			} else {
-				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{A: 128}})
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{A: 32}})
 				cost = black
 			}
 			ss[i] = append(ss[i], formatInt64(cost))
@@ -188,8 +188,9 @@ func calculateCubeAll() MessageChain {
 		header = append(header, target)
 	}
 	p, err := TableOptionRender(TableChartOption{
-		Header: header,
-		Data:   ss,
+		Header:          header,
+		Data:            ss,
+		HeaderFontColor: Color{R: 35, G: 35, B: 35, A: 255},
 		CellStyle: func(cell TableCell) *Style {
 			if cell.Column > 0 && cell.Row > 0 && len(cell.Text) > 0 {
 				return styles[ss[cell.Row-1][0]][cell.Column-1]
@@ -223,7 +224,7 @@ func calculateCube(s string) MessageChain {
 		styles = append(styles, &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
 		eToLCost = eToLR
 	} else {
-		styles = append(styles, &Style{FillColor: drawing.Color{A: 128}})
+		styles = append(styles, &Style{FillColor: drawing.Color{A: 32}})
 		eToLCost = eToLB
 	}
 	ss := make([][]string, 0, len(selections)+1)
@@ -236,7 +237,7 @@ func calculateCube(s string) MessageChain {
 			styles = append(styles, &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
 			cost = red
 		} else {
-			styles = append(styles, &Style{FillColor: drawing.Color{A: 128}})
+			styles = append(styles, &Style{FillColor: drawing.Color{A: 32}})
 			cost = black
 		}
 		var target string
@@ -247,9 +248,10 @@ func calculateCube(s string) MessageChain {
 		ss = append(ss, []string{target, formatInt64(cost)})
 	}
 	p, err := TableOptionRender(TableChartOption{
-		Width:  400,
-		Header: []string{fmt.Sprintf("%d级%s", nameLevel.level, s), "（底色表示魔方颜色）"},
-		Data:   ss,
+		Width:           400,
+		Header:          []string{fmt.Sprintf("%d级%s", nameLevel.level, s), "（底色表示魔方颜色）"},
+		Data:            ss,
+		HeaderFontColor: Color{R: 35, G: 35, B: 35, A: 255},
 		CellStyle: func(cell TableCell) *Style {
 			if cell.Column > 0 && cell.Row > 0 && len(cell.Text) > 0 {
 				return styles[cell.Row-1]
@@ -279,7 +281,6 @@ func init() {
 	if err := json.Unmarshal(cubeRatesJson, &cubeRates); err != nil {
 		panic(err)
 	}
-	SetDefaultTableSetting(TableDarkThemeSetting)
 }
 
 var cubeCost = map[string]int64{

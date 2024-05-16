@@ -38,11 +38,11 @@ image_expire_hours: 72
 
 ### 中文乱码问题
 
-对于“洗魔方”功能，如遇Linux下中文乱码，请将**宋体**文件`simsun.ttc`放入`/usr/share/fonts`中，然后执行以下shell
+对于“洗魔方”功能，如遇Linux下中文乱码，请将**黑体**文件`SIMHEI.TTF`放入`/usr/share/fonts`中，然后执行以下shell
 
 ```shell
 # 刷新字体缓存
 fc-cache
-# 查看是否有宋体
-fc-list :lang=zh | grep 宋体
+# 查看是否有黑体
+fc-list :lang=zh | grep 黑体
 ```

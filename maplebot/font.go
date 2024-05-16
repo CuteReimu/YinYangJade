@@ -25,7 +25,7 @@ func init() {
 		if err != nil {
 			return err
 		}
-		if filepath.Base(path) == "simsun.ttc" {
+		if filepath.Base(path) == "SIMHEI.TTF" {
 			fontFilePath = path
 			return filepath.SkipAll
 		}
@@ -45,11 +45,11 @@ func init() {
 		slog.Warn("Failed to read font file.", "err", err)
 		return
 	}
-	err = InstallFont("simsun", fontBytes)
+	err = InstallFont("simhei", fontBytes)
 	if err != nil {
 		slog.Warn("Failed to install font.", "err", err)
 		return
 	}
-	font, _ := GetFont("simsun")
+	font, _ := GetFont("simhei")
 	SetDefaultFont(font)
 }

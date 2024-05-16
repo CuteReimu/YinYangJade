@@ -225,7 +225,6 @@ func calculateStarForce1(content string) MessageChain {
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
 	image := drawStarForce(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos/float64(testCount), testCount)
 	if image != nil {
-		s += "\n花费分布图：\n"
 		return MessageChain{&Plain{Text: s}, image}
 	}
 	return MessageChain{&Plain{Text: s}}
@@ -294,7 +293,6 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
 	image := drawStarForce(0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos22/1000, 1000)
 	if image != nil {
-		s += "\n花费分布图：\n"
 		return MessageChain{&Plain{Text: s}, image}
 	}
 	return MessageChain{&Plain{Text: s}}
@@ -356,9 +354,7 @@ func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifte
 	}
 	p, err := PieRender(
 		values,
-		TitleOptionFunc(TitleOption{
-			Text: fmt.Sprintf("%d to %d Mesos cost", cur, des),
-		}),
+		PaddingOptionFunc(Box{Top: 50}),
 		LegendOptionFunc(LegendOption{
 			Show: FalseFlag(),
 			Data: labels,

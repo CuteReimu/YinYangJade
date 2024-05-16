@@ -141,11 +141,27 @@ func findRole(name string) MessageChain {
 			maxValue = math.Ceil(maxValue/factor) * factor * 6
 			p, err := BarRender(
 				[][]float64{values},
+				ThemeOptionFunc(ThemeDark),
 				PaddingOptionFunc(Box{Top: 30, Left: 10, Right: 54, Bottom: 10}),
 				XAxisDataOptionFunc(labels),
 				MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
-				MarkPointOptionFunc(0, SeriesMarkDataTypeMax, SeriesMarkDataTypeMin),
 				YAxisOptionFunc(YAxisOption{Min: NewFloatPoint(0), Max: &maxValue}),
+				func(opt *ChartOption) {
+					opt.ValueFormatter = func(f float64) string {
+						switch {
+						case f < 1000.0:
+							return fmt.Sprintf("%.0f", f)
+						case f < 1000000.0:
+							return fmt.Sprintf("%.0fK", float64(f)/1000.0)
+						case f < 1000000000.0:
+							return fmt.Sprintf("%.0fM", float64(f)/1000000.0)
+						case f < 1000000000000.0:
+							return fmt.Sprintf("%.0fB", float64(f)/1000000000.0)
+						default:
+							return fmt.Sprintf("%.0fT", float64(f)/1000000000000.0)
+						}
+					}
+				},
 			)
 			if err != nil {
 				slog.Error("render chart failed", "error", err)
