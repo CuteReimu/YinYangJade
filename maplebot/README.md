@@ -46,3 +46,9 @@ fc-cache
 # 查看是否有黑体
 fc-list :lang=zh | grep 黑体
 ```
+
+### 查询角色时，单位`B`会显示成`G`的问题
+
+没有什么好的解决，使用的库就是这样的，并且库里没有给出解决方案。
+
+我的解决方法是直接手动改一下GOPATH下的源码文件`pkg/mod/github.com/vicanso/go-charts/v2@v2.6.5/util.go`中的`commafWithDigits`函数，将`G`改成`B`。
