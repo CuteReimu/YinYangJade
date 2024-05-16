@@ -104,10 +104,6 @@ func findRole(name string) MessageChain {
 				values = append(values, float64(datasets[i].Int()))
 			}
 		}
-		//if trimLen := len(labels) - 14; trimLen > 0 {
-		//	labels = labels[trimLen:]
-		//	values = values[trimLen:]
-		//}
 		if slices.ContainsFunc(values, func(f float64) bool { return f != 0 }) {
 			if levelEnd := strings.Index(levelExp, "("); levelEnd >= 0 {
 				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelExp[:levelEnd]))); totalExp > 0 {
@@ -138,7 +134,7 @@ func findRole(name string) MessageChain {
 			maxValue := slices.Max(values)
 			digits := int(math.Floor(math.Log10(maxValue))) + 1
 			factor := math.Pow(10, float64(digits-1))
-			highest := math.Ceil(maxValue / factor)
+			highest := math.Floor(maxValue / factor)
 			if highest < 2 {
 				factor /= 5
 			} else if highest < 5 {
