@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20240513215342-40fe852832be
-	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240516040908-9a6636c6012c
+	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240516065342-1047d629f4a9
 	github.com/CuteReimu/threp v1.0.1
 	github.com/dlclark/regexp2 v1.11.0
 	github.com/go-resty/resty/v2 v2.13.1
