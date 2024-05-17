@@ -110,9 +110,12 @@ func findRole(name string) MessageChain {
 					if expPercentStart := strings.Index(levelExp, "("); expPercentStart >= 0 {
 						if expPercentEnd := strings.Index(levelExp, "%"); expPercentEnd >= 0 {
 							if expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64); err == nil {
-								var sumExp float64
+								var sumExp, n float64
 								for _, v := range values {
-									sumExp += v
+									if v != 0 || n > 0 {
+										sumExp += v
+										n++
+									}
 								}
 								aveExp := sumExp / float64(len(values))
 								days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
