@@ -114,18 +114,9 @@ func findRole(name string) MessageChain {
 								for _, v := range values {
 									sumExp += v
 								}
-								if sumExp > 0 {
-									aveExp := sumExp / float64(len(values))
-									sumExp = 0
-									for _, v := range values {
-										if v >= aveExp/20 && v <= aveExp*20 {
-											sumExp += v
-										}
-									}
-									aveExp = sumExp / float64(len(values))
-									days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
-									s += fmt.Sprintf("预计还有%d天升级\n", days)
-								}
+								aveExp := sumExp / float64(len(values))
+								days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
+								s += fmt.Sprintf("预计还有%d天升级\n", days)
 							}
 						}
 					}
