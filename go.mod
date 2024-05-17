@@ -12,13 +12,14 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.18.2
 	github.com/tidwall/gjson v1.17.1
-	github.com/vicanso/go-charts/v2 v2.6.5
+	github.com/vicanso/go-charts/v2 v2.6.6
 	github.com/wcharczuk/go-chart/v2 v2.1.1
 )
 
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f // indirect
 	github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878 // indirect
+	github.com/blend/go-sdk v1.20220411.3 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
