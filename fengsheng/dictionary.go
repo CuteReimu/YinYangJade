@@ -109,14 +109,14 @@ func handleDictionary(message *GroupMessage) bool {
 				ms = append(ms, m)
 			}
 		}
+		if err := saveImage(ms); err != nil {
+			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败，" + err.Error()})
+			return true
+		}
 		buf, err := json.Marshal(ms)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
 			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败"})
-			return true
-		}
-		if err = saveImage(ms); err != nil {
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败，" + err.Error()})
 			return true
 		}
 		m := qunDb.GetStringMapString("data")
@@ -167,6 +167,7 @@ func saveImage(message MessageChain) error {
 				return errors.New("保存图片失败")
 			}
 			img.Path = filepath.Join("..", "YinYangJade", "dictionary-images", img.ImageId)
+			img.ImageId = ""
 			img.Url = ""
 		}
 	}
