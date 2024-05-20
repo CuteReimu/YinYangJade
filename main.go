@@ -9,6 +9,7 @@ import (
 	"github.com/CuteReimu/mirai-sdk-http"
 	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 	"log"
 	"log/slog"
 	"os"
@@ -86,6 +87,7 @@ func main() {
 		slog.Error("connect failed", "error", err)
 		os.Exit(1)
 	}
+	b.SetLimiter("drop", rate.NewLimiter(rate.Every(3*time.Second), 5))
 	tfcc.Init(b)
 	fengsheng.Init(b)
 	maplebot.Init(b)
