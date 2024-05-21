@@ -77,7 +77,7 @@ func determineOutcome(currentStar int, boomProtect, fiveTenFifteen bool) starFor
 		return _SUCCESS
 	}
 	var (
-		outcome             = rand.Float64()
+		outcome             = rand.Float64() //nolint:gosec
 		probabilitySuccess  = rates[currentStar][_SUCCESS]
 		probabilityMaintain = rates[currentStar][_MAINTAIN]
 		probabilityDecrease = rates[currentStar][_DECREASE]

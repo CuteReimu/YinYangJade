@@ -80,7 +80,7 @@ func (r *roll) CheckAuth(int64, int64) bool {
 
 func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return MessageChain{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}}
+		return MessageChain{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}} //nolint:gosec
 	}
 	return nil
 }
@@ -91,15 +91,15 @@ func (r *randDraw) Name() string {
 	return "抽签"
 }
 
-func (r *randDraw) ShowTips(groupCode int64, senderId int64) string {
+func (r *randDraw) ShowTips(int64, int64) string {
 	return "抽签 选手数量"
 }
 
-func (r *randDraw) CheckAuth(groupCode int64, senderId int64) bool {
+func (r *randDraw) CheckAuth(_ int64, senderId int64) bool {
 	return IsAdmin(senderId)
 }
 
-func (r *randDraw) Execute(msg *GroupMessage, content string) MessageChain {
+func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 	count, err := strconv.Atoi(content)
 	if err != nil {
 		return MessageChain{&Plain{Text: "指令格式如下：\n抽签 选手数量"}}
@@ -121,7 +121,7 @@ func (r *randDraw) Execute(msg *GroupMessage, content string) MessageChain {
 	for i := 0; i < count/2; i++ {
 		a1 := a[len(a)-1]
 		a = a[:len(a)-1]
-		index := rand.IntN(len(a))
+		index := rand.IntN(len(a)) //nolint:gosec
 		a2 := a[index]
 		a = append(a[:index], a[index+1:]...)
 		ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", a1, a2))

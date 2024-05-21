@@ -74,12 +74,12 @@ func handleGroupMessage(message *GroupMessage) bool {
 				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "pong"})
 				return true
 			} else if plain.Text == "roll" {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))})
+				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
 				return true
 			} else if strings.HasPrefix(plain.Text, "roll ") {
 				upperLimit, _ := strconv.Atoi(strings.TrimSpace(plain.Text[len("roll"):]))
 				if upperLimit > 0 {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
+					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
 				}
 				return true
 			} else if plain.Text == "查询我" {
