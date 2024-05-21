@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var B *Bot
@@ -14,6 +15,11 @@ var B *Bot
 func Init(b *Bot) {
 	initConfig()
 	B = b
+	go func() {
+		for range time.Tick(24 * time.Hour) {
+			B.Run(clearExpiredImages)
+		}
+	}()
 	B.ListenGroupMessage(cmdHandleFunc)
 	B.ListenGroupMessage(handleDictionary)
 	B.ListenGroupMessage(searchAt)

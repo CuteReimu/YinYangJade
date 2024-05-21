@@ -199,6 +199,39 @@ func dealKey(s string) string {
 	return strings.ToLower(s)
 }
 
+func clearExpiredImages() {
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("panic recovered", "error", err)
+		}
+	}()
+	data := qunDb.GetStringMapString("data")
+	data2 := make(map[string]bool)
+	for _, v := range data {
+		var ms MessageChain
+		if err := json.Unmarshal([]byte(v), &ms); err != nil {
+			slog.Error("json unmarshal failed", "error", err)
+			continue
+		}
+		for _, m := range ms {
+			if img, ok := m.(*Image); ok && len(img.Path) > 0 {
+				data2[filepath.Base(img.Path)] = true
+			}
+		}
+	}
+	files, err := os.ReadDir("dictionary-images")
+	if err != nil {
+		slog.Error("read dir failed", "error", err)
+	}
+	for _, file := range files {
+		if !data2[file.Name()] {
+			if err = os.Remove(filepath.Join("dictionary-images", file.Name())); err != nil {
+				slog.Error("remove file failed", "error", err)
+			}
+		}
+	}
+}
+
 type dictionaryCommand struct {
 	name string
 	tips string

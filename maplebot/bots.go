@@ -33,6 +33,11 @@ var B *Bot
 func Init(b *Bot) {
 	initConfig()
 	B = b
+	go func() {
+		for range time.Tick(24 * time.Hour) {
+			B.Run(clearExpiredImages)
+		}
+	}()
 	B.ListenGroupMessage(handleGroupMessage)
 }
 
@@ -320,11 +325,11 @@ func saveImage(message MessageChain) error {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			if err = os.WriteFile(filepath.Join("dictionary-images", img.ImageId), resp.Body(), 0600); err != nil {
+			if err = os.WriteFile(filepath.Join("chat-images", img.ImageId), resp.Body(), 0600); err != nil {
 				slog.Error("write image failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			img.Path = filepath.Join("..", "YinYangJade", "dictionary-images", img.ImageId)
+			img.Path = filepath.Join("..", "YinYangJade", "chat-images", img.ImageId)
 			img.ImageId = ""
 			img.Url = ""
 		}
@@ -355,4 +360,37 @@ func dealKey(s string) string {
 	s = strings.ReplaceAll(s, "八", "8")
 	s = strings.ReplaceAll(s, "九", "9")
 	return strings.ToLower(s)
+}
+
+func clearExpiredImages() {
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("panic recovered", "error", err)
+		}
+	}()
+	data := qunDb.GetStringMapString("data")
+	data2 := make(map[string]bool)
+	for _, v := range data {
+		var ms MessageChain
+		if err := json.Unmarshal([]byte(v), &ms); err != nil {
+			slog.Error("json unmarshal failed", "error", err)
+			continue
+		}
+		for _, m := range ms {
+			if img, ok := m.(*Image); ok && len(img.Path) > 0 {
+				data2[filepath.Base(img.Path)] = true
+			}
+		}
+	}
+	files, err := os.ReadDir("chat-images")
+	if err != nil {
+		slog.Error("read dir failed", "error", err)
+	}
+	for _, file := range files {
+		if !data2[file.Name()] {
+			if err = os.Remove(filepath.Join("chat-images", file.Name())); err != nil {
+				slog.Error("remove file failed", "error", err)
+			}
+		}
+	}
 }
