@@ -12,7 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.18.2
 	github.com/tidwall/gjson v1.17.1
-	github.com/vicanso/go-charts/v2 v2.6.6
+	github.com/vicanso/go-charts/v2 v2.6.7
 	github.com/wcharczuk/go-chart/v2 v2.1.1
 	golang.org/x/time v0.5.0
 )
