@@ -344,6 +344,18 @@ func sendGroupMessage(group int64, messages ...SingleMessage) {
 	_, err := B.SendGroupMessage(group, 0, messages)
 	if err != nil {
 		slog.Error("send group message failed", "error", err)
+		newMessages := make([]SingleMessage, 0, len(messages))
+		for _, m := range messages {
+			if image, ok := m.(*Image); !ok || len(image.ImageId) > 0 || len(image.Url) == 0 {
+				newMessages = append(newMessages, m)
+			}
+		}
+		if len(newMessages) != len(messages) && len(newMessages) > 0 {
+			_, err = B.SendGroupMessage(group, 0, newMessages)
+			if err != nil {
+				slog.Error("send group message failed", "error", err)
+			}
+		}
 	}
 }
 
