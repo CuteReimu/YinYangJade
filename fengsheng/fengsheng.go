@@ -275,12 +275,12 @@ func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 	data := permData.GetStringMapString("playerMap")
 	for id, v := range data {
 		if v == content {
-			qq, err := strconv.ParseInt(id, 10, 64)
+			_, err := strconv.ParseInt(id, 10, 64)
 			if err != nil {
 				slog.Error("parse int failed: " + id)
 				return nil
 			}
-			return MessageChain{&At{Target: qq}}
+			return MessageChain{&Plain{Text: "@" + id}}
 		}
 	}
 	return MessageChain{&Plain{Text: "没能找到此玩家，可能还未绑定"}}
