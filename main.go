@@ -50,6 +50,10 @@ func init() {
 							s.File = s.File[index+1:]
 						}
 					}
+					const projectName = "/YinYangJade/"
+					if index := strings.LastIndex(s.File, projectName); index >= 0 {
+						s.File = s.File[index+len(projectName):]
+					}
 				}
 			default:
 				if e, ok := a.Value.Any().(error); ok {
