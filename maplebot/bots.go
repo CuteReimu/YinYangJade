@@ -1,7 +1,7 @@
 package maplebot
 
 import (
-	"crypto/md5"
+	"crypto/md5" //nolint:gosec
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"math/rand/v2"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -314,20 +315,27 @@ func handleGroupMessage(message *GroupMessage) bool {
 func saveImage(message MessageChain) error {
 	for _, m := range message {
 		if img, ok := m.(*Image); ok && len(img.Url) > 0 {
+			u := img.Url
+			_, err := url.Parse(u)
+			if err != nil {
+				slog.Error("userInput is not a valid URL, reject it", "error", err)
+				return err
+			}
 			if err := os.MkdirAll("chat-images", 0755); err != nil {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			md5sum := md5.Sum([]byte(img.Url))
-			img.ImageId = fmt.Sprintf("%d-%x.png", time.Now().Unix(), md5sum)
-			cmd := exec.Command("curl", "-o", filepath.Join("chat-images", img.ImageId), img.Url)
+			md5sum := md5.Sum([]byte(u)) //nolint:gosec
+			imageId := fmt.Sprintf("%d-%x.png", time.Now().Unix(), md5sum)
+			p := filepath.Join("chat-images", imageId)
+			cmd := exec.Command("curl", "-o", p, u)
 			if out, err := cmd.CombinedOutput(); err != nil {
-				slog.Error("cmd.Run() failed with %s\n", err)
+				slog.Error("cmd.Run() failed", "error", err)
 				return errors.New("保存图片失败")
 			} else {
 				slog.Debug(string(out))
 			}
-			img.Path = filepath.Join("..", "YinYangJade", "chat-images", img.ImageId)
+			img.Path = filepath.Join("..", "YinYangJade", "chat-images", imageId)
 			img.ImageId = ""
 			img.Url = ""
 		}
