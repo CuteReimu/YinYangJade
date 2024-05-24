@@ -1,6 +1,7 @@
 package maplebot
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -312,22 +314,18 @@ func handleGroupMessage(message *GroupMessage) bool {
 func saveImage(message MessageChain) error {
 	for _, m := range message {
 		if img, ok := m.(*Image); ok && len(img.Url) > 0 {
-			resp, err := restyClient.R().Get(img.Url)
-			if err != nil {
-				slog.Error("get image failed", "error", err)
-				return errors.New("保存图片失败")
-			}
-			if resp.StatusCode() != 200 {
-				slog.Error("get image failed", "status", resp.Status(), "body", resp.String())
-				return errors.New("保存图片失败")
-			}
-			if err = os.MkdirAll("chat-images", 0755); err != nil {
+			if err := os.MkdirAll("chat-images", 0755); err != nil {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			if err = os.WriteFile(filepath.Join("chat-images", img.ImageId), resp.Body(), 0600); err != nil {
-				slog.Error("write image failed", "error", err)
+			md5sum := md5.Sum([]byte(img.Url))
+			img.ImageId = fmt.Sprintf("%d-%x.png", time.Now().Unix(), md5sum)
+			cmd := exec.Command("curl", "-o", filepath.Join("chat-images", img.ImageId), img.Url)
+			if out, err := cmd.CombinedOutput(); err != nil {
+				slog.Error("cmd.Run() failed with %s\n", err)
 				return errors.New("保存图片失败")
+			} else {
+				slog.Debug(string(out))
 			}
 			img.Path = filepath.Join("..", "YinYangJade", "chat-images", img.ImageId)
 			img.ImageId = ""
