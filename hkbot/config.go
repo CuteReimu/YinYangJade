@@ -9,7 +9,6 @@ import (
 var (
 	hkConfig = viper.New()
 	hkData   = viper.New()
-	qunDb    = viper.New()
 )
 
 func initConfig() {
