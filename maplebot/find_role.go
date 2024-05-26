@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"github.com/tidwall/gjson"
 	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
@@ -32,7 +32,7 @@ func findRole(name string) MessageChain {
 	}
 	switch resp.StatusCode() {
 	case 404:
-		return MessageChain{&Plain{Text: name + "已身死道消"}}
+		return MessageChain{&Text{Text: name + "已身死道消"}}
 	case 200:
 	default:
 		slog.Error("请求失败", "status", resp.StatusCode())
@@ -92,7 +92,12 @@ func findRole(name string) MessageChain {
 
 	var messageChain MessageChain
 	if len(imgUrl) > 0 {
-		messageChain = append(messageChain, &Image{Url: imgUrl})
+		resp, err := restyClient.R().Get(imgUrl)
+		if err != nil {
+			slog.Error("请求失败", "error", err)
+		} else {
+			messageChain = append(messageChain, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())})
+		}
 	}
 
 	s := fmt.Sprintf("角色名：%s\n职业：%s\n等级：%s\n联盟：%s\n", rawName, class, levelExp, legionLevel)
@@ -213,13 +218,13 @@ func findRole(name string) MessageChain {
 			} else if buf, err := p.Bytes(); err != nil {
 				slog.Error("render chart failed", "error", err)
 			} else {
-				messageChain = append(messageChain, &Plain{Text: s}, &Image{Base64: base64.StdEncoding.EncodeToString(buf)})
+				messageChain = append(messageChain, &Text{Text: s}, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
 			}
 		} else {
-			messageChain = append(messageChain, &Plain{Text: s + "近日无经验变化"})
+			messageChain = append(messageChain, &Text{Text: s + "近日无经验变化"})
 		}
 	} else {
-		messageChain = append(messageChain, &Plain{Text: s + "近日无经验变化"})
+		messageChain = append(messageChain, &Text{Text: s + "近日无经验变化"})
 	}
 	return messageChain
 }

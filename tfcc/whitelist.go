@@ -1,7 +1,7 @@
 package tfcc
 
 import (
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -41,12 +41,12 @@ func (d *delWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 			return nil
 		}
 		if !IsWhitelist(qq) {
-			return MessageChain{&Plain{Text: s + "并不是白名单"}}
+			return MessageChain{&Text{Text: s + "并不是白名单"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
 	if len(qqNumbers) == 0 {
-		return MessageChain{&Plain{Text: "指令格式如下：\n删除白名单 对方QQ号"}}
+		return MessageChain{&Text{Text: "指令格式如下：\n删除白名单 对方QQ号"}}
 	}
 	for _, qq := range qqNumbers {
 		RemoveWhitelist(qq)
@@ -55,7 +55,7 @@ func (d *delWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain{&Plain{Text: ret}}
+	return MessageChain{&Text{Text: ret}}
 }
 
 type addWhitelist struct{}
@@ -86,12 +86,12 @@ func (a *addWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 			return nil
 		}
 		if IsWhitelist(qq) {
-			return MessageChain{&Plain{Text: s + "已经是白名单了"}}
+			return MessageChain{&Text{Text: s + "已经是白名单了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
 	if len(qqNumbers) == 0 {
-		return MessageChain{&Plain{Text: "指令格式如下：\n增加白名单 对方QQ号"}}
+		return MessageChain{&Text{Text: "指令格式如下：\n增加白名单 对方QQ号"}}
 	}
 	for _, qq := range qqNumbers {
 		AddWhitelist(qq)
@@ -100,7 +100,7 @@ func (a *addWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain{&Plain{Text: ret}}
+	return MessageChain{&Text{Text: ret}}
 }
 
 type checkWhitelist struct{}
@@ -120,11 +120,11 @@ func (e *checkWhitelist) CheckAuth(int64, int64) bool {
 func (e *checkWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	qq, err := strconv.ParseInt(content, 10, 64)
 	if err != nil {
-		return MessageChain{&Plain{Text: "指令格式如下：\n查看白名单 对方QQ号"}}
+		return MessageChain{&Text{Text: "指令格式如下：\n查看白名单 对方QQ号"}}
 	}
 	if IsWhitelist(qq) {
-		return MessageChain{&Plain{Text: content + "是白名单"}}
+		return MessageChain{&Text{Text: content + "是白名单"}}
 	} else {
-		return MessageChain{&Plain{Text: content + "不是白名单"}}
+		return MessageChain{&Text{Text: content + "不是白名单"}}
 	}
 }

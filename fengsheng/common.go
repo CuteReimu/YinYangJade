@@ -1,7 +1,7 @@
 package fengsheng
 
 import (
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"math/rand/v2"
 	"slices"
 	"strconv"
@@ -31,14 +31,14 @@ func (t *showTips) CheckAuth(int64, int64) bool {
 func (t *showTips) Execute(msg *GroupMessage, _ string) MessageChain {
 	var ret []string
 	for _, h := range cmdMap {
-		if h.CheckAuth(msg.Sender.Group.Id, msg.Sender.Id) {
-			if tip := h.ShowTips(msg.Sender.Group.Id, msg.Sender.Id); len(tip) > 0 {
+		if h.CheckAuth(msg.GroupId, msg.Sender.UserId) {
+			if tip := h.ShowTips(msg.GroupId, msg.Sender.UserId); len(tip) > 0 {
 				ret = append(ret, tip)
 			}
 		}
 	}
 	slices.Sort(ret)
-	return MessageChain{&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
+	return MessageChain{&Text{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
 }
 
 type ping struct{}
@@ -57,7 +57,7 @@ func (p *ping) CheckAuth(int64, int64) bool {
 
 func (p *ping) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return MessageChain{&Plain{Text: "pong"}}
+		return MessageChain{&Text{Text: "pong"}}
 	}
 	return nil
 }
@@ -76,9 +76,9 @@ func (r *roll) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
+func (r *roll) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return MessageChain{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}} //nolint:gosec
+		return MessageChain{&Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}} //nolint:gosec
 	}
 	return nil
 }

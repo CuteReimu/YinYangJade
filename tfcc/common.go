@@ -2,7 +2,7 @@ package tfcc
 
 import (
 	"fmt"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"math/rand/v2"
 	"slices"
 	"strconv"
@@ -33,14 +33,14 @@ func (t *showTips) CheckAuth(int64, int64) bool {
 func (t *showTips) Execute(msg *GroupMessage, _ string) MessageChain {
 	var ret []string
 	for _, h := range cmdMap {
-		if h.CheckAuth(msg.Sender.Group.Id, msg.Sender.Id) {
-			if tip := h.ShowTips(msg.Sender.Group.Id, msg.Sender.Id); len(tip) > 0 {
+		if h.CheckAuth(msg.GroupId, msg.Sender.UserId) {
+			if tip := h.ShowTips(msg.GroupId, msg.Sender.UserId); len(tip) > 0 {
 				ret = append(ret, tip)
 			}
 		}
 	}
 	slices.Sort(ret)
-	return MessageChain{&Plain{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
+	return MessageChain{&Text{Text: "你可以使用以下功能：\n" + strings.Join(ret, "\n")}}
 }
 
 type ping struct{}
@@ -59,7 +59,7 @@ func (p *ping) CheckAuth(int64, int64) bool {
 
 func (p *ping) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return MessageChain{&Plain{Text: "pong"}}
+		return MessageChain{&Text{Text: "pong"}}
 	}
 	return nil
 }
@@ -78,9 +78,9 @@ func (r *roll) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
+func (r *roll) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return MessageChain{&Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}} //nolint:gosec
+		return MessageChain{&Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}} //nolint:gosec
 	}
 	return nil
 }
@@ -102,16 +102,16 @@ func (r *randDraw) CheckAuth(_ int64, senderId int64) bool {
 func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 	count, err := strconv.Atoi(content)
 	if err != nil {
-		return MessageChain{&Plain{Text: "指令格式如下：\n抽签 选手数量"}}
+		return MessageChain{&Text{Text: "指令格式如下：\n抽签 选手数量"}}
 	}
 	if count%2 != 0 {
-		return MessageChain{&Plain{Text: "选手数量必须为偶数"}}
+		return MessageChain{&Text{Text: "选手数量必须为偶数"}}
 	}
 	if count > 32 {
-		return MessageChain{&Plain{Text: "选手数量太多"}}
+		return MessageChain{&Text{Text: "选手数量太多"}}
 	}
 	if count <= 0 {
-		return MessageChain{&Plain{Text: "选手数量太少"}}
+		return MessageChain{&Text{Text: "选手数量太少"}}
 	}
 	a := make([]int, 0, count)
 	for i := count; i > 0; i-- {
@@ -126,5 +126,5 @@ func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 		a = append(a[:index], a[index+1:]...)
 		ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", a1, a2))
 	}
-	return MessageChain{&Plain{Text: strings.Join(ret, "\n")}}
+	return MessageChain{&Text{Text: strings.Join(ret, "\n")}}
 }

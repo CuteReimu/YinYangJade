@@ -2,7 +2,7 @@ package fengsheng
 
 import (
 	"encoding/base64"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -46,16 +46,16 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	data := permData.GetStringMapString("playerMap")
-	name := data[strconv.FormatInt(msg.Sender.Id, 10)]
+	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 	if len(name) == 0 {
-		return MessageChain{&Plain{Text: "请先绑定"}}
+		return MessageChain{&Text{Text: "请先绑定"}}
 	}
 	result, returnError := httpGetString("/getscore", map[string]string{"name": name})
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	return MessageChain{&Plain{Text: result}}
+	return MessageChain{&Text{Text: result}}
 }
 
 type getScore struct{}
@@ -82,7 +82,7 @@ func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	return MessageChain{&Plain{Text: result}}
+	return MessageChain{&Text{Text: result}}
 }
 
 type rankList struct{}
@@ -113,7 +113,7 @@ func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "status", resp.StatusCode())
 		return nil
 	}
-	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(resp.Body())}}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())}}
 }
 
 type winRate struct{}
@@ -144,7 +144,7 @@ func (r *winRate) Execute(_ *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "status", resp.StatusCode())
 		return nil
 	}
-	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(resp.Body())}}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())}}
 }
 
 type register struct{}
@@ -168,11 +168,11 @@ func (r *register) CheckAuth(int64, int64) bool {
 func (r *register) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
-		return MessageChain{&Plain{Text: "命令格式：\n注册 名字"}}
+		return MessageChain{&Text{Text: "命令格式：\n注册 名字"}}
 	}
 	data := permData.GetStringMapString("playerMap")
-	if oldName := data[strconv.FormatInt(msg.Sender.Id, 10)]; len(oldName) > 0 {
-		return MessageChain{&Plain{Text: "你已经注册过：" + oldName}}
+	if oldName := data[strconv.FormatInt(msg.Sender.UserId, 10)]; len(oldName) > 0 {
+		return MessageChain{&Text{Text: "你已经注册过：" + oldName}}
 	}
 	result, returnError := httpGetBool("/register", map[string]string{"name": name})
 	if returnError != nil {
@@ -180,14 +180,14 @@ func (r *register) Execute(msg *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	if !result {
-		return MessageChain{&Plain{Text: "用户名重复"}}
+		return MessageChain{&Text{Text: "用户名重复"}}
 	}
-	data[strconv.FormatInt(msg.Sender.Id, 10)] = name
+	data[strconv.FormatInt(msg.Sender.UserId, 10)] = name
 	permData.Set("playerMap", data)
 	if err := permData.WriteConfig(); err != nil {
 		slog.Error("write data failed", "error", err)
 	}
-	return MessageChain{&Plain{Text: "注册成功"}}
+	return MessageChain{&Text{Text: "注册成功"}}
 }
 
 type addNotifyOnStart struct{}
@@ -209,16 +209,16 @@ func (a *addNotifyOnStart) Execute(msg *GroupMessage, content string) MessageCha
 		return nil
 	}
 	result, returnError := httpGetBool("/addnotify", map[string]string{
-		"qq": strconv.FormatInt(msg.Sender.Id, 10),
+		"qq": strconv.FormatInt(msg.Sender.UserId, 10),
 	})
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
 	if !result {
-		return MessageChain{&Plain{Text: "太多人预约了，不能再添加了"}}
+		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
 	}
-	return MessageChain{&Plain{Text: "好的，开了喊你"}}
+	return MessageChain{&Text{Text: "好的，开了喊你"}}
 }
 
 type addNotifyOnEnd struct{}
@@ -240,7 +240,7 @@ func (a *addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain
 		return nil
 	}
 	result, returnError := httpGetBool("/addnotify", map[string]string{
-		"qq":   strconv.FormatInt(msg.Sender.Id, 10),
+		"qq":   strconv.FormatInt(msg.Sender.UserId, 10),
 		"when": "1",
 	})
 	if returnError != nil {
@@ -248,9 +248,9 @@ func (a *addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain
 		return returnError.message
 	}
 	if !result {
-		return MessageChain{&Plain{Text: "太多人预约了，不能再添加了"}}
+		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
 	}
-	return MessageChain{&Plain{Text: "好的，结束喊你"}}
+	return MessageChain{&Text{Text: "好的，结束喊你"}}
 }
 
 type atPlayer struct{}
@@ -270,7 +270,7 @@ func (a *atPlayer) CheckAuth(int64, int64) bool {
 func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
-		return MessageChain{&Plain{Text: "命令格式：\n艾特 游戏内的名字"}}
+		return MessageChain{&Text{Text: "命令格式：\n艾特 游戏内的名字"}}
 	}
 	data := permData.GetStringMapString("playerMap")
 	for id, v := range data {
@@ -280,10 +280,10 @@ func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 				slog.Error("parse int failed: " + id)
 				return nil
 			}
-			return MessageChain{&Plain{Text: "@" + id}}
+			return MessageChain{&At{QQ: id}}
 		}
 	}
-	return MessageChain{&Plain{Text: "没能找到此玩家，可能还未绑定"}}
+	return MessageChain{&Text{Text: "没能找到此玩家，可能还未绑定"}}
 }
 
 type updateTitle struct{}
@@ -307,12 +307,12 @@ func (u *updateTitle) CheckAuth(int64, int64) bool {
 func (u *updateTitle) Execute(msg *GroupMessage, content string) MessageChain {
 	title := strings.TrimSpace(content)
 	if len(title) == 0 {
-		return MessageChain{&Plain{Text: "命令格式：\n修改称号 称号"}}
+		return MessageChain{&Text{Text: "命令格式：\n修改称号 称号"}}
 	}
 	data := permData.GetStringMapString("playerMap")
-	name := data[strconv.FormatInt(msg.Sender.Id, 10)]
+	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 	if len(name) == 0 {
-		return MessageChain{&Plain{Text: "请先注册"}}
+		return MessageChain{&Text{Text: "请先注册"}}
 	}
 	result, returnError := httpGetBool("/updatetitle", map[string]string{"name": name, "title": title})
 	if returnError != nil {
@@ -320,9 +320,9 @@ func (u *updateTitle) Execute(msg *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	if !result {
-		return MessageChain{&Plain{Text: "你的段位太低，请提升段位后再来使用此功能"}}
+		return MessageChain{&Text{Text: "你的段位太低，请提升段位后再来使用此功能"}}
 	}
-	return MessageChain{&Plain{Text: "修改称号成功"}}
+	return MessageChain{&Text{Text: "修改称号成功"}}
 }
 
 type removeTitle struct{}
@@ -349,9 +349,9 @@ func (u *removeTitle) Execute(msg *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	data := permData.GetStringMapString("playerMap")
-	name := data[strconv.FormatInt(msg.Sender.Id, 10)]
+	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 	if len(name) == 0 {
-		return MessageChain{&Plain{Text: "请先注册"}}
+		return MessageChain{&Text{Text: "请先注册"}}
 	}
 	result, returnError := httpGetBool("/updatetitle", map[string]string{"name": name, "title": ""})
 	if returnError != nil {
@@ -359,9 +359,9 @@ func (u *removeTitle) Execute(msg *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	if !result {
-		return MessageChain{&Plain{Text: "你的段位太低，请提升段位后再来使用此功能"}}
+		return MessageChain{&Text{Text: "你的段位太低，请提升段位后再来使用此功能"}}
 	}
-	return MessageChain{&Plain{Text: "称号已删除"}}
+	return MessageChain{&Text{Text: "称号已删除"}}
 }
 
 type resetPwd struct{}
@@ -391,16 +391,16 @@ func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 	var result string
 	var returnError *errorWithMessage
 	if len(name) == 0 {
-		playerName := data[strconv.FormatInt(msg.Sender.Id, 10)]
+		playerName := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 		if len(playerName) == 0 {
-			if !IsAdmin(msg.Sender.Id) {
+			if !IsAdmin(msg.Sender.UserId) {
 				return nil
 			}
-			return MessageChain{&Plain{Text: "重置密码 名字"}}
+			return MessageChain{&Text{Text: "重置密码 名字"}}
 		}
 		result, returnError = httpGetString("/resetpwd", map[string]string{"name": playerName})
 	} else {
-		if !IsAdmin(msg.Sender.Id) {
+		if !IsAdmin(msg.Sender.UserId) {
 			return nil
 		}
 		result, returnError = httpGetString("/resetpwd", map[string]string{"name": name})
@@ -412,5 +412,5 @@ func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(result) == 0 {
 		return nil
 	}
-	return MessageChain{&Plain{Text: result}}
+	return MessageChain{&Text{Text: result}}
 }

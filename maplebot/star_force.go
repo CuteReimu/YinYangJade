@@ -7,7 +7,7 @@ package maplebot
 import (
 	"encoding/base64"
 	"fmt"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"math"
@@ -160,28 +160,28 @@ func calculateStarForce1(content string) MessageChain {
 		return nil
 	}
 	if itemLevel < 5 || itemLevel > 300 {
-		return MessageChain{&Plain{Text: "装备等级不合理"}}
+		return MessageChain{&Text{Text: "装备等级不合理"}}
 	}
 	cur, err := strconv.Atoi(arr[1])
 	if err != nil {
 		return nil
 	}
 	if cur < 0 {
-		return MessageChain{&Plain{Text: "当前星数不合理"}}
+		return MessageChain{&Text{Text: "当前星数不合理"}}
 	}
 	des, err := strconv.Atoi(arr[2])
 	if err != nil {
 		return nil
 	}
 	if des <= cur {
-		return MessageChain{&Plain{Text: "目标星数必须大于当前星数"}}
+		return MessageChain{&Text{Text: "目标星数必须大于当前星数"}}
 	}
 	maxStar := getMaxStar(itemLevel)
 	if des > maxStar {
-		return MessageChain{&Plain{Text: fmt.Sprintf("%d级装备最多升到%d星", itemLevel, maxStar)}}
+		return MessageChain{&Text{Text: fmt.Sprintf("%d级装备最多升到%d星", itemLevel, maxStar)}}
 	}
 	if des > 24 {
-		return MessageChain{&Plain{Text: fmt.Sprintf("还想升%d星？梦里什么都有", des)}}
+		return MessageChain{&Text{Text: fmt.Sprintf("还想升%d星？梦里什么都有", des)}}
 	}
 	boomProtect := strings.Contains(content, "保护")
 	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
@@ -225,14 +225,14 @@ func calculateStarForce1(content string) MessageChain {
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
 	image := drawStarForce(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos/float64(testCount), testCount)
 	if image != nil {
-		return MessageChain{&Plain{Text: s}, image}
+		return MessageChain{&Text{Text: s}, image}
 	}
-	return MessageChain{&Plain{Text: s}}
+	return MessageChain{&Text{Text: s}}
 }
 
 func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageChain {
 	if itemLevel < 5 || itemLevel > 300 {
-		return MessageChain{&Plain{Text: "装备等级不合理"}}
+		return MessageChain{&Text{Text: "装备等级不合理"}}
 	}
 	maxStar := getMaxStar(itemLevel)
 	var cur int
@@ -293,9 +293,9 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
 	image := drawStarForce(0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos22/1000, 1000)
 	if image != nil {
-		return MessageChain{&Plain{Text: s}, image}
+		return MessageChain{&Text{Text: s}, image}
 	}
-	return MessageChain{&Plain{Text: s}}
+	return MessageChain{&Text{Text: s}}
 }
 
 func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool, totalMesos float64, testCount int) *Image {
@@ -373,7 +373,7 @@ func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifte
 		slog.Error("render chart failed", "error", err)
 		return nil
 	} else {
-		return &Image{Base64: base64.StdEncoding.EncodeToString(buf)}
+		return &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}
 	}
 }
 

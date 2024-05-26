@@ -1,11 +1,11 @@
 package fengsheng
 
 import (
-	"crypto/md5" //nolint:gosec
+	//nolint:gosec
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"net/url"
 	"os"
@@ -13,71 +13,70 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 )
 
 var addDbQQList = make(map[int64]string)
 
 func handleDictionary(message *GroupMessage) bool {
-	if len(message.MessageChain) <= 1 {
+	if len(message.Message) == 0 {
 		return true
 	}
-	if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
+	if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(message.GroupId)) {
 		return true
 	}
-	if len(message.MessageChain) == 2 {
-		if plain, ok := message.MessageChain[1].(*Plain); ok {
-			perm := IsWhitelist(message.Sender.Id)
-			if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
-				key := dealKey(plain.Text[len("添加词条"):])
+	if len(message.Message) == 1 {
+		if text, ok := message.Message[0].(*Text); ok {
+			perm := IsWhitelist(message.Sender.UserId)
+			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
+				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条名称中不能包含 . 符号"})
+					replyGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
 					return true
 				}
 				if _, ok = cmdMap[key]; ok {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "不能用" + key + "作为词条"})
+					replyGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
 					return true
 				}
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; ok {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条已存在"})
+						replyGroupMessage(message, &Text{Text: "词条已存在"})
 					} else {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要添加的内容"})
-						addDbQQList[message.Sender.Id] = key
+						replyGroupMessage(message, &Text{Text: "请输入要添加的内容"})
+						addDbQQList[message.Sender.UserId] = key
 					}
 				}
 				return true
-			} else if perm && strings.HasPrefix(plain.Text, "修改词条 ") {
-				key := dealKey(plain.Text[len("修改词条"):])
+			} else if perm && strings.HasPrefix(text.Text, "修改词条 ") {
+				key := dealKey(text.Text[len("修改词条"):])
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; !ok {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
+						replyGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要修改的内容"})
-						addDbQQList[message.Sender.Id] = key
+						replyGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+						addDbQQList[message.Sender.UserId] = key
 					}
 				}
 				return true
-			} else if perm && strings.HasPrefix(plain.Text, "删除词条 ") {
-				key := dealKey(plain.Text[len("删除词条"):])
+			} else if perm && strings.HasPrefix(text.Text, "删除词条 ") {
+				key := dealKey(text.Text[len("删除词条"):])
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; !ok {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
+						replyGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
 						delete(m, key)
 						qunDb.Set("data", m)
 						if err := qunDb.WriteConfig(); err != nil {
 							slog.Error("write data failed", "error", err)
 						}
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "删除词条成功"})
+						replyGroupMessage(message, &Text{Text: "删除词条成功"})
 					}
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "查询词条 ") || strings.HasPrefix(plain.Text, "搜索词条 ") {
-				key := dealKey(plain.Text[len("搜索词条"):])
+			} else if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
+				key := dealKey(text.Text[len("搜索词条"):])
 				if len(key) > 0 {
 					var res []string
 					m := qunDb.GetStringMapString("data")
@@ -96,31 +95,25 @@ func handleDictionary(message *GroupMessage) bool {
 						for i := range res {
 							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
 						}
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
+						replyGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
 					} else {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索不到词条(" + key + ")"})
+						replyGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
 					}
 				}
 				return true
 			}
 		}
 	}
-	if key, ok := addDbQQList[message.Sender.Id]; ok { // 添加词条
-		delete(addDbQQList, message.Sender.Id)
-		var ms MessageChain
-		for _, m := range message.MessageChain {
-			if _, ok = m.(*Source); !ok {
-				ms = append(ms, m)
-			}
-		}
-		if err := saveImage(ms); err != nil {
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败，" + err.Error()})
+	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
+		delete(addDbQQList, message.Sender.UserId)
+		if err := saveImage(message.Message); err != nil {
+			replyGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
 		}
-		buf, err := json.Marshal(ms)
+		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败"})
+			replyGroupMessage(message, &Text{Text: "编辑词条失败"})
 			return true
 		}
 		m := qunDb.GetStringMapString("data")
@@ -129,20 +122,20 @@ func handleDictionary(message *GroupMessage) bool {
 		if err = qunDb.WriteConfig(); err != nil {
 			slog.Error("write data failed", "error", err)
 		}
-		sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条成功"})
+		replyGroupMessage(message, &Text{Text: "编辑词条成功"})
 	} else { // 调用词条
-		if len(message.MessageChain) == 2 {
-			if plain, ok := message.MessageChain[1].(*Plain); ok {
+		if len(message.Message) == 1 {
+			if text, ok := message.Message[0].(*Text); ok {
 				m := qunDb.GetStringMapString("data")
-				s := m[dealKey(plain.Text)]
+				s := m[dealKey(text.Text)]
 				if len(s) > 0 {
 					var ms MessageChain
 					if err := json.Unmarshal([]byte(s), &ms); err != nil {
 						slog.Error("json unmarshal failed", "error", err, "s", s)
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "调用词条失败"})
+						replyGroupMessage(message, &Text{Text: "调用词条失败"})
 						return true
 					}
-					sendGroupMessage(message.Sender.Group.Id, ms...)
+					replyGroupMessage(message, ms...)
 				}
 			}
 		}
@@ -163,31 +156,51 @@ func saveImage(message MessageChain) error {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			md5sum := md5.Sum([]byte(u)) //nolint:gosec
-			imageId := fmt.Sprintf("%d-%x.png", time.Now().Unix(), md5sum)
-			p := filepath.Join("dictionary-images", imageId)
+			p := filepath.Join("dictionary-images", img.File)
 			cmd := exec.Command("curl", "-o", p, u)
 			if out, err := cmd.CombinedOutput(); err != nil {
-				slog.Error("cmd.Run() failed with", "error", err)
+				slog.Error("cmd.Run() failed", "error", err)
 				return errors.New("保存图片失败")
 			} else {
 				slog.Debug(string(out))
 			}
-			img.Path = filepath.Join("..", "YinYangJade", "dictionary-images", imageId)
-			img.ImageId = ""
+			img.File = "file://" + filepath.Join("..", "YinYangJade", "dictionary-images", img.File)
 			img.Url = ""
 		}
 	}
 	return nil
 }
 
-func sendGroupMessage(group int64, messages ...SingleMessage) {
+func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
 	if len(messages) == 0 {
 		return
 	}
-	_, err := B.SendGroupMessage(group, 0, messages)
-	if err != nil {
+	f := func(messages []SingleMessage) error {
+		if slices.ContainsFunc(messages, func(message SingleMessage) bool {
+			switch message.(type) {
+			case *Text, *Image, *Face:
+				return false
+			}
+			return true
+		}) {
+			_, err := B.SendGroupMessage(context.GroupId, messages)
+			return err
+		}
+		return context.Reply(B, messages, true)
+	}
+	if err := f(messages); err != nil {
 		slog.Error("send group message failed", "error", err)
+		newMessages := make([]SingleMessage, 0, len(messages))
+		for _, m := range messages {
+			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
+				newMessages = append(newMessages, m)
+			}
+		}
+		if len(newMessages) != len(messages) && len(newMessages) > 0 {
+			if err = f(newMessages); err != nil {
+				slog.Error("send group message failed", "error", err)
+			}
+		}
 	}
 }
 
@@ -221,8 +234,8 @@ func clearExpiredImages() {
 			continue
 		}
 		for _, m := range ms {
-			if img, ok := m.(*Image); ok && len(img.Path) > 0 {
-				data2[filepath.Base(img.Path)] = true
+			if img, ok := m.(*Image); ok && len(img.File) > 0 && strings.HasPrefix(img.File, "file://") {
+				data2[filepath.Base(img.File[len("file://"):])] = true
 			}
 		}
 	}
@@ -258,7 +271,7 @@ func (d *dictionaryCommand) CheckAuth(int64, int64) bool {
 
 func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) == 0 {
-		return MessageChain{&Plain{Text: "命令格式：\n" + d.tips}}
+		return MessageChain{&Text{Text: "命令格式：\n" + d.tips}}
 	}
 	return nil
 }

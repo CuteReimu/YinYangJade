@@ -6,7 +6,7 @@ import (
 	"github.com/CuteReimu/YinYangJade/hkbot"
 	"github.com/CuteReimu/YinYangJade/maplebot"
 	"github.com/CuteReimu/YinYangJade/tfcc"
-	"github.com/CuteReimu/mirai-sdk-http"
+	"github.com/CuteReimu/onebot"
 	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -86,7 +86,7 @@ func main() {
 	port := mainConfig.GetInt("port")
 	verifyKey := mainConfig.GetString("verifyKey")
 	qq := mainConfig.GetInt64("qq")
-	b, err := miraihttp.Connect(host, port, miraihttp.WsChannelAll, verifyKey, qq, false)
+	b, err := onebot.Connect(host, port, onebot.WsChannelAll, verifyKey, qq, false)
 	if err != nil {
 		slog.Error("connect failed", "error", err)
 		os.Exit(1)
@@ -102,7 +102,7 @@ func main() {
 	<-ch
 }
 
-func checkQQGroups(b *miraihttp.Bot) {
+func checkQQGroups(b *onebot.Bot) {
 	go func() {
 		for range time.Tick(30 * time.Second) {
 			go func() {
@@ -112,14 +112,14 @@ func checkQQGroups(b *miraihttp.Bot) {
 					}
 				}()
 				groups := mainConfig.GetIntSlice("check_qq_groups")
-				groupList, err := b.GroupList()
+				groupList, err := b.GetGroupList()
 				if err != nil {
 					slog.Error("get group list failed", "error", err)
 					return
 				}
 				for _, group := range groupList {
-					if !slices.Contains(groups, int(group.Id)) {
-						if err = b.Quit(group.Id); err != nil {
+					if !slices.Contains(groups, int(group.GroupId)) {
+						if err = b.SetGroupLeave(group.GroupId, false); err != nil {
 							slog.Error("quit group failed", "error", err)
 						}
 					}

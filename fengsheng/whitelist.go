@@ -1,7 +1,7 @@
 package fengsheng
 
 import (
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -40,12 +40,12 @@ func (d *delWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 			return nil
 		}
 		if !IsWhitelist(qq) {
-			return MessageChain{&Plain{Text: s + "并没有词条权限"}}
+			return MessageChain{&Text{Text: s + "并没有词条权限"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
 	if len(qqNumbers) == 0 {
-		return MessageChain{&Plain{Text: "指令格式如下：\n删除词条权限 对方QQ号"}}
+		return MessageChain{&Text{Text: "指令格式如下：\n删除词条权限 对方QQ号"}}
 	}
 	for _, qq := range qqNumbers {
 		RemoveWhitelist(qq)
@@ -54,7 +54,7 @@ func (d *delWhitelist) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain{&Plain{Text: ret}}
+	return MessageChain{&Text{Text: ret}}
 }
 
 type addWhitelist struct{}
@@ -85,15 +85,15 @@ func (a *addWhitelist) Execute(msg *GroupMessage, content string) MessageChain {
 			return nil
 		}
 		if IsWhitelist(qq) {
-			return MessageChain{&Plain{Text: s + "已经有词条权限了"}}
+			return MessageChain{&Text{Text: s + "已经有词条权限了"}}
 		}
-		if _, err := B.GetMemberInfo(msg.Sender.Group.Id, qq); err != nil {
-			return MessageChain{&Plain{Text: s + "不是群成员"}}
+		if _, err := B.GetGroupMemberInfo(msg.GroupId, qq, false); err != nil {
+			return MessageChain{&Text{Text: s + "不是群成员"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
 	if len(qqNumbers) == 0 {
-		return MessageChain{&Plain{Text: "指令格式如下：\n增加词条权限 对方QQ号"}}
+		return MessageChain{&Text{Text: "指令格式如下：\n增加词条权限 对方QQ号"}}
 	}
 	for _, qq := range qqNumbers {
 		AddWhitelist(qq)
@@ -102,5 +102,5 @@ func (a *addWhitelist) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain{&Plain{Text: ret}}
+	return MessageChain{&Text{Text: ret}}
 }

@@ -2,7 +2,7 @@ package hkbot
 
 import (
 	"encoding/json"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"regexp"
@@ -87,7 +87,7 @@ func doTimer() {
 		return
 	}
 	for _, groupId := range hkConfig.GetIntSlice("speedrun_push_qq_group") {
-		_, err := B.SendGroupMessage(int64(groupId), 0, MessageChain{&Plain{Text: strings.Join(result1, "\n")}})
+		_, err := B.SendGroupMessage(int64(groupId), MessageChain{&Text{Text: strings.Join(result1, "\n")}})
 		if err != nil {
 			slog.Error("send group message failed", "error", err)
 		}

@@ -2,12 +2,11 @@ package tfcc
 
 import (
 	"github.com/CuteReimu/YinYangJade/iface"
-	. "github.com/CuteReimu/mirai-sdk-http"
-	"github.com/CuteReimu/threp"
+	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
-	"io"
 	"log/slog"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,40 +31,33 @@ func Init(b *Bot) {
 	B = b
 	B.ListenGroupMessage(cmdHandleFunc)
 	B.ListenGroupMessage(bilibiliAnalysis)
-	B.ListenGroupMessage(repAnalysis)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
 
 func cmdHandleFunc(message *GroupMessage) bool {
-	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
+	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.GroupId)) {
 		return true
 	}
-	chain := message.MessageChain
+	chain := message.Message
 	if len(chain) == 0 {
 		return true
 	}
-	if _, ok := chain[0].(*Source); ok {
-		chain = chain[1:]
-		if len(chain) == 0 {
-			return true
-		}
-	}
-	if at, ok := chain[0].(*At); ok && at.Target == B.QQ {
+	if at, ok := chain[0].(*At); ok && at.QQ == strconv.FormatInt(B.QQ, 10) {
 		chain = chain[1:]
 		if len(chain) > 0 {
-			if plain, ok := chain[0].(*Plain); ok && len(strings.TrimSpace(plain.Text)) == 0 {
+			if Text, ok := chain[0].(*Text); ok && len(strings.TrimSpace(Text.Text)) == 0 {
 				chain = chain[1:]
 			}
 		}
 		if len(chain) == 0 {
-			chain = append(chain, &Plain{Text: "查看帮助"})
+			chain = append(chain, &Text{Text: "查看帮助"})
 		}
 	}
 	var cmd, content string
 	if len(chain) == 1 {
-		if plain, ok := chain[0].(*Plain); ok {
-			arr := strings.SplitN(strings.TrimSpace(plain.Text), " ", 2)
+		if Text, ok := chain[0].(*Text); ok {
+			arr := strings.SplitN(strings.TrimSpace(Text.Text), " ", 2)
 			cmd = strings.TrimSpace(arr[0])
 			if len(arr) > 1 {
 				content = strings.TrimSpace(arr[1])
@@ -76,13 +68,10 @@ func cmdHandleFunc(message *GroupMessage) bool {
 		return true
 	}
 	if h, ok := cmdMap[cmd]; ok {
-		if h.CheckAuth(message.Sender.Group.Id, message.Sender.Id) {
+		if h.CheckAuth(message.GroupId, message.Sender.UserId) {
 			groupMsg := h.Execute(message, content)
 			if len(groupMsg) > 0 {
-				_, err := B.SendGroupMessage(message.Sender.Group.Id, 0, groupMsg)
-				if err != nil {
-					slog.Error("发送群消息失败", "error", err)
-				}
+				replyGroupMessage(message, groupMsg...)
 			}
 			return true
 		}
@@ -98,45 +87,35 @@ func addCmdListener(handler iface.CmdHandler) {
 	cmdMap[name] = handler
 }
 
-func repAnalysis(message *GroupMessage) bool {
-	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
-		return true
+func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+	if len(messages) == 0 {
+		return
 	}
-	for _, chain := range message.MessageChain {
-		if file, ok := chain.(*File); ok && (strings.HasSuffix(file.Name, ".rpy") && file.Size <= 10*1024*1024) {
-			go func() {
-				defer func() {
-					if r := recover(); r != nil {
-						slog.Error("panic recovered", "error", r)
-					}
-				}()
-				info, err := B.GetFileInfo(FileParam{
-					Id:               file.Id,
-					Group:            message.Sender.Group.Id,
-					WithDownloadInfo: true,
-				})
-				if err != nil || info.DownloadInfo == nil {
-					slog.Error("获取文件信息失败", "error", err, "info", info)
-					return
-				}
-				resp, err := restyClient.R().SetDoNotParseResponse(true).Get(info.DownloadInfo.Url)
-				if err != nil {
-					slog.Error("请求失败", "error", err)
-					return
-				}
-				body := resp.RawBody()
-				defer func(body io.ReadCloser) { _ = body.Close() }(body)
-				replay, err := threp.DecodeReplay(body)
-				if err != nil {
-					slog.Error("解析失败", "error", err)
-					return
-				}
-				_, err = B.SendGroupMessage(message.Sender.Group.Id, 0, MessageChain{&Plain{Text: replay.String()}})
-				if err != nil {
-					slog.Error("发送群消息失败", "error", err)
-				}
-			}()
+	f := func(messages []SingleMessage) error {
+		if slices.ContainsFunc(messages, func(message SingleMessage) bool {
+			switch message.(type) {
+			case *Text, *Image, *Face:
+				return false
+			}
+			return true
+		}) {
+			_, err := B.SendGroupMessage(context.GroupId, messages)
+			return err
+		}
+		return context.Reply(B, messages, true)
+	}
+	if err := f(messages); err != nil {
+		slog.Error("send group message failed", "error", err)
+		newMessages := make([]SingleMessage, 0, len(messages))
+		for _, m := range messages {
+			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
+				newMessages = append(newMessages, m)
+			}
+		}
+		if len(newMessages) != len(messages) && len(newMessages) > 0 {
+			if err = f(newMessages); err != nil {
+				slog.Error("send group message failed", "error", err)
+			}
 		}
 	}
-	return true
 }

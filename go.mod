@@ -3,16 +3,15 @@ module github.com/CuteReimu/YinYangJade
 go 1.22
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.0.0-20240520031259-5eebc1246561
-	github.com/CuteReimu/mirai-sdk-http v0.0.0-20240521033606-2f9b48170460
-	github.com/CuteReimu/threp v1.0.1
+	github.com/CuteReimu/bilibili/v2 v2.0.0-20240526051517-3fb77e77c786
+	github.com/CuteReimu/onebot v0.0.0-20240526084918-3069cb29aef5
 	github.com/dlclark/regexp2 v1.11.0
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.18.2
 	github.com/tidwall/gjson v1.17.1
-	github.com/vicanso/go-charts/v2 v2.6.6
+	github.com/vicanso/go-charts/v2 v2.6.7
 	github.com/wcharczuk/go-chart/v2 v2.1.1
 	golang.org/x/time v0.5.0
 )
@@ -44,7 +43,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d // indirect
 	golang.org/x/image v0.16.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect

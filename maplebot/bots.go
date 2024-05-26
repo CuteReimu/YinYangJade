@@ -1,11 +1,11 @@
 package maplebot
 
 import (
-	"crypto/md5" //nolint:gosec
+	//nolint:gosec
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"math/rand/v2"
@@ -47,19 +47,19 @@ func Init(b *Bot) {
 var addDbQQList = make(map[int64]string)
 
 func handleGroupMessage(message *GroupMessage) bool {
-	if len(message.MessageChain) <= 1 {
+	if len(message.Message) <= 0 {
 		return true
 	}
-	if !slices.Contains(config.GetIntSlice("qq_groups"), int(message.Sender.Group.Id)) {
+	if !slices.Contains(config.GetIntSlice("qq_groups"), int(message.GroupId)) {
 		return true
 	}
-	if len(message.MessageChain) >= 3 {
-		if plain, ok := message.MessageChain[1].(*Plain); ok && strings.TrimSpace(plain.Text) == "查询" {
-			if at, ok := message.MessageChain[2].(*At); ok {
+	if len(message.Message) >= 2 {
+		if text, ok := message.Message[0].(*Text); ok && strings.TrimSpace(text.Text) == "查询" {
+			if at, ok := message.Message[1].(*At); ok {
 				data := findRoleData.GetStringMapString("data")
-				name := data[strconv.FormatInt(at.Target, 10)]
+				name := data[at.QQ]
 				if len(name) == 0 {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "该玩家还未绑定"})
+					replyGroupMessage(message, &Text{Text: "该玩家还未绑定"})
 				} else {
 					go func() {
 						defer func() {
@@ -67,34 +67,34 @@ func handleGroupMessage(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						sendGroupMessage(message.Sender.Group.Id, findRole(name)...)
+						replyGroupMessage(message, findRole(name)...)
 					}()
 				}
 			}
 			return true
 		}
 	}
-	if len(message.MessageChain) == 2 {
-		if plain, ok := message.MessageChain[1].(*Plain); ok {
-			perm := message.Sender.Permission == PermAdministrator || message.Sender.Permission == PermOwner ||
-				config.GetInt64("admin") == message.Sender.Id
-			if plain.Text == "ping" {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "pong"})
+	if len(message.Message) == 1 {
+		if text, ok := message.Message[0].(*Text); ok {
+			perm := message.Sender.Role == RoleAdmin || message.Sender.Role == RoleOwner ||
+				config.GetInt64("admin") == message.Sender.UserId
+			if text.Text == "ping" {
+				replyGroupMessage(message, &Text{Text: "pong"})
 				return true
-			} else if plain.Text == "roll" {
-				sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
+			} else if text.Text == "roll" {
+				replyGroupMessage(message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
 				return true
-			} else if strings.HasPrefix(plain.Text, "roll ") {
-				upperLimit, _ := strconv.Atoi(strings.TrimSpace(plain.Text[len("roll"):]))
+			} else if strings.HasPrefix(text.Text, "roll ") {
+				upperLimit, _ := strconv.Atoi(strings.TrimSpace(text.Text[len("roll"):]))
 				if upperLimit > 0 {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: message.Sender.MemberName + " roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
+					replyGroupMessage(message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
 				}
 				return true
-			} else if plain.Text == "查询我" {
+			} else if text.Text == "查询我" {
 				data := findRoleData.GetStringMapString("data")
-				name := data[strconv.FormatInt(message.Sender.Id, 10)]
+				name := data[strconv.FormatInt(message.Sender.UserId, 10)]
 				if len(name) == 0 {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你还未绑定"})
+					replyGroupMessage(message, &Text{Text: "你还未绑定"})
 				} else {
 					go func() {
 						defer func() {
@@ -102,12 +102,12 @@ func handleGroupMessage(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						sendGroupMessage(message.Sender.Group.Id, findRole(name)...)
+						replyGroupMessage(message, findRole(name)...)
 					}()
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "查询 ") {
-				name := strings.TrimSpace(plain.Text[len("查询"):])
+			} else if strings.HasPrefix(text.Text, "查询 ") {
+				name := strings.TrimSpace(text.Text[len("查询"):])
 				if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
 					go func() {
 						defer func() {
@@ -115,131 +115,131 @@ func handleGroupMessage(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						sendGroupMessage(message.Sender.Group.Id, findRole(name)...)
+						replyGroupMessage(message, findRole(name)...)
 					}()
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "绑定 ") {
+			} else if strings.HasPrefix(text.Text, "绑定 ") {
 				data := findRoleData.GetStringMapString("data")
-				if data[strconv.FormatInt(message.Sender.Id, 10)] != "" {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你已经绑定过了，如需更换请先解绑"})
+				if data[strconv.FormatInt(message.Sender.UserId, 10)] != "" {
+					replyGroupMessage(message, &Text{Text: "你已经绑定过了，如需更换请先解绑"})
 				} else {
-					name := strings.TrimSpace(plain.Text[len("绑定"):])
+					name := strings.TrimSpace(text.Text[len("绑定"):])
 					if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
-						data[strconv.FormatInt(message.Sender.Id, 10)] = name
+						data[strconv.FormatInt(message.Sender.UserId, 10)] = name
 						findRoleData.Set("data", data)
 						if err := findRoleData.WriteConfig(); err != nil {
 							slog.Error("write config failed", "error", err)
 						}
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "绑定成功"})
+						replyGroupMessage(message, &Text{Text: "绑定成功"})
 					}
 				}
 				return true
-			} else if plain.Text == "解绑" {
+			} else if text.Text == "解绑" {
 				data := findRoleData.GetStringMapString("data")
-				if data[strconv.FormatInt(message.Sender.Id, 10)] != "" {
-					delete(data, strconv.FormatInt(message.Sender.Id, 10))
+				if data[strconv.FormatInt(message.Sender.UserId, 10)] != "" {
+					delete(data, strconv.FormatInt(message.Sender.UserId, 10))
 					findRoleData.Set("data", data)
 					if err := findRoleData.WriteConfig(); err != nil {
 						slog.Error("write config failed", "error", err)
 					}
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "解绑成功"})
+					replyGroupMessage(message, &Text{Text: "解绑成功"})
 				} else {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "你还未绑定"})
+					replyGroupMessage(message, &Text{Text: "你还未绑定"})
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "模拟升星 ") || strings.HasPrefix(plain.Text, "模拟上星 ") ||
-				strings.HasPrefix(plain.Text, "升星期望 ") || strings.HasPrefix(plain.Text, "上星期望 ") {
-				content := strings.TrimSpace(plain.Text[len("模拟升星"):])
+			} else if strings.HasPrefix(text.Text, "模拟升星 ") || strings.HasPrefix(text.Text, "模拟上星 ") ||
+				strings.HasPrefix(text.Text, "升星期望 ") || strings.HasPrefix(text.Text, "上星期望 ") {
+				content := strings.TrimSpace(text.Text[len("模拟升星"):])
 				result1 := calculateStarForce1(content)
 				if len(result1) > 0 {
-					sendGroupMessage(message.Sender.Group.Id, result1...)
+					replyGroupMessage(message, result1...)
 				} else if itemLevel, err := strconv.Atoi(content); err == nil {
-					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, false, false)...)
+					replyGroupMessage(message, calculateStarForce2(itemLevel, false, false)...)
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "模拟升星必成活动 ") || strings.HasPrefix(plain.Text, "模拟上星必成活动 ") ||
-				strings.HasPrefix(plain.Text, "升星期望必成活动 ") || strings.HasPrefix(plain.Text, "上星期望必成活动 ") {
-				content := strings.TrimSpace(plain.Text[len("模拟升星必成活动"):])
+			} else if strings.HasPrefix(text.Text, "模拟升星必成活动 ") || strings.HasPrefix(text.Text, "模拟上星必成活动 ") ||
+				strings.HasPrefix(text.Text, "升星期望必成活动 ") || strings.HasPrefix(text.Text, "上星期望必成活动 ") {
+				content := strings.TrimSpace(text.Text[len("模拟升星必成活动"):])
 				if itemLevel, err := strconv.Atoi(content); err == nil {
-					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, false, true)...)
+					replyGroupMessage(message, calculateStarForce2(itemLevel, false, true)...)
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "模拟升星七折活动 ") || strings.HasPrefix(plain.Text, "模拟上星七折活动 ") ||
-				strings.HasPrefix(plain.Text, "升星期望七折活动 ") || strings.HasPrefix(plain.Text, "上星期望七折活动 ") {
-				content := strings.TrimSpace(plain.Text[len("模拟升星七折活动"):])
+			} else if strings.HasPrefix(text.Text, "模拟升星七折活动 ") || strings.HasPrefix(text.Text, "模拟上星七折活动 ") ||
+				strings.HasPrefix(text.Text, "升星期望七折活动 ") || strings.HasPrefix(text.Text, "上星期望七折活动 ") {
+				content := strings.TrimSpace(text.Text[len("模拟升星七折活动"):])
 				if itemLevel, err := strconv.Atoi(content); err == nil {
-					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, false)...)
+					replyGroupMessage(message, calculateStarForce2(itemLevel, true, false)...)
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "模拟升星超必活动 ") || strings.HasPrefix(plain.Text, "模拟升星超级必成 ") ||
-				strings.HasPrefix(plain.Text, "模拟上星超必活动 ") || strings.HasPrefix(plain.Text, "模拟上星超必活动 ") ||
-				strings.HasPrefix(plain.Text, "升星期望超必活动 ") || strings.HasPrefix(plain.Text, "升星期望超级必成 ") ||
-				strings.HasPrefix(plain.Text, "上星期望超必活动 ") || strings.HasPrefix(plain.Text, "上星期望超级必成 ") {
-				content := strings.TrimSpace(plain.Text[len("模拟升星超必活动"):])
+			} else if strings.HasPrefix(text.Text, "模拟升星超必活动 ") || strings.HasPrefix(text.Text, "模拟升星超级必成 ") ||
+				strings.HasPrefix(text.Text, "模拟上星超必活动 ") || strings.HasPrefix(text.Text, "模拟上星超必活动 ") ||
+				strings.HasPrefix(text.Text, "升星期望超必活动 ") || strings.HasPrefix(text.Text, "升星期望超级必成 ") ||
+				strings.HasPrefix(text.Text, "上星期望超必活动 ") || strings.HasPrefix(text.Text, "上星期望超级必成 ") {
+				content := strings.TrimSpace(text.Text[len("模拟升星超必活动"):])
 				if itemLevel, err := strconv.Atoi(content); err == nil {
-					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, true)...)
+					replyGroupMessage(message, calculateStarForce2(itemLevel, true, true)...)
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "模拟升星超级必成活动 ") || strings.HasPrefix(plain.Text, "模拟上星超级必成活动 ") ||
-				strings.HasPrefix(plain.Text, "升星期望超级必成活动 ") || strings.HasPrefix(plain.Text, "上星期望超级必成活动 ") {
-				content := strings.TrimSpace(plain.Text[len("模拟升星超级必成活动"):])
+			} else if strings.HasPrefix(text.Text, "模拟升星超级必成活动 ") || strings.HasPrefix(text.Text, "模拟上星超级必成活动 ") ||
+				strings.HasPrefix(text.Text, "升星期望超级必成活动 ") || strings.HasPrefix(text.Text, "上星期望超级必成活动 ") {
+				content := strings.TrimSpace(text.Text[len("模拟升星超级必成活动"):])
 				if itemLevel, err := strconv.Atoi(content); err == nil {
-					sendGroupMessage(message.Sender.Group.Id, calculateStarForce2(itemLevel, true, true)...)
+					replyGroupMessage(message, calculateStarForce2(itemLevel, true, true)...)
 				}
 				return true
-			} else if plain.Text == "洗魔方" {
-				sendGroupMessage(message.Sender.Group.Id, calculateCubeAll()...)
+			} else if text.Text == "洗魔方" {
+				replyGroupMessage(message, calculateCubeAll()...)
 				return true
-			} else if strings.HasPrefix(plain.Text, "洗魔方 ") {
-				sendGroupMessage(message.Sender.Group.Id, calculateCube(strings.TrimSpace(plain.Text[len("洗魔方"):]))...)
+			} else if strings.HasPrefix(text.Text, "洗魔方 ") {
+				replyGroupMessage(message, calculateCube(strings.TrimSpace(text.Text[len("洗魔方"):]))...)
 				return true
-			} else if perm && strings.HasPrefix(plain.Text, "添加词条 ") {
-				key := dealKey(plain.Text[len("添加词条"):])
+			} else if perm && strings.HasPrefix(text.Text, "添加词条 ") {
+				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
-					sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条名称中不能包含 . 符号"})
+					replyGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
 					return true
 				}
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; ok {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条已存在"})
+						replyGroupMessage(message, &Text{Text: "词条已存在"})
 					} else {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要添加的内容"})
-						addDbQQList[message.Sender.Id] = key
+						replyGroupMessage(message, &Text{Text: "请输入要添加的内容"})
+						addDbQQList[message.Sender.UserId] = key
 					}
 				}
 				return true
-			} else if perm && strings.HasPrefix(plain.Text, "修改词条 ") {
-				key := dealKey(plain.Text[len("修改词条"):])
+			} else if perm && strings.HasPrefix(text.Text, "修改词条 ") {
+				key := dealKey(text.Text[len("修改词条"):])
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; !ok {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
+						replyGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "请输入要修改的内容"})
-						addDbQQList[message.Sender.Id] = key
+						replyGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+						addDbQQList[message.Sender.UserId] = key
 					}
 				}
 				return true
-			} else if perm && strings.HasPrefix(plain.Text, "删除词条 ") {
-				key := dealKey(plain.Text[len("删除词条"):])
+			} else if perm && strings.HasPrefix(text.Text, "删除词条 ") {
+				key := dealKey(text.Text[len("删除词条"):])
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; !ok {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "词条不存在"})
+						replyGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
 						delete(m, key)
 						qunDb.Set("data", m)
 						if err := qunDb.WriteConfig(); err != nil {
 							slog.Error("write data failed", "error", err)
 						}
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "删除词条成功"})
+						replyGroupMessage(message, &Text{Text: "删除词条成功"})
 					}
 				}
 				return true
-			} else if strings.HasPrefix(plain.Text, "查询词条 ") || strings.HasPrefix(plain.Text, "搜索词条 ") {
-				key := dealKey(plain.Text[len("搜索词条"):])
+			} else if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
+				key := dealKey(text.Text[len("搜索词条"):])
 				if len(key) > 0 {
 					var res []string
 					m := qunDb.GetStringMapString("data")
@@ -258,31 +258,25 @@ func handleGroupMessage(message *GroupMessage) bool {
 						for i := range res {
 							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
 						}
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
+						replyGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
 					} else {
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "搜索不到词条(" + key + ")"})
+						replyGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
 					}
 				}
 				return true
 			}
 		}
 	}
-	if key, ok := addDbQQList[message.Sender.Id]; ok { // 添加词条
-		delete(addDbQQList, message.Sender.Id)
-		var ms MessageChain
-		for _, m := range message.MessageChain {
-			if _, ok = m.(*Source); !ok {
-				ms = append(ms, m)
-			}
-		}
-		if err := saveImage(ms); err != nil {
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败，" + err.Error()})
+	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
+		delete(addDbQQList, message.Sender.UserId)
+		if err := saveImage(message.Message); err != nil {
+			replyGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
 		}
-		buf, err := json.Marshal(ms)
+		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
-			sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条失败"})
+			replyGroupMessage(message, &Text{Text: "编辑词条失败"})
 			return true
 		}
 		m := qunDb.GetStringMapString("data")
@@ -291,20 +285,20 @@ func handleGroupMessage(message *GroupMessage) bool {
 		if err = qunDb.WriteConfig(); err != nil {
 			slog.Error("write data failed", "error", err)
 		}
-		sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "编辑词条成功"})
+		replyGroupMessage(message, &Text{Text: "编辑词条成功"})
 	} else { // 调用词条
-		if len(message.MessageChain) == 2 {
-			if plain, ok := message.MessageChain[1].(*Plain); ok {
+		if len(message.Message) == 1 {
+			if text, ok := message.Message[0].(*Text); ok {
 				m := qunDb.GetStringMapString("data")
-				s := m[dealKey(plain.Text)]
+				s := m[dealKey(text.Text)]
 				if len(s) > 0 {
 					var ms MessageChain
 					if err := json.Unmarshal([]byte(s), &ms); err != nil {
 						slog.Error("json unmarshal failed", "error", err, "s", s)
-						sendGroupMessage(message.Sender.Group.Id, &Plain{Text: "调用词条失败"})
+						replyGroupMessage(message, &Text{Text: "调用词条失败"})
 						return true
 					}
-					sendGroupMessage(message.Sender.Group.Id, ms...)
+					replyGroupMessage(message, ms...)
 				}
 			}
 		}
@@ -325,9 +319,7 @@ func saveImage(message MessageChain) error {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			md5sum := md5.Sum([]byte(u)) //nolint:gosec
-			imageId := fmt.Sprintf("%d-%x.png", time.Now().Unix(), md5sum)
-			p := filepath.Join("chat-images", imageId)
+			p := filepath.Join("chat-images", img.File)
 			cmd := exec.Command("curl", "-o", p, u)
 			if out, err := cmd.CombinedOutput(); err != nil {
 				slog.Error("cmd.Run() failed", "error", err)
@@ -335,30 +327,40 @@ func saveImage(message MessageChain) error {
 			} else {
 				slog.Debug(string(out))
 			}
-			img.Path = filepath.Join("..", "YinYangJade", "chat-images", imageId)
-			img.ImageId = ""
+			img.File = "file://" + filepath.Join("..", "YinYangJade", "chat-images", img.File)
 			img.Url = ""
 		}
 	}
 	return nil
 }
 
-func sendGroupMessage(group int64, messages ...SingleMessage) {
+func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
 	if len(messages) == 0 {
 		return
 	}
-	_, err := B.SendGroupMessage(group, 0, messages)
-	if err != nil {
+	f := func(messages []SingleMessage) error {
+		if slices.ContainsFunc(messages, func(message SingleMessage) bool {
+			switch message.(type) {
+			case *Text, *Image, *Face:
+				return false
+			}
+			return true
+		}) {
+			_, err := B.SendGroupMessage(context.GroupId, messages)
+			return err
+		}
+		return context.Reply(B, messages, true)
+	}
+	if err := f(messages); err != nil {
 		slog.Error("send group message failed", "error", err)
 		newMessages := make([]SingleMessage, 0, len(messages))
 		for _, m := range messages {
-			if image, ok := m.(*Image); !ok || len(image.ImageId) > 0 || len(image.Url) == 0 {
+			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
 				newMessages = append(newMessages, m)
 			}
 		}
 		if len(newMessages) != len(messages) && len(newMessages) > 0 {
-			_, err = B.SendGroupMessage(group, 0, newMessages)
-			if err != nil {
+			if err = f(newMessages); err != nil {
 				slog.Error("send group message failed", "error", err)
 			}
 		}
@@ -395,8 +397,8 @@ func clearExpiredImages() {
 			continue
 		}
 		for _, m := range ms {
-			if img, ok := m.(*Image); ok && len(img.Path) > 0 {
-				data2[filepath.Base(img.Path)] = true
+			if img, ok := m.(*Image); ok && len(img.File) > 0 && strings.HasPrefix(img.File, "file://") {
+				data2[filepath.Base(img.File[len("file://"):])] = true
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 package tfcc
 
 import (
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -41,10 +41,10 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 			return nil
 		}
 		if IsSuperAdmin(qq) {
-			return MessageChain{&Plain{Text: "你不能删除自己"}}
+			return MessageChain{&Text{Text: "你不能删除自己"}}
 		}
 		if !IsAdmin(qq) {
-			return MessageChain{&Plain{Text: s + "并不是管理员"}}
+			return MessageChain{&Text{Text: s + "并不是管理员"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
@@ -58,7 +58,7 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain{&Plain{Text: ret}}
+	return MessageChain{&Text{Text: ret}}
 }
 
 type addAdmin struct{}
@@ -89,7 +89,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 			return nil
 		}
 		if IsSuperAdmin(qq) || IsAdmin(qq) {
-			return MessageChain{&Plain{Text: s + "已经是管理员了"}}
+			return MessageChain{&Text{Text: s + "已经是管理员了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
 	}
@@ -103,7 +103,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(qqNumbers) == 1 {
 		ret += "：" + strconv.FormatInt(qqNumbers[0], 10)
 	}
-	return MessageChain{&Plain{Text: ret}}
+	return MessageChain{&Text{Text: ret}}
 }
 
 type listAllAdmin struct{}
@@ -129,5 +129,5 @@ func (l *listAllAdmin) Execute(*GroupMessage, string) MessageChain {
 	for _, qq := range admin {
 		s = append(s, strconv.Itoa(qq))
 	}
-	return MessageChain{&Plain{Text: strings.Join(s, "\n")}}
+	return MessageChain{&Text{Text: strings.Join(s, "\n")}}
 }

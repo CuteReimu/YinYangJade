@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
@@ -207,7 +207,7 @@ func calculateCubeAll() MessageChain {
 		slog.Error("生成表格失败", "error", err)
 		return nil
 	}
-	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(buf)}}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
 }
 
 func calculateCube(s string) MessageChain {
@@ -268,7 +268,7 @@ func calculateCube(s string) MessageChain {
 		slog.Error("生成表格失败", "error", err)
 		return nil
 	}
-	return MessageChain{&Image{Base64: base64.StdEncoding.EncodeToString(buf)}}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
 }
 
 var (

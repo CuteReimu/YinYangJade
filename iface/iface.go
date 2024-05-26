@@ -1,7 +1,7 @@
 package iface
 
 import (
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 )
 
 // CmdHandler 这是聊天指令处理器的接口，当你想要新增自己的聊天指令处理器时，实现这个接口即可

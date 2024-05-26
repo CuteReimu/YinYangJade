@@ -3,7 +3,7 @@ package tfcc
 import (
 	"fmt"
 	"github.com/CuteReimu/bilibili/v2"
-	. "github.com/CuteReimu/mirai-sdk-http"
+	. "github.com/CuteReimu/onebot"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/pkg/errors"
 	"log/slog"
@@ -25,17 +25,17 @@ func bilibiliAnalysis(message *GroupMessage) bool {
 		videoFormat = "%s\nhttps://www.bilibili.com/video/%s\nUP主：%s\n视频简介：%s"
 		liveFormat  = "%s\nhttps://live.bilibili.com/%d\n人气：%d\n直播简介：%s"
 	)
-	if len(message.MessageChain) != 2 {
+	if len(message.Message) != 1 {
 		return true
 	}
-	plain, ok := message.MessageChain[1].(*Plain)
+	test, ok := message.Message[0].(*Text)
 	if !ok {
 		return true
 	}
-	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.Sender.Group.Id)) {
+	if !slices.Contains(tfccConfig.GetIntSlice("qq.qq_group"), int(message.GroupId)) {
 		return true
 	}
-	content := strings.TrimSpace(plain.Text)
+	content := strings.TrimSpace(test.Text)
 	resultAny, found, err := getVideoInfo(content)
 	if found {
 		if err != nil {
@@ -46,25 +46,25 @@ func bilibiliAnalysis(message *GroupMessage) bool {
 		switch result := resultAny.(type) {
 		case *bilibili.VideoInfo:
 			if len(result.Pic) > 0 {
-				image = &Image{Url: result.Pic}
+				image = &Image{File: result.Pic}
 			}
 			if len([]rune(result.Desc)) > 100 {
 				result.Desc = string([]rune(result.Desc)[:100]) + "。。。"
 			}
-			plain = &Plain{Text: fmt.Sprintf(videoFormat, result.Title, result.Bvid, result.Owner.Name, result.Desc)}
+			test = &Text{Text: fmt.Sprintf(videoFormat, result.Title, result.Bvid, result.Owner.Name, result.Desc)}
 		case *bilibili.LiveRoomInfo:
 			if len(result.UserCover) > 0 {
-				image = &Image{Url: result.UserCover}
+				image = &Image{File: result.UserCover}
 			}
 			if len([]rune(result.Description)) > 100 {
 				result.Description = string([]rune(result.Description)[:100]) + "。。。"
 			}
-			plain = &Plain{Text: fmt.Sprintf(liveFormat, result.Title, result.RoomId, result.Online, result.Description)}
+			test = &Text{Text: fmt.Sprintf(liveFormat, result.Title, result.RoomId, result.Online, result.Description)}
 		default:
 			slog.Error("解析类型异常", "result", reflect.TypeOf(result))
 			return true
 		}
-		_, err := B.SendGroupMessage(message.Sender.Group.Id, 0, MessageChain{image, plain})
+		err = message.Reply(B, MessageChain{image, test}, true)
 		if err != nil {
 			slog.Error("发送群消息失败", "error", err)
 		}
