@@ -157,6 +157,11 @@ func saveImage(message MessageChain) error {
 				return errors.New("保存图片失败")
 			}
 			p := filepath.Join("dictionary-images", img.File)
+			abs, err := filepath.Abs(p)
+			if err != nil {
+				slog.Error("filepath.Abs() failed", "error", err)
+				return errors.New("保存图片失败")
+			}
 			cmd := exec.Command("curl", "-o", p, u)
 			if out, err := cmd.CombinedOutput(); err != nil {
 				slog.Error("cmd.Run() failed", "error", err)
@@ -164,7 +169,7 @@ func saveImage(message MessageChain) error {
 			} else {
 				slog.Debug(string(out))
 			}
-			img.File = "file://" + filepath.Join("..", "YinYangJade", "dictionary-images", img.File)
+			img.File = "file://" + abs
 			img.Url = ""
 		}
 	}
