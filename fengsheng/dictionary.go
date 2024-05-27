@@ -1,7 +1,6 @@
 package fengsheng
 
 import (
-	//nolint:gosec
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,19 +29,19 @@ func handleDictionary(message *GroupMessage) bool {
 			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
-					replyGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
+					sendGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
 					return true
 				}
 				if _, ok = cmdMap[key]; ok {
-					replyGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
+					sendGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
 					return true
 				}
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; ok {
-						replyGroupMessage(message, &Text{Text: "词条已存在"})
+						sendGroupMessage(message, &Text{Text: "词条已存在"})
 					} else {
-						replyGroupMessage(message, &Text{Text: "请输入要添加的内容"})
+						sendGroupMessage(message, &Text{Text: "请输入要添加的内容"})
 						addDbQQList[message.Sender.UserId] = key
 					}
 				}
@@ -52,9 +51,9 @@ func handleDictionary(message *GroupMessage) bool {
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; !ok {
-						replyGroupMessage(message, &Text{Text: "词条不存在"})
+						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						replyGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
 						addDbQQList[message.Sender.UserId] = key
 					}
 				}
@@ -64,14 +63,14 @@ func handleDictionary(message *GroupMessage) bool {
 				if len(key) > 0 {
 					m := qunDb.GetStringMapString("data")
 					if _, ok = m[key]; !ok {
-						replyGroupMessage(message, &Text{Text: "词条不存在"})
+						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
 						delete(m, key)
 						qunDb.Set("data", m)
 						if err := qunDb.WriteConfig(); err != nil {
 							slog.Error("write data failed", "error", err)
 						}
-						replyGroupMessage(message, &Text{Text: "删除词条成功"})
+						sendGroupMessage(message, &Text{Text: "删除词条成功"})
 					}
 				}
 				return true
@@ -95,9 +94,9 @@ func handleDictionary(message *GroupMessage) bool {
 						for i := range res {
 							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
 						}
-						replyGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
+						sendGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
 					} else {
-						replyGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
+						sendGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
 					}
 				}
 				return true
@@ -107,13 +106,13 @@ func handleDictionary(message *GroupMessage) bool {
 	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
 		if err := saveImage(message.Message); err != nil {
-			replyGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
+			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
 		}
 		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
-			replyGroupMessage(message, &Text{Text: "编辑词条失败"})
+			sendGroupMessage(message, &Text{Text: "编辑词条失败"})
 			return true
 		}
 		m := qunDb.GetStringMapString("data")
@@ -122,7 +121,7 @@ func handleDictionary(message *GroupMessage) bool {
 		if err = qunDb.WriteConfig(); err != nil {
 			slog.Error("write data failed", "error", err)
 		}
-		replyGroupMessage(message, &Text{Text: "编辑词条成功"})
+		sendGroupMessage(message, &Text{Text: "编辑词条成功"})
 	} else { // 调用词条
 		if len(message.Message) == 1 {
 			if text, ok := message.Message[0].(*Text); ok {
@@ -132,10 +131,10 @@ func handleDictionary(message *GroupMessage) bool {
 					var ms MessageChain
 					if err := json.Unmarshal([]byte(s), &ms); err != nil {
 						slog.Error("json unmarshal failed", "error", err, "s", s)
-						replyGroupMessage(message, &Text{Text: "调用词条失败"})
+						sendGroupMessage(message, &Text{Text: "调用词条失败"})
 						return true
 					}
-					replyGroupMessage(message, ms...)
+					sendGroupMessage(message, ms...)
 				}
 			}
 		}
@@ -176,18 +175,16 @@ func saveImage(message MessageChain) error {
 	return nil
 }
 
-func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+	replyGroupMessage(false, context, messages...)
+}
+
+func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMessage) {
 	if len(messages) == 0 {
 		return
 	}
 	f := func(messages []SingleMessage) error {
-		if slices.ContainsFunc(messages, func(message SingleMessage) bool {
-			switch message.(type) {
-			case *Text, *Image, *Face:
-				return false
-			}
-			return true
-		}) {
+		if !reply {
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err
 		}

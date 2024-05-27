@@ -63,7 +63,7 @@ func cmdHandleFunc(message *GroupMessage) bool {
 		if h.CheckAuth(message.GroupId, message.Sender.UserId) {
 			groupMsg := h.Execute(message, content)
 			if len(groupMsg) > 0 {
-				replyGroupMessage(message, groupMsg...)
+				sendGroupMessage(message, groupMsg...)
 			}
 			return true
 		}
@@ -92,7 +92,7 @@ func searchAt(message *GroupMessage) bool {
 				data := permData.GetStringMapString("playerMap")
 				name := data[at.QQ]
 				if len(name) == 0 {
-					replyGroupMessage(message, &Text{Text: "该玩家还未绑定"})
+					sendGroupMessage(message, &Text{Text: "该玩家还未绑定"})
 				} else {
 					go func() {
 						defer func() {
@@ -103,10 +103,10 @@ func searchAt(message *GroupMessage) bool {
 						result, returnError := httpGetString("/getscore", map[string]string{"name": name})
 						if returnError != nil {
 							slog.Error("请求失败", "error", returnError.error)
-							replyGroupMessage(message, returnError.message...)
+							sendGroupMessage(message, returnError.message...)
 							return
 						}
-						replyGroupMessage(message, &Text{Text: result})
+						sendGroupMessage(message, &Text{Text: result})
 					}()
 				}
 			}

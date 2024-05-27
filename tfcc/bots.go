@@ -71,7 +71,7 @@ func cmdHandleFunc(message *GroupMessage) bool {
 		if h.CheckAuth(message.GroupId, message.Sender.UserId) {
 			groupMsg := h.Execute(message, content)
 			if len(groupMsg) > 0 {
-				replyGroupMessage(message, groupMsg...)
+				sendGroupMessage(message, groupMsg...)
 			}
 			return true
 		}
@@ -87,18 +87,16 @@ func addCmdListener(handler iface.CmdHandler) {
 	cmdMap[name] = handler
 }
 
-func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+	replyGroupMessage(false, context, messages...)
+}
+
+func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMessage) {
 	if len(messages) == 0 {
 		return
 	}
 	f := func(messages []SingleMessage) error {
-		if slices.ContainsFunc(messages, func(message SingleMessage) bool {
-			switch message.(type) {
-			case *Text, *Image, *Face:
-				return false
-			}
-			return true
-		}) {
+		if !reply {
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err
 		}

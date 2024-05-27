@@ -78,9 +78,9 @@ func (r *roll) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *roll) Execute(_ *GroupMessage, content string) MessageChain {
+func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		return MessageChain{&Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}} //nolint:gosec
+		replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
 	}
 	return nil
 }
