@@ -67,10 +67,24 @@ var (
 		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
 		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
 	)
+	accessorySelections160 = append(defaultSelections160,
+		"lineMeso+1", "lineDrop+1", "lineMesoOrDrop+1",
+		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
+		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
+	)
 	hatSelections = append(defaultSelections,
 		"secCooldown+2", "secCooldown+3", "secCooldown+4", "secCooldown+5", "secCooldown+6",
 		"secCooldown+2&lineStat+2",
 		"secCooldown+2&lineStat+1", "secCooldown+3&lineStat+1", "secCooldown+4&lineStat+1",
+	)
+	hatSelections160 = append(defaultSelections160,
+		"secCooldown+2", "secCooldown+3", "secCooldown+4", "secCooldown+5", "secCooldown+6",
+		"secCooldown+2&lineStat+2",
+		"secCooldown+2&lineStat+1", "secCooldown+3&lineStat+1", "secCooldown+4&lineStat+1",
+	)
+	gloveSelections = append(defaultSelections,
+		"lineCritDamage+1", "lineCritDamage+2", "lineCritDamage+3",
+		"lineCritDamage+1&lineStat+1", "lineCritDamage+1&lineStat+2", "lineCritDamage+2&lineStat+1",
 	)
 	gloveSelections160 = append(defaultSelections160,
 		"lineCritDamage+1", "lineCritDamage+2", "lineCritDamage+3",
@@ -102,12 +116,22 @@ var (
 		"lineAttOrBossOrIed+1", "lineAttOrBossOrIed+2", "lineAttOrBossOrIed+3",
 		"lineAtt+1&lineAttOrBossOrIed+2", "lineAtt+1&lineAttOrBossOrIed+3", "lineAtt+2&lineAttOrBossOrIed+3",
 	}
+	eSelections160 = []string{
+		"percAtt+21", "percAtt+24", "percAtt+33", "percAtt+36", "percAtt+39",
+		"lineIed+1&percAtt+20", "lineIed+1&percAtt+23", "lineIed+1&percAtt+26",
+		"lineAttOrBossOrIed+1", "lineAttOrBossOrIed+2", "lineAttOrBossOrIed+3",
+		"lineAtt+1&lineAttOrBossOrIed+2", "lineAtt+1&lineAttOrBossOrIed+3", "lineAtt+2&lineAttOrBossOrIed+3",
+	}
 )
 
 func getSelection(name string, itemLevel int) []string {
 	switch name {
 	case "emblem":
-		return eSelections // 纹章现在只算100的
+		if itemLevel < 160 {
+			return eSelections
+		} else {
+			return eSelections160
+		}
 	case "weapon", "secondary":
 		if itemLevel < 160 {
 			return wsSelections
@@ -115,11 +139,23 @@ func getSelection(name string, itemLevel int) []string {
 			return wsSelections160
 		}
 	case "accessory":
-		return accessorySelections // 首饰现在只算150的
+		if itemLevel < 160 {
+			return accessorySelections
+		} else {
+			return accessorySelections160
+		}
 	case "hat":
-		return hatSelections // 帽子现在只算150的
+		if itemLevel < 160 {
+			return hatSelections
+		} else {
+			return hatSelections160
+		}
 	case "gloves":
-		return gloveSelections160 // 手套现在只算200的
+		if itemLevel < 160 {
+			return gloveSelections
+		} else {
+			return gloveSelections160
+		}
 	default:
 		if itemLevel < 160 {
 			return defaultSelections
@@ -211,10 +247,27 @@ func calculateCubeAll() MessageChain {
 }
 
 func calculateCube(s string) MessageChain {
+	sAndLevel := strings.Split(s, " ")
+	if len(sAndLevel) >= 2 {
+		s = sAndLevel[0]
+	}
 	nameLevel, ok := nameMap[s]
 	if !ok {
 		return nil
 	}
+	if len(sAndLevel) >= 2 {
+		level, err := strconv.Atoi(sAndLevel[1])
+		if err != nil {
+			return nil
+		}
+		if level < 100 {
+			return MessageChain{&Text{Text: "不能低于100级"}}
+		} else if level > 300 {
+			return MessageChain{&Text{Text: "不能高于300级"}}
+		}
+		nameLevel.level = level
+	}
+	s = strings.TrimLeft(s, "0123456789")
 	selections := getSelection(nameLevel.name, nameLevel.level)
 	styles := make([]*Style, 0, len(selections)+1)
 	_, eToLR := runCalculator(nameLevel.name, "red", 1, nameLevel.level, 3, "")
