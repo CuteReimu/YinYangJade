@@ -89,6 +89,9 @@ func handleGroupMessage(message *GroupMessage) bool {
 					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
 				}
 				return true
+			} else if strings.HasPrefix(text.Text, "8421") {
+				sendGroupMessage(message, calculatePotion()...)
+				return true
 			} else if text.Text == "查询我" {
 				data := findRoleData.GetStringMapString("data")
 				name := data[strconv.FormatInt(message.Sender.UserId, 10)]
