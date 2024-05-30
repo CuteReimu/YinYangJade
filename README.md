@@ -23,7 +23,7 @@
 - [Lagrange](https://github.com/LagrangeDev/Lagrange.Core) 一个基于纯C#的NTQQ协议实现，源自Konata.Core
 - [LiteLoaderQQNT](https://github.com/LiteLoaderQQNT/LiteLoaderQQNT) QQNT 插件加载器
 - [Gensokyo](https://github.com/Hoshinonyaruko/Gensokyo) 基于qq官方api开发的符合onebot标准的golang实现，轻量、原生跨平台
-- [LLOneBot](https://github.com/LLOneBot/LLOneBot)LiteLoaderQQNT插件，使你的NTQQ支持OneBot11协议进行QQ机器人开发
+- [LLOneBot](https://github.com/LLOneBot/LLOneBot) LiteLoaderQQNT插件，使你的NTQQ支持OneBot11协议进行QQ机器人开发
 
 > [!IMPORTANT]
 > 本项目是基于onebot的正向ws接口，因此你需要开启对应机器人项目的ws监听。
