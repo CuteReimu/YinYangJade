@@ -150,6 +150,62 @@ func formatInt64(i int64) string {
 	return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
 }
 
+func calculateBoomCount(content string) MessageChain {
+	boomProtect := strings.Contains(content, "保护")
+	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
+	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
+	title := "0-22星爆炸次数"
+	if thirtyOff && !fiveTenFifteen {
+		title += "(七折)"
+	}
+	if fiveTenFifteen && !thirtyOff {
+		title += "(必成)"
+	}
+	if thirtyOff && fiveTenFifteen {
+		title += "(超必)"
+	}
+	if boomProtect {
+		title += "(保护)"
+	}
+	booms := make(map[int]int)
+	for range 1000 {
+		_, b, _ := performExperiment(0, 22, 200, boomProtect, thirtyOff, fiveTenFifteen)
+		booms[b]++
+	}
+	values := make([]float64, 0, len(booms))
+	labels := make([]string, 0, len(booms))
+	left := 1000
+	for k := 0; k <= 10; k++ {
+		labels = append(labels, fmt.Sprintf("%d次", k))
+		values = append(values, float64(booms[k]))
+		left -= booms[k]
+	}
+	if left > 0 {
+		labels = append(labels, fmt.Sprintf("超过10次"))
+		values = append(values, float64(left))
+	}
+	p, err := PieRender(
+		values,
+		TitleOptionFunc(TitleOption{
+			Text: title,
+			Left: PositionRight,
+		}),
+		LegendOptionFunc(LegendOption{
+			Data: labels,
+			Show: FalseFlag(),
+		}),
+		PieSeriesShowLabel(),
+	)
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else if buf, err := p.Bytes(); err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else {
+		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
+	}
+	return nil
+}
+
 func calculateStarForce1(content string) MessageChain {
 	arr := strings.Split(content, " ")
 	if len(arr) < 3 {

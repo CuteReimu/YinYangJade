@@ -89,8 +89,14 @@ func handleGroupMessage(message *GroupMessage) bool {
 					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
 				}
 				return true
-			} else if strings.HasPrefix(text.Text, "8421") {
+			} else if text.Text == "8421" {
 				sendGroupMessage(message, calculatePotion()...)
+				return true
+			} else if text.Text == "升级经验" {
+				sendGroupMessage(message, calculateLevelExp()...)
+				return true
+			} else if text.Text == "爆炸次数" || strings.HasPrefix(text.Text, "爆炸次数 ") {
+				sendGroupMessage(message, calculateBoomCount(text.Text[len("爆炸次数"):])...)
 				return true
 			} else if text.Text == "查询我" {
 				data := findRoleData.GetStringMapString("data")
