@@ -171,7 +171,7 @@ func findRole(name string) MessageChain {
 										n++
 									}
 								}
-								aveExp := sumExp / float64(len(expValues))
+								aveExp := sumExp / n
 								days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
 								s += fmt.Sprintf("预计还有%d天升级\n", days)
 							}
