@@ -181,7 +181,7 @@ func calculateBoomCount(content string) MessageChain {
 		left -= booms[k]
 	}
 	if left > 0 {
-		labels = append(labels, fmt.Sprintf("超过10次"))
+		labels = append(labels, "超过10次")
 		values = append(values, float64(left))
 	}
 	p, err := PieRender(
