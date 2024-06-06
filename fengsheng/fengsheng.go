@@ -2,10 +2,13 @@ package fengsheng
 
 import (
 	"encoding/base64"
+	"fmt"
 	. "github.com/CuteReimu/onebot"
 	"log/slog"
+	"math/rand/v2"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -20,6 +23,7 @@ func init() {
 	addCmdListener(&updateTitle{})
 	addCmdListener(&removeTitle{})
 	addCmdListener(&resetPwd{})
+	addCmdListener(&sign{})
 }
 
 type getMyScore struct{}
@@ -413,4 +417,60 @@ func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	return MessageChain{&Text{Text: result}}
+}
+
+type sign struct{}
+
+func (s *sign) Name() string {
+	return "签到"
+}
+
+func (s *sign) ShowTips(int64, int64) string {
+	return "签到"
+}
+
+func (s *sign) CheckAuth(_ int64, _ int64) bool {
+	return true
+}
+
+func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
+	if len(strings.TrimSpace(content)) != 0 {
+		return nil
+	}
+	qq := strconv.FormatInt(msg.Sender.UserId, 10)
+	data := permData.GetStringMapString("playerMap")
+	name := data[qq]
+	if len(name) == 0 {
+		return MessageChain{&Text{Text: "请先注册"}}
+	}
+	lastSignTime := signData.GetInt64("data." + qq)
+	now := time.Now()
+	y1, m1, d1 := time.UnixMilli(lastSignTime).Date()
+	y2, m2, d2 := now.Date()
+	if y1 == y2 && m1 == m2 && d1 == d2 {
+		return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
+	}
+	signData.Set("data."+qq, now.UnixMilli())
+	if err := signData.WriteConfig(); err != nil {
+		slog.Error("write data failed", "error", err)
+	}
+	energy := rand.IntN(10)/3 + 1
+	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if !success {
+		return MessageChain{&Text{Text: "签到失败"}}
+	}
+	switch energy {
+	case 1:
+		return MessageChain{&Text{Text: "太背了，获得1点精力"}}
+	case 2:
+		return MessageChain{&Text{Text: "运气还行，获得2点精力"}}
+	case 3:
+		return MessageChain{&Text{Text: "运气不错，获得3点精力"}}
+	default:
+		return MessageChain{&Text{Text: fmt.Sprintf("运气爆棚，获得%d点精力", energy)}}
+	}
 }
