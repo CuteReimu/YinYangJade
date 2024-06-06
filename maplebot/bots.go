@@ -81,12 +81,12 @@ func handleGroupMessage(message *GroupMessage) bool {
 				sendGroupMessage(message, &Text{Text: "pong"})
 				return true
 			} else if text.Text == "roll" {
-				replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
+				replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
 				return true
 			} else if strings.HasPrefix(text.Text, "roll ") {
 				upperLimit, _ := strconv.Atoi(strings.TrimSpace(text.Text[len("roll"):]))
 				if upperLimit > 0 {
-					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
+					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
 				}
 				return true
 			} else if text.Text == "8421" {

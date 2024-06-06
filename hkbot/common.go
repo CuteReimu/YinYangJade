@@ -78,7 +78,7 @@ func (r *roll) CheckAuth(int64, int64) bool {
 
 func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
+		replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
 	}
 	return nil
 }

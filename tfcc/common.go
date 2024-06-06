@@ -80,7 +80,7 @@ func (r *roll) CheckAuth(int64, int64) bool {
 
 func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
+		replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
 	}
 	return nil
 }
@@ -121,7 +121,7 @@ func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 	for i := 0; i < count/2; i++ {
 		a1 := a[len(a)-1]
 		a = a[:len(a)-1]
-		index := rand.IntN(len(a)) //nolint:gosec
+		index := rand.IntN(len(a))
 		a2 := a[index]
 		a = append(a[:index], a[index+1:]...)
 		ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", a1, a2))
