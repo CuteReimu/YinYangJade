@@ -255,8 +255,9 @@ func clearExpiredImages() {
 }
 
 type dictionaryCommand struct {
-	name string
-	tips string
+	name      string
+	tips      string
+	checkPerm bool
 }
 
 func (d *dictionaryCommand) Name() string {
@@ -267,8 +268,8 @@ func (d *dictionaryCommand) ShowTips(int64, int64) string {
 	return d.tips
 }
 
-func (d *dictionaryCommand) CheckAuth(int64, int64) bool {
-	return true
+func (d *dictionaryCommand) CheckAuth(_ int64, senderId int64) bool {
+	return !d.checkPerm || IsWhitelist(senderId)
 }
 
 func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChain {
@@ -279,8 +280,8 @@ func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChai
 }
 
 func init() {
-	addCmdListener(&dictionaryCommand{name: "添加词条", tips: "添加词条 词条名称"})
-	addCmdListener(&dictionaryCommand{name: "删除词条", tips: "删除词条 词条名称"})
-	addCmdListener(&dictionaryCommand{name: "修改词条", tips: "修改词条 词条名称"})
+	addCmdListener(&dictionaryCommand{name: "添加词条", tips: "添加词条 词条名称", checkPerm: true})
+	addCmdListener(&dictionaryCommand{name: "删除词条", tips: "删除词条 词条名称", checkPerm: true})
+	addCmdListener(&dictionaryCommand{name: "修改词条", tips: "修改词条 词条名称", checkPerm: true})
 	addCmdListener(&dictionaryCommand{name: "搜索词条", tips: "搜索词条 关键词"})
 }
