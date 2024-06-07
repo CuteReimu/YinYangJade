@@ -450,10 +450,6 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 	if y1 == y2 && m1 == m2 && d1 == d2 {
 		return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
 	}
-	signData.Set("data."+qq, now.UnixMilli())
-	if err := signData.WriteConfig(); err != nil {
-		slog.Error("write data failed", "error", err)
-	}
 	energy := rand.IntN(10)/3 + 1
 	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
 	if returnError != nil {
@@ -462,6 +458,10 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 	}
 	if !success {
 		return MessageChain{&Text{Text: "签到失败"}}
+	}
+	signData.Set("data."+qq, now.UnixMilli())
+	if err := signData.WriteConfig(); err != nil {
+		slog.Error("write data failed", "error", err)
 	}
 	switch energy {
 	case 1:
