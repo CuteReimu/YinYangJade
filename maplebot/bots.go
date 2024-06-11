@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/CuteReimu/YinYangJade/slicegame"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
@@ -88,6 +89,9 @@ func handleGroupMessage(message *GroupMessage) bool {
 				if upperLimit > 0 {
 					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
 				}
+				return true
+			} else if text.Text == "滑块" {
+				sendGroupMessage(message, slicegame.DoStuff()...)
 				return true
 			} else if text.Text == "8421" {
 				sendGroupMessage(message, calculatePotion()...)
