@@ -16,39 +16,17 @@ import (
 
 type findRoleReturnData struct {
 	CharacterData struct {
-		AchievementPoints int
-		AchievementRank   int
-		CharacterImageURL string
-		Class             string
-		ClassRank         int
-		EXP               int64
-		EXPPercent        float64
-		GlobalRanking     int
+		CharacterImageURL string  `json:"CharacterImageURL"`
+		Class             string  `json:"Class"`
+		EXPPercent        float64 `json:"EXPPercent"`
 		GraphData         []struct {
-			AvatarURL        string
-			ClassID          int
-			ClassRankGroupID int
-			CurrentEXP       int64
-			DateLabel        string
-			EXPDifference    int
-			EXPToNextLevel   int64
-			ImportTime       int
-			Level            int
-			Name             string
-			ServerID         int
-			ServerMergeID    int
-			TotalOverallEXP  int64
+			CurrentEXP int64  `json:"CurrentEXP"`
+			DateLabel  string `json:"DateLabel"`
+			Level      int    `json:"Level"`
 		} `json:"GraphData"`
-		Guild              string
-		LegionLevel        int
-		LegionPower        int
-		LegionRank         int
-		Level              int
-		Name               string
-		Server             string
-		ServerClassRanking int
-		ServerRank         int
-		ServerSlug         string
+		LegionLevel int    `json:"LegionLevel"`
+		Level       int    `json:"Level"`
+		Name        string `json:"Name"`
 	} `json:"CharacterData"`
 }
 
