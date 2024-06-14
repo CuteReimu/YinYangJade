@@ -1,31 +1,59 @@
 package maplebot
 
 import (
-	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	. "github.com/CuteReimu/onebot"
-	"github.com/tidwall/gjson"
 	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"math"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var (
-	nameRegex   = regexp.MustCompile(`<h3 class="card-title text-nowrap">([A-Za-z0-9 ]+)</h3>`)
-	imgRegex    = regexp.MustCompile(`<img src="(.*?)"`)
-	levelRegex  = regexp.MustCompile(`<h5 class="card-text">([A-Za-z0-9.% ()]+)</h5>`)
-	classRegex  = regexp.MustCompile(`<p class="card-text mb-0">([A-Za-z0-9 ]*?) in`)
-	legionRegex = regexp.MustCompile(`Legion Level <span class="char-stat-right">([0-9,]+)</span>`)
-	dataRegex   = regexp.MustCompile(`"data":\s*\{`)
-)
+type findRoleReturnData struct {
+	CharacterData struct {
+		AchievementPoints int
+		AchievementRank   int
+		CharacterImageURL string
+		Class             string
+		ClassRank         int
+		EXP               int64
+		EXPPercent        float64
+		GlobalRanking     int
+		GraphData         []struct {
+			AvatarURL        string
+			ClassID          int
+			ClassRankGroupID int
+			CurrentEXP       int64
+			DateLabel        string
+			EXPDifference    int
+			EXPToNextLevel   int64
+			ImportTime       int
+			Level            int
+			Name             string
+			ServerID         int
+			ServerMergeID    int
+			TotalOverallEXP  int64
+		} `json:"GraphData"`
+		Guild              string
+		LegionLevel        int
+		LegionPower        int
+		LegionRank         int
+		Level              int
+		Name               string
+		Server             string
+		ServerClassRanking int
+		ServerRank         int
+		ServerSlug         string
+	} `json:"CharacterData"`
+}
 
 func findRole(name string) MessageChain {
-	resp, err := restyClient.R().Get("https://mapleranks.com/u/" + name)
+	resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
@@ -39,56 +67,18 @@ func findRole(name string) MessageChain {
 		return nil
 	}
 	body := resp.Body()
-	var (
-		rawName     = ""
-		class       = ""
-		levelExp    = ""
-		legionLevel = "0"
-		imgUrl      = ""
-		expData     gjson.Result
-		levelData   gjson.Result
-	)
-	nameMatch := nameRegex.FindSubmatchIndex(body)
-	if nameMatch != nil {
-		rawName = string(body[nameMatch[2]:nameMatch[3]])
-		body = body[nameMatch[1]:]
+	var data *findRoleReturnData
+	if err = json.Unmarshal(body, &data); err != nil {
+		slog.Error("json解析失败", "error", err, "body", body)
+		return nil
 	}
-	imgMatch := imgRegex.FindSubmatchIndex(body)
-	if imgMatch != nil {
-		imgUrl = string(body[imgMatch[2]:imgMatch[3]])
-	}
-	levelMatch := levelRegex.FindSubmatchIndex(body)
-	if levelMatch != nil {
-		levelExp = string(body[levelMatch[2]:levelMatch[3]])
-		if index := strings.Index(levelExp, "Lv."); index != -1 {
-			levelExp = levelExp[index+len("Lv."):]
-		}
-		levelExp = strings.TrimSpace(levelExp)
-	}
-	classMatch := classRegex.FindSubmatchIndex(body)
-	if classMatch != nil {
-		class = string(body[classMatch[2]:classMatch[3]])
-	}
-	legionMatch := legionRegex.FindSubmatchIndex(body)
-	if legionMatch != nil {
-		legionLevel = string(body[legionMatch[2]:legionMatch[3]])
-	}
-	body = resp.Body()
-	for dataMatch := dataRegex.FindIndex(body); dataMatch != nil; dataMatch = dataRegex.FindIndex(body) {
-		body = body[dataMatch[1]:]
-		index := bytes.Index(body, []byte("},"))
-		rawData := "{" + string(body[:index]) + "}"
-		chartData := gjson.Parse(rawData)
-		a := chartData.Get("datasets").Array()
-		if len(a) > 0 {
-			switch a[0].Get("label").String() {
-			case "Level":
-				levelData = chartData
-			case "Exp":
-				expData = chartData
-			}
-		}
-	}
+	imgUrl := data.CharacterData.CharacterImageURL
+	rawName := data.CharacterData.Name
+	class := data.CharacterData.Class
+	level := data.CharacterData.Level
+	exp := data.CharacterData.EXPPercent
+	levelExp := fmt.Sprintf("%d (%g%%)", level, exp)
+	legionLevel := data.CharacterData.LegionLevel
 
 	var messageChain MessageChain
 	if len(imgUrl) > 0 {
@@ -100,20 +90,47 @@ func findRole(name string) MessageChain {
 		}
 	}
 
-	s := fmt.Sprintf("角色名：%s\n职业：%s\n等级：%s\n联盟：%s\n", rawName, class, levelExp, legionLevel)
+	s := fmt.Sprintf("角色名：%s\n职业：%s\n等级：%s\n联盟：%d\n", rawName, class, levelExp, legionLevel)
 
-	expValues := make([]float64, 0, 30)
-	levelValues := make([]float64, 0, 30)
-	labels := make([]string, 0, 30)
-	a := expData.Get("datasets").Array()
+	expValues := make([]float64, 0, 14)
+	levelValues := make([]float64, 0, 15)
+	labels := make([]string, 0, 15)
+	a := data.CharacterData.GraphData
 	if len(a) > 0 {
-		datasets := a[0].Get("data").Array()
-		for i, label := range expData.Get("labels").Array() {
-			if s := label.String(); len(s) > 0 {
-				labels = append(labels, s)
-				expValues = append(expValues, float64(datasets[i].Int()))
+		for _, d := range a {
+			labels = append(labels, d.DateLabel)
+			expPercent := float64(d.CurrentEXP) / levelExpData.GetFloat64(fmt.Sprintf("data.%d", d.Level))
+			levelValues = append(levelValues, float64(d.Level)+expPercent)
+		}
+		if len(labels) < 15 {
+			t, err := time.Parse("2006-01-02", a[0].DateLabel)
+			for len(labels) < 15 {
+				if err != nil {
+					labels = append([]string{""}, labels...)
+				} else {
+					t = t.Add(-24 * time.Hour)
+					labels = append([]string{t.Format("2006-01-02")}, labels...)
+				}
+				// maplestory.gg只统计210级以上角色的经验数据，没数据我们就只能认为是210级了
+				levelValues = append([]float64{210}, levelValues...)
 			}
 		}
+		for i := 1; i < len(levelValues); i++ {
+			level0, level1 := int(levelValues[i-1]), int(levelValues[i])
+			expPercent0, expPercent1 := levelValues[i-1]-float64(level0), levelValues[i]-float64(level1)
+			var totalExp float64
+			for j := level0; j < level1; j++ {
+				totalExp += levelExpData.GetFloat64(fmt.Sprintf("data.%d", j))
+			}
+			totalExp -= expPercent0 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level0))
+			totalExp += expPercent1 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level1))
+			expValues = append(expValues, math.Round(totalExp))
+		}
+		labels = labels[1:]
+		for i := range labels {
+			labels[i] = labels[i][5:]
+		}
+		levelValues = levelValues[1:]
 		maxValue := slices.Max(expValues)
 		digits := int(math.Floor(math.Log10(maxValue))) + 1
 		factor := math.Pow(10, float64(digits-1))
@@ -127,35 +144,20 @@ func findRole(name string) MessageChain {
 		divideCount := int(maxValue / factor)
 		var yAxisOptions []YAxisOption
 		yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(0), Max: &maxValue, DivideCount: divideCount, Unit: 1})
-		aLevel := levelData.Get("datasets").Array()
-		if len(aLevel) > 0 {
-			datasetsLevel := aLevel[0].Get("data").Array()
-			for i, label := range levelData.Get("labels").Array() {
-				if s := label.String(); len(s) > 0 && i < len(datasetsLevel) {
-					levelValues = append(levelValues, datasetsLevel[i].Float())
+		for _, diff := range []float64{0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
+			minLevel, maxLevel := math.Floor(slices.Min(levelValues)/diff)*diff, math.Ceil(slices.Max(levelValues)/diff)*diff
+			remainCount := divideCount - int(math.Round((maxLevel-minLevel)/diff))
+			if remainCount >= 0 {
+				if remainCount > 0 {
+					maxLevel += diff * float64(remainCount-remainCount/2)
+					minLevel -= diff * float64(remainCount/2)
 				}
-			}
-			for i := range levelValues {
-				if levelValues[i] == 0 && i > 0 {
-					levelValues[i] = levelValues[i-1]
+				if minLevel <= 210 { // 为了图表好看，最低显示210级
+					maxLevel -= minLevel - 210
+					minLevel = 210
 				}
-			}
-			for i := len(levelValues) - 2; i >= 0; i-- {
-				if levelValues[i] == 0 {
-					levelValues[i] = levelValues[i+1]
-				}
-			}
-			for _, diff := range []float64{0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
-				minLevel, maxLevel := math.Floor(slices.Min(levelValues)/diff)*diff, math.Ceil(slices.Max(levelValues)/diff)*diff
-				remainCount := divideCount - int(math.Round((maxLevel-minLevel)/diff))
-				if remainCount >= 0 {
-					if remainCount > 0 {
-						maxLevel += diff * float64(remainCount-remainCount/2)
-						minLevel -= diff * float64(remainCount/2)
-					}
-					yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(minLevel), Max: NewFloatPoint(maxLevel), DivideCount: divideCount, Unit: 1})
-					break
-				}
+				yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(minLevel), Max: NewFloatPoint(maxLevel), DivideCount: divideCount, Unit: 1})
+				break
 			}
 		}
 		if slices.ContainsFunc(expValues, func(f float64) bool { return f != 0 }) {
@@ -196,9 +198,10 @@ func findRole(name string) MessageChain {
 					opt.XAxis.TextRotation = -math.Pi / 4
 					opt.XAxis.LabelOffset = Box{Top: -5, Left: 7}
 					opt.XAxis.FontSize = 7.5
-					opt.XAxis.FirstAxis = 1
 					opt.ValueFormatter = func(f float64) string {
 						switch {
+						case f == 210.0:
+							return "\u3000" // 不显示210级的坐标，用全角空格代替
 						case f < 1000.0:
 							return fmt.Sprintf("%g", math.Round(f*1000)/1000)
 						case f < 1000000.0:
