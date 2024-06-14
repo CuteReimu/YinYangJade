@@ -124,7 +124,7 @@ func findRole(name string) MessageChain {
 			}
 			totalExp -= expPercent0 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level0))
 			totalExp += expPercent1 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level1))
-			expValues = append(expValues, math.Round(totalExp))
+			expValues = append(expValues, max(math.Round(totalExp), 0))
 		}
 		labels = labels[1:]
 		for i := range labels {
