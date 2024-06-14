@@ -99,7 +99,11 @@ func findRole(name string) MessageChain {
 	if len(a) > 0 {
 		for _, d := range a {
 			labels = append(labels, d.DateLabel)
-			expPercent := float64(d.CurrentEXP) / levelExpData.GetFloat64(fmt.Sprintf("data.%d", d.Level))
+			levelUpExp := levelExpData.GetFloat64(fmt.Sprintf("data.%d", d.Level))
+			var expPercent float64
+			if levelUpExp > 0 {
+				expPercent = float64(d.CurrentEXP) / levelUpExp
+			}
 			levelValues = append(levelValues, float64(d.Level)+expPercent)
 		}
 		if len(labels) < 15 {
