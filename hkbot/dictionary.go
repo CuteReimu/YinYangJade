@@ -188,7 +188,7 @@ func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMess
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err
 		}
-		return context.Reply(B, messages, true)
+		return context.Reply(B, messages, false)
 	}
 	if err := f(messages); err != nil {
 		slog.Error("send group message failed", "error", err)
