@@ -52,7 +52,7 @@ func findRole(name string) MessageChain {
 	}
 	imgUrl := data.CharacterData.CharacterImageURL
 	rawName := data.CharacterData.Name
-	class := data.CharacterData.Class
+	class := TranslateClassName(data.CharacterData.Class)
 	level := data.CharacterData.Level
 	exp := data.CharacterData.EXPPercent
 	levelExp := fmt.Sprintf("%d (%g%%)", level, exp)
