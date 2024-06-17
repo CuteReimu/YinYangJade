@@ -53,7 +53,8 @@ var ClassNameMap = map[string]string{
 	"Kanna":                  "阴阳师",
 	"ZERO":                   "神之子",
 	"Lynn":                   "琳恩",
-	"Kinesis":                "凯内西斯",
+	"":                       "琳恩",
+	"Kinesis":                "超能力者",
 }
 
 func init() {
