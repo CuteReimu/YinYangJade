@@ -93,8 +93,8 @@ func findRole(name string) MessageChain {
 					t = t.Add(-24 * time.Hour)
 					labels = append([]string{t.Format("2006-01-02")}, labels...)
 				}
-				// maplestory.gg只统计210级以上角色的经验数据，没数据我们就只能认为是210级了
-				levelValues = append([]float64{210}, levelValues...)
+				// maplestory.gg只统计220级以上角色的经验数据，没数据我们就只能认为是220级了
+				levelValues = append([]float64{220}, levelValues...)
 			}
 		}
 		// 处理一下，有可能有的数据是0级
@@ -145,9 +145,9 @@ func findRole(name string) MessageChain {
 					maxLevel += diff * float64(remainCount-remainCount/2)
 					minLevel -= diff * float64(remainCount/2)
 				}
-				if minLevel <= 210 { // 为了图表好看，最低显示210级
-					maxLevel -= minLevel - 210
-					minLevel = 210
+				if minLevel <= 220 { // 为了图表好看，最低显示220级
+					maxLevel -= minLevel - 220
+					minLevel = 220
 				}
 				yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(minLevel), Max: NewFloatPoint(maxLevel), DivideCount: divideCount, Unit: 1})
 				break
@@ -193,8 +193,8 @@ func findRole(name string) MessageChain {
 					opt.XAxis.FontSize = 7.5
 					opt.ValueFormatter = func(f float64) string {
 						switch {
-						case f == 210.0:
-							return "\u3000" // 不显示210级的坐标，用全角空格代替
+						case f == 220.0:
+							return "\u3000" // 不显示220级的坐标，用全角空格代替
 						case f < 1000.0:
 							return fmt.Sprintf("%g", math.Round(f*1000)/1000)
 						case f < 1000000.0:
