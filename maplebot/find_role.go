@@ -97,6 +97,17 @@ func findRole(name string) MessageChain {
 				levelValues = append([]float64{210}, levelValues...)
 			}
 		}
+		// 处理一下，有可能有的数据是0级
+		for i := 1; i < len(levelValues); i++ {
+			if levelValues[i] == 0 {
+				levelValues[i] = levelValues[i-1]
+			}
+		}
+		for i := len(levelValues) - 2; i >= 0; i-- {
+			if levelValues[i] == 0 {
+				levelValues[i] = levelValues[i+1]
+			}
+		}
 		for i := 1; i < len(levelValues); i++ {
 			level0, level1 := int(levelValues[i-1]), int(levelValues[i])
 			expPercent0, expPercent1 := levelValues[i-1]-float64(level0), levelValues[i]-float64(level1)
