@@ -1,11 +1,18 @@
 package maplebot
 
 import (
+	"bytes"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/jpeg"
+	"image/png"
 	"log/slog"
 	"math"
 	"slices"
@@ -13,6 +20,20 @@ import (
 	"strings"
 	"time"
 )
+
+//go:embed lucid_bkg_mid.jpeg
+var bkgFile []byte
+
+var bkg *image.Image
+
+func init() {
+	file, err := jpeg.Decode(bytes.NewReader(bkgFile))
+	if err != nil {
+		slog.Error("解析背景图片失败", "error", err)
+	} else {
+		bkg = &file
+	}
+}
 
 type findRoleReturnData struct {
 	CharacterData struct {
@@ -214,6 +235,23 @@ func findRole(name string) MessageChain {
 			} else if buf, err := p.Bytes(); err != nil {
 				slog.Error("render chart failed", "error", err)
 			} else {
+				if bkg != nil {
+					img, err := png.Decode(bytes.NewReader(buf))
+					if err != nil {
+						slog.Error("解析图片失败", "error", err)
+					} else {
+						mask := &image.Uniform{C: color.RGBA{R: 255, G: 255, B: 255, A: 56}}
+						newImg := image.NewRGBA(img.Bounds())
+						draw.Draw(newImg, newImg.Bounds(), img, image.Point{}, draw.Src)
+						draw.DrawMask(newImg, newImg.Bounds(), *bkg, image.Point{}, mask, image.Point{}, draw.Over)
+						buf2 := &bytes.Buffer{}
+						if err = png.Encode(buf2, newImg); err != nil {
+							slog.Error("生成图片失败", "error", err)
+						} else {
+							buf = buf2.Bytes()
+						}
+					}
+				}
 				messageChain = append(messageChain, &Text{Text: s}, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
 			}
 		} else {
