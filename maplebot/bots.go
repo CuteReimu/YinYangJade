@@ -99,6 +99,15 @@ func handleGroupMessage(message *GroupMessage) bool {
 			} else if text.Text == "升级经验" {
 				sendGroupMessage(message, calculateLevelExp()...)
 				return true
+			} else if strings.HasPrefix(text.Text, "升级经验 ") {
+				content := strings.TrimSpace(text.Text[len("升级经验"):])
+				parts := strings.SplitN(content, " ", 2)
+				if len(parts) == 2 {
+					start, _ := strconv.Atoi(parts[0])
+					end, _ := strconv.Atoi(parts[1])
+					sendGroupMessage(message, calculateExpBetweenLevel(int64(start), int64(end))...)
+				}
+				return true
 			} else if text.Text == "爆炸次数" || strings.HasPrefix(text.Text, "爆炸次数 ") {
 				sendGroupMessage(message, calculateBoomCount(text.Text[len("爆炸次数"):])...)
 				return true

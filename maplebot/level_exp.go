@@ -10,6 +10,32 @@ import (
 	"strconv"
 )
 
+func calculateExpBetweenLevel(start, end int64) MessageChain {
+	if start < 1 || end > 300 || start >= end {
+		return nil
+	}
+	var exp int64
+	for i := start; i < end; i++ {
+		exp += int64(levelExpData.GetFloat64(fmt.Sprintf("data.%d", i)))
+	}
+	var s string
+	switch {
+	case exp < 1000:
+		s = fmt.Sprintf("%d", exp)
+	case exp < 1000000:
+		s = fmt.Sprintf("%.2fK", float64(exp)/1000)
+	case exp < 1000000000:
+		s = fmt.Sprintf("%.2fM", float64(exp)/1000000)
+	case exp < 1000000000000:
+		s = fmt.Sprintf("%.2fB", float64(exp)/1000000000)
+	case exp < 1000000000000000:
+		s = fmt.Sprintf("%.2fT", float64(exp)/1000000000000)
+	default:
+		s = fmt.Sprintf("%.2fQ", float64(exp)/1000000000000000)
+	}
+	return MessageChain{&Text{Text: fmt.Sprintf("从%d级到%d级需要经验：%s", start, end, s)}}
+}
+
 func calculateLevelExp() MessageChain {
 	labels := make([]string, 0, 100)
 	values := [][]float64{make([]float64, 0, 100)}
