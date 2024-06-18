@@ -21,7 +21,7 @@ func calculateExpBetweenLevel(start, end int64) MessageChain {
 	var s string
 	switch {
 	case exp < 1000:
-		s = fmt.Sprintf("%d", exp)
+		s = strconv.FormatInt(exp, 10)
 	case exp < 1000000:
 		s = fmt.Sprintf("%.2fK", float64(exp)/1000)
 	case exp < 1000000000:
