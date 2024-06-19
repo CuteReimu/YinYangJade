@@ -10,7 +10,7 @@ import (
 	. "github.com/vicanso/go-charts/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 	"image"
-	"image/color"
+	"image/draw"
 	"image/gif"
 	"image/png"
 	"log/slog"
@@ -107,18 +107,18 @@ func displayResult(img *gif.GIF, h int, results map[int]*Result) error {
 		if err := displayResult(img, r.lastHash, results); err != nil {
 			return err
 		}
-		if err := draw(img, h); err != nil {
+		if err := drawImage(img, h); err != nil {
 			return err
 		}
 	} else {
-		if err := draw(img, h); err != nil {
+		if err := drawImage(img, h); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func draw(img *gif.GIF, hash int) error {
+func drawImage(img *gif.GIF, hash int) error {
 	problem := make([]string, 0, 9)
 	for range 9 {
 		if hash%10 != 0 {
@@ -155,15 +155,8 @@ func draw(img *gif.GIF, hash int) error {
 	}
 	if img0.Bounds().Dx() != 102 || img0.Bounds().Dy() != 102 {
 		img1 := image.NewRGBA(image.Rect(0, 0, 102, 102))
-		for x := 0; x < 102; x++ {
-			for y := 0; y < 102; y++ {
-				if x >= img0.Bounds().Dx() || y >= img0.Bounds().Dy() {
-					img1.Set(x, y, color.White)
-				} else {
-					img1.Set(x, y, img0.At(x, y))
-				}
-			}
-		}
+		draw.Draw(img1, img1.Bounds(), image.White, image.Point{}, draw.Src)
+		draw.Draw(img1, img0.Bounds(), img0, image.Point{}, draw.Over)
 		img0 = img1
 	}
 	img.Image = append(img.Image, neuquant.Paletted(img0))
