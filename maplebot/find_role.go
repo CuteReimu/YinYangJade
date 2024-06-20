@@ -24,14 +24,14 @@ import (
 //go:embed lucid_bkg_mid.jpeg
 var bkgFile []byte
 
-var bkg *image.Image
+var bkg image.Image
 
 func init() {
 	file, err := jpeg.Decode(bytes.NewReader(bkgFile))
 	if err != nil {
 		slog.Error("解析背景图片失败", "error", err)
 	} else {
-		bkg = &file
+		bkg = file
 	}
 }
 
@@ -243,7 +243,17 @@ func findRole(name string) MessageChain {
 						mask := &image.Uniform{C: color.RGBA{R: 255, G: 255, B: 255, A: 56}}
 						newImg := image.NewRGBA(img.Bounds())
 						draw.Draw(newImg, newImg.Bounds(), img, image.Point{}, draw.Src)
-						draw.DrawMask(newImg, newImg.Bounds(), *bkg, image.Point{}, mask, image.Point{}, draw.Over)
+						bkg2, err := GetClassImage(data.CharacterData.Class)
+						if bkg2 == nil {
+							if err != nil {
+								slog.Error("获取职业图片失败", "error", err)
+							}
+							draw.DrawMask(newImg, newImg.Bounds(), bkg, image.Point{}, mask, image.Point{}, draw.Over)
+						} else {
+							rect := newImg.Bounds()
+							rect.Min.X = rect.Max.X - bkg2.Bounds().Dx()
+							draw.DrawMask(newImg, rect, bkg2, image.Point{}, mask, image.Point{}, draw.Over)
+						}
 						buf2 := &bytes.Buffer{}
 						if err = png.Encode(buf2, newImg); err != nil {
 							slog.Error("生成图片失败", "error", err)

@@ -1,6 +1,19 @@
 package maplebot
 
 import (
+	"bytes"
+	. "github.com/CuteReimu/onebot"
+	"github.com/nfnt/resize"
+	"github.com/pkg/errors"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"log/slog"
+	"net/url"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -53,7 +66,6 @@ var ClassNameMap = map[string]string{
 	"Kanna":                  "阴阳师",
 	"ZERO":                   "神之子",
 	"Lynn":                   "琳恩",
-	"":                       "琳恩",
 	"Kinesis":                "超能力者",
 }
 
@@ -67,8 +79,69 @@ func init() {
 }
 
 func TranslateClassName(s string) string {
+	if len(s) == 0 {
+		s = "Lynn"
+	}
 	if name, ok := ClassNameMap[strings.ToLower(s)]; ok {
 		return name
 	}
 	return s
+}
+
+func GetClassImage(name string) (image.Image, error) {
+	if len(name) == 0 {
+		name = "Lynn"
+	}
+	if name := classImageData.GetString(strings.ToLower(name)); len(name) > 0 {
+		img, err := getClassImage(name)
+		if err != nil {
+			return nil, err
+		}
+		return resize.Resize(0, 400, img, resize.Lanczos3), nil
+	}
+	return nil, errors.Errorf("class image not found: %s", name)
+}
+
+func getClassImage(name string) (image.Image, error) {
+	buf, err := os.ReadFile(filepath.Join("class_image", name))
+	if err != nil {
+		return nil, err
+	}
+	img, _, err := image.Decode(bytes.NewReader(buf))
+	return img, err
+}
+
+func SetClassImage(name string, img *Image) MessageChain {
+	if len(name) == 0 || !classImageData.IsSet(name) {
+		return MessageChain{&Text{Text: "职业不存在"}}
+	}
+	u := img.Url
+	_, err := url.Parse(u)
+	if err != nil {
+		slog.Error("userInput is not a valid URL, reject it", "error", err)
+		return nil
+	}
+	if err := os.MkdirAll("class_image", 0755); err != nil {
+		slog.Error("mkdir failed", "error", err)
+		return MessageChain{&Text{Text: "保存图片失败"}}
+	}
+	p := filepath.Join("class_image", img.File)
+	cmd := exec.Command("curl", "-o", p, u)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		slog.Error("cmd.Run() failed", "error", err)
+		return MessageChain{&Text{Text: "保存图片失败"}}
+	} else {
+		slog.Debug(string(out))
+	}
+	_, err = getClassImage(img.File)
+	if err != nil {
+		slog.Error("invalid image", "error", err)
+		_ = os.Remove(p)
+		return MessageChain{&Text{Text: "不支持的图片格式"}}
+	}
+	classImageData.Set(name, img.File)
+	if err = classImageData.WriteConfig(); err != nil {
+		slog.Error("write config failed", "error", err)
+	}
+	return MessageChain{&Text{Text: "保存图片成功"}}
 }

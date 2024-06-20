@@ -7,10 +7,11 @@ import (
 )
 
 var (
-	config       = viper.New()
-	qunDb        = viper.New()
-	findRoleData = viper.New()
-	levelExpData = viper.New()
+	config         = viper.New()
+	qunDb          = viper.New()
+	findRoleData   = viper.New()
+	levelExpData   = viper.New()
+	classImageData = viper.New()
 )
 
 func initConfig() {
@@ -54,6 +55,19 @@ func initConfig() {
 	levelExpData.SetConfigType("yml")
 	_ = levelExpData.SafeWriteConfigAs(filepath.Join("data", "net.cutereimu.maplebots", "LevelExpData.yml"))
 	if err := levelExpData.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
+	classImageData.AddConfigPath(filepath.Join("data", "net.cutereimu.maplebots"))
+	classImageData.SetConfigName("ClassImageData")
+	classImageData.SetConfigType("yml")
+	for k := range ClassNameMap {
+		if len(k) > 0 {
+			classImageData.SetDefault(k, "")
+		}
+	}
+	_ = classImageData.SafeWriteConfigAs(filepath.Join("data", "net.cutereimu.maplebots", "ClassImageData.yml"))
+	if err := classImageData.ReadInConfig(); err != nil {
 		panic(err)
 	}
 }

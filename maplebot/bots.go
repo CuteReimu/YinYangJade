@@ -44,7 +44,10 @@ func Init(b *Bot) {
 	B.ListenGroupMessage(handleGroupMessage)
 }
 
-var addDbQQList = make(map[int64]string)
+var (
+	addDbQQList          = make(map[int64]string)
+	updateClassImageList = make(map[int64]string)
+)
 
 func handleGroupMessage(message *GroupMessage) bool {
 	if len(message.Message) <= 0 {
@@ -215,6 +218,17 @@ func handleGroupMessage(message *GroupMessage) bool {
 			} else if strings.HasPrefix(text.Text, "洗魔方 ") {
 				sendGroupMessage(message, calculateCube(strings.TrimSpace(text.Text[len("洗魔方"):]))...)
 				return true
+			} else if perm && strings.HasPrefix(text.Text, "修改职业图片 ") {
+				key := dealKey(text.Text[len("修改职业图片"):])
+				if len(key) > 0 {
+					if _, ok := ClassNameMap[key]; !ok {
+						sendGroupMessage(message, &Text{Text: "不存在的职业"})
+					} else {
+						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+						updateClassImageList[message.Sender.UserId] = key
+					}
+				}
+				return true
 			} else if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
@@ -288,7 +302,19 @@ func handleGroupMessage(message *GroupMessage) bool {
 			}
 		}
 	}
-	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
+	if key, ok := updateClassImageList[message.Sender.UserId]; ok { // 修改职业图片
+		delete(updateClassImageList, message.Sender.UserId)
+		if len(message.Message) != 1 {
+			sendGroupMessage(message, &Text{Text: "提供的不是一张图片，修改失败"})
+		} else if img, ok := message.Message[0].(*Image); !ok {
+			sendGroupMessage(message, &Text{Text: "提供的不是一张图片，修改失败"})
+		} else if len(img.Url) == 0 {
+			sendGroupMessage(message, &Text{Text: "无法识别图片，修改失败"})
+		} else {
+			sendGroupMessage(message, SetClassImage(key, img)...)
+		}
+		return true
+	} else if key, ok = addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
 		if err := saveImage(message.Message); err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
