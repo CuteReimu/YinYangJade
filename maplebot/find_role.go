@@ -300,6 +300,7 @@ func findRole2(name1, name2 string) MessageChain {
 	if len(a) == 0 {
 		return MessageChain{&Text{Text: "查询不到" + name1 + "数据"}}
 	}
+	name1 = data1.CharacterData.Name
 
 	resp, err = restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name2)
 	if err != nil {
@@ -324,6 +325,7 @@ func findRole2(name1, name2 string) MessageChain {
 	if len(b) == 0 {
 		return MessageChain{&Text{Text: "查询不到" + name2 + "数据"}}
 	}
+	name2 = data2.CharacterData.Name
 
 	expValues1 := make([]float64, 0, 14)
 	levelValues1 := make([]float64, 0, 15)
