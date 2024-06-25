@@ -29,7 +29,7 @@ var ClassNameMap = map[string]string{
 	"Blade Master":           "暗影双刀",
 	"Buccaneer":              "冲锋队长",
 	"Corsair":                "船长",
-	"Cannoneer":              "火炮手",
+	"Cannon Master":          "神炮王",
 	"Marksman":               "箭神",
 	"Bowmaster":              "神射手",
 	"Pathfinder":             "古迹猎人",
