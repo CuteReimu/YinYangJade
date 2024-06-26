@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/CuteReimu/YinYangJade/fengsheng"
 	"github.com/CuteReimu/YinYangJade/hkbot"
+	"github.com/CuteReimu/YinYangJade/imageutil"
 	"github.com/CuteReimu/YinYangJade/maplebot"
 	"github.com/CuteReimu/YinYangJade/tfcc"
 	"github.com/CuteReimu/onebot"
@@ -96,6 +97,7 @@ func main() {
 	fengsheng.Init(b)
 	maplebot.Init(b)
 	hkbot.Init(b)
+	imageutil.Init(b)
 	checkQQGroups(b)
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
