@@ -1,6 +1,7 @@
 package maplebot
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,8 +39,11 @@ func Init(b *Bot) {
 	initConfig()
 	B = b
 	go func() {
+		B.Run(clearExpiredImages)
+		B.Run(clearExpiredImages2)
 		for range time.Tick(24 * time.Hour) {
 			B.Run(clearExpiredImages)
+			B.Run(clearExpiredImages2)
 		}
 	}()
 	B.ListenGroupMessage(handleGroupMessage)
@@ -236,13 +240,24 @@ func handleGroupMessage(message *GroupMessage) bool {
 				sendGroupMessage(message, calculateCube(strings.TrimSpace(text.Text[len("洗魔方"):]))...)
 				return true
 			} else if perm && strings.HasPrefix(text.Text, "修改职业图片 ") {
-				key := dealKey(text.Text[len("修改职业图片"):])
+				key := strings.TrimSpace(text.Text[len("修改职业图片"):])
 				if len(key) > 0 {
 					if _, ok := ClassNameMap[key]; !ok {
 						sendGroupMessage(message, &Text{Text: "不存在的职业"})
 					} else {
 						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
 						updateClassImageList[message.Sender.UserId] = key
+					}
+				}
+				return true
+			} else if strings.HasPrefix(text.Text, "查询职业图片 ") {
+				key := strings.TrimSpace(text.Text[len("查询职业图片"):])
+				if len(key) > 0 {
+					if img, err := GetClassOriginImageBuff(key); err != nil {
+						slog.Error("找不到职业图片", "error", err)
+						sendGroupMessage(message, &Text{Text: "找不到职业图片"})
+					} else {
+						sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(img)})
 					}
 				}
 				return true

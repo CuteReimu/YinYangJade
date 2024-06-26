@@ -102,6 +102,17 @@ func GetClassImage(name string) (image.Image, error) {
 	return nil, errors.Errorf("class image not found: %s", name)
 }
 
+func GetClassOriginImageBuff(name string) ([]byte, error) {
+	if name := classImageData.GetString(strings.ToLower(name)); len(name) > 0 {
+		buf, err := os.ReadFile(filepath.Join("class_image", name))
+		if err != nil {
+			return nil, err
+		}
+		return buf, nil
+	}
+	return nil, errors.Errorf("class image not found: %s", name)
+}
+
 func getClassImage(name string) (image.Image, error) {
 	buf, err := os.ReadFile(filepath.Join("class_image", name))
 	if err != nil {
@@ -144,4 +155,30 @@ func SetClassImage(name string, img *Image) MessageChain {
 		slog.Error("write config failed", "error", err)
 	}
 	return MessageChain{&Text{Text: "保存图片成功"}}
+}
+
+func clearExpiredImages2() {
+	defer func() {
+		if err := recover(); err != nil {
+			slog.Error("panic recovered", "error", err)
+		}
+	}()
+	data := make(map[string]bool)
+	for name := range ClassNameMap {
+		s := classImageData.GetString(name)
+		if len(s) > 0 {
+			data[s] = true
+		}
+	}
+	files, err := os.ReadDir("class_image")
+	if err != nil {
+		slog.Error("read dir failed", "error", err)
+	}
+	for _, file := range files {
+		if !data[file.Name()] {
+			if err = os.Remove(filepath.Join("class_image", file.Name())); err != nil {
+				slog.Error("remove file failed", "error", err)
+			}
+		}
+	}
 }
