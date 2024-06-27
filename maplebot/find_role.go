@@ -103,7 +103,7 @@ func findRole(name string) MessageChain {
 			levelUpExp := levelExpData.GetFloat64(fmt.Sprintf("data.%d", d.Level))
 			var expPercent float64
 			if levelUpExp > 0 {
-				expPercent = float64(d.CurrentEXP) / levelUpExp
+				expPercent = min(float64(d.CurrentEXP)/levelUpExp, 0.999)
 			}
 			levelValues = append(levelValues, float64(d.Level)+expPercent)
 		}
@@ -131,11 +131,17 @@ func findRole(name string) MessageChain {
 				levelValues[i] = levelValues[i+1]
 			}
 		}
+		maybeBurn := !slices.ContainsFunc(levelValues, func(f float64) bool {
+			return int(f) > 220 && int(f)%3 != 2
+		})
 		for i := 1; i < len(levelValues); i++ {
 			level0, level1 := int(levelValues[i-1]), int(levelValues[i])
 			expPercent0, expPercent1 := levelValues[i-1]-float64(level0), levelValues[i]-float64(level1)
 			var totalExp float64
 			for j := level0; j < level1; j++ {
+				if maybeBurn && j%3 != 2 {
+					continue
+				}
 				totalExp += levelExpData.GetFloat64(fmt.Sprintf("data.%d", j))
 			}
 			totalExp -= expPercent0 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level0))
@@ -363,7 +369,7 @@ func findRole2(name1, name2 string) MessageChain {
 		if level < 220 {
 			level = 220
 		} else if levelExp := levelExpData.GetFloat64(fmt.Sprintf("data.%d", int(level))); levelExp > 0 {
-			level += float64(a[index].CurrentEXP) / levelExp
+			level += min(float64(a[index].CurrentEXP)/levelExp, 0.999)
 		}
 		return level
 	}
@@ -383,11 +389,17 @@ func findRole2(name1, name2 string) MessageChain {
 				levelValues[i] = levelValues[i+1]
 			}
 		}
+		maybeBurn := !slices.ContainsFunc(levelValues, func(f float64) bool {
+			return int(f) > 220 && int(f)%3 != 2
+		})
 		for i := 1; i < len(levelValues); i++ {
 			level0, level1 := int(levelValues[i-1]), int(levelValues[i])
 			expPercent0, expPercent1 := levelValues[i-1]-float64(level0), levelValues[i]-float64(level1)
 			var totalExp float64
 			for j := level0; j < level1; j++ {
+				if maybeBurn && j%3 != 2 {
+					continue
+				}
 				totalExp += levelExpData.GetFloat64(fmt.Sprintf("data.%d", j))
 			}
 			totalExp -= expPercent0 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level0))
