@@ -132,14 +132,14 @@ func findRole(name string) MessageChain {
 			}
 		}
 		maybeBurn := !slices.ContainsFunc(levelValues, func(f float64) bool {
-			return int(f) > 220 && int(f)%3 != 2
+			return int(f) > 220 && int(f) < 260 && int(f)%3 != 2
 		})
 		for i := 1; i < len(levelValues); i++ {
 			level0, level1 := int(levelValues[i-1]), int(levelValues[i])
 			expPercent0, expPercent1 := levelValues[i-1]-float64(level0), levelValues[i]-float64(level1)
 			var totalExp float64
 			for j := level0; j < level1; j++ {
-				if maybeBurn && j%3 != 2 {
+				if maybeBurn && j > 220 && j < 260 && j%3 != 2 {
 					continue
 				}
 				totalExp += levelExpData.GetFloat64(fmt.Sprintf("data.%d", j))
@@ -390,14 +390,14 @@ func findRole2(name1, name2 string) MessageChain {
 			}
 		}
 		maybeBurn := !slices.ContainsFunc(levelValues, func(f float64) bool {
-			return int(f) > 220 && int(f)%3 != 2
+			return int(f) > 220 && int(f) < 260 && int(f)%3 != 2
 		})
 		for i := 1; i < len(levelValues); i++ {
 			level0, level1 := int(levelValues[i-1]), int(levelValues[i])
 			expPercent0, expPercent1 := levelValues[i-1]-float64(level0), levelValues[i]-float64(level1)
 			var totalExp float64
 			for j := level0; j < level1; j++ {
-				if maybeBurn && j%3 != 2 {
+				if maybeBurn && j > 220 && j < 260 && j%3 != 2 {
 					continue
 				}
 				totalExp += levelExpData.GetFloat64(fmt.Sprintf("data.%d", j))
