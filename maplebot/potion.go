@@ -55,6 +55,9 @@ func calculatePotion() MessageChain {
 		TextAligns:      aligns,
 		HeaderFontColor: Color{R: 35, G: 35, B: 35, A: 255},
 		CellStyle: func(cell TableCell) *Style {
+			if cell.Column%9 == 0 {
+				return &Style{FillColor: drawing.Color{R: 180, G: 180, B: 180, A: 128}}
+			}
 			if cell.Column > 1 && cell.Row > 0 && len(cell.Text) > 0 {
 				v, _ := strconv.ParseFloat(cell.Text[:len(cell.Text)-1], 64)
 				if v >= 50 {
