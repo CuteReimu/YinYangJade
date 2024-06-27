@@ -7,6 +7,7 @@ import (
 	. "github.com/vicanso/go-charts/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
+	"slices"
 	"strconv"
 )
 
@@ -18,11 +19,13 @@ func calculatePotion() MessageChain {
 		"229药": levelExpData.GetInt64("data.229"),
 		"239药": levelExpData.GetInt64("data.239"),
 		"249药": levelExpData.GetInt64("data.249"),
+		"259药": levelExpData.GetInt64("data.259"),
+		"269药": levelExpData.GetInt64("data.269"),
 	}
-	keys := []string{"敲头", "209药", "219药", "229药", "239药", "249药"}
+	keys := []string{"敲头", "209药", "219药", "229药", "239药", "249药", "259药", "269药"}
 	ss := make([][]string, 0, 51)
-	for i := 210; i <= 260; i++ {
-		values := make([]string, 0, len(keys)+1)
+	for i := 201; i <= 240; i++ {
+		values := make([]string, 0, 2*(len(keys)+1))
 		values = append(values, strconv.Itoa(i))
 		for _, key := range keys {
 			value := potions[key]
@@ -30,12 +33,26 @@ func calculatePotion() MessageChain {
 			v := min(100.0, float64(value)/float64(need)*100)
 			values = append(values, fmt.Sprintf("%.2f%%", v))
 		}
+		values = append(values, strconv.Itoa(i+40))
+		for _, key := range keys {
+			value := potions[key]
+			need := levelExpData.GetInt64(fmt.Sprintf("data.%d", i+40))
+			v := min(100.0, float64(value)/float64(need)*100)
+			values = append(values, fmt.Sprintf("%.2f%%", v))
+		}
 		ss = append(ss, values)
 	}
+	keys = append([]string{"等级"}, keys...)
+	keys = append(slices.Clip(keys), keys...)
+	aligns := make([]string, 0, len(keys))
+	for i := 0; i < len(keys); i++ {
+		aligns = append(aligns, AlignRight)
+	}
 	p, err := TableOptionRender(TableChartOption{
-		Width:           600,
-		Header:          append([]string{"等级"}, keys...),
+		Width:           1600,
+		Header:          keys,
 		Data:            ss,
+		TextAligns:      aligns,
 		HeaderFontColor: Color{R: 35, G: 35, B: 35, A: 255},
 		CellStyle: func(cell TableCell) *Style {
 			if cell.Column > 1 && cell.Row > 0 && len(cell.Text) > 0 {
