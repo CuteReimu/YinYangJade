@@ -65,12 +65,12 @@ var (
 	accessorySelections  = append(defaultSelections,
 		"lineMeso+1", "lineDrop+1", "lineMesoOrDrop+1",
 		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
-		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
+		"lineMeso+3", "lineDrop+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
 	)
 	accessorySelections160 = append(defaultSelections160,
 		"lineMeso+1", "lineDrop+1", "lineMesoOrDrop+1",
 		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
-		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
+		"lineMeso+3", "lineDrop+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
 	)
 	hatSelections = append(defaultSelections,
 		"secCooldown+2", "secCooldown+3", "secCooldown+4", "secCooldown+5", "secCooldown+6",
@@ -260,8 +260,8 @@ func calculateCube(s string) MessageChain {
 		if err != nil {
 			return nil
 		}
-		if level < 100 {
-			return MessageChain{&Text{Text: "不能低于100级"}}
+		if level < 71 {
+			return MessageChain{&Text{Text: "不能低于71级"}}
 		} else if level > 300 {
 			return MessageChain{&Text{Text: "不能高于300级"}}
 		}
@@ -846,9 +846,9 @@ var (
 	MAX_CATEGORY_COUNT = map[string]int{
 		CATEGORY_DECENT_SKILL:    1,
 		CATEGORY_INVINCIBLE_TIME: 1,
-		CATEGORY_IED_PERC:        2,
-		CATEGORY_BOSSDMG_PERC:    2,
-		CATEGORY_DROP_PERC:       2,
+		CATEGORY_IED_PERC:        3,
+		CATEGORY_BOSSDMG_PERC:    3,
+		CATEGORY_DROP_PERC:       3,
 		CATEGORY_IGNOREDMG_PERC:  2,
 		CATEGORY_INVINCIBLE_PERC: 2,
 	}
