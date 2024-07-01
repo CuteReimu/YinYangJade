@@ -86,6 +86,9 @@ func handleGroupMessage(message *GroupMessage) bool {
 		if text, ok := message.Message[0].(*Text); ok {
 			perm := message.Sender.Role == RoleAdmin || message.Sender.Role == RoleOwner ||
 				config.GetInt64("admin") == message.Sender.UserId
+			if perm {
+				perm = slices.Contains(config.GetIntSlice("admin_groups"), int(message.GroupId))
+			}
 			if text.Text == "ping" {
 				sendGroupMessage(message, &Text{Text: "pong"})
 				return true

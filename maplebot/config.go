@@ -27,6 +27,7 @@ func initConfig() {
 	config.SetConfigName("Config")
 	config.SetConfigType("yml")
 	config.SetDefault("admin", int64(12345678))
+	config.SetDefault("admin_groups", []int64{12345678})
 	config.SetDefault("qq_groups", []int64{12345678})
 	config.SetDefault("image_expire_hours", int64(24))
 	_ = config.SafeWriteConfigAs(filepath.Join("config", "net.cutereimu.maplebots", "Config.yml"))
