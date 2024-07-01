@@ -176,7 +176,7 @@ func calculateCubeAll() MessageChain {
 		}
 		names = append(names, s)
 	}
-	selections := defaultSelections160[2:]
+	selections := defaultSelections160
 	ss := make([][]string, len(names))
 	styles := make(map[string][]*Style, len(names))
 	costs := make(map[string]int64, len(names))
@@ -224,6 +224,7 @@ func calculateCubeAll() MessageChain {
 		header = append(header, target)
 	}
 	p, err := TableOptionRender(TableChartOption{
+		Width:           770,
 		Header:          header,
 		Data:            ss,
 		HeaderFontColor: Color{R: 35, G: 35, B: 35, A: 255},
