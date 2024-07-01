@@ -194,10 +194,10 @@ func calculateCubeAll() MessageChain {
 				cost int64
 			)
 			if red <= black {
-				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 0, G: 132, B: 199, A: 96}})
 				cost = red
 			} else {
-				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{A: 32}})
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 				cost = black
 			}
 			ss[i] = append(ss[i], formatInt64(cost))
@@ -274,10 +274,10 @@ func calculateCube(s string) MessageChain {
 	_, eToLB := runCalculator(nameLevel.name, "black", 1, nameLevel.level, 3, "")
 	var eToLCost int64
 	if eToLR < eToLB {
-		styles = append(styles, &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
+		styles = append(styles, &Style{FillColor: drawing.Color{R: 0, G: 132, B: 199, A: 96}})
 		eToLCost = eToLR
 	} else {
-		styles = append(styles, &Style{FillColor: drawing.Color{A: 32}})
+		styles = append(styles, &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 		eToLCost = eToLB
 	}
 	ss := make([][]string, 0, len(selections)+1)
@@ -287,10 +287,10 @@ func calculateCube(s string) MessageChain {
 		_, black := runCalculator(nameLevel.name, "black", 3, nameLevel.level, 3, it)
 		var cost int64
 		if red <= black {
-			styles = append(styles, &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
+			styles = append(styles, &Style{FillColor: drawing.Color{R: 0, G: 132, B: 199, A: 96}})
 			cost = red
 		} else {
-			styles = append(styles, &Style{FillColor: drawing.Color{A: 32}})
+			styles = append(styles, &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 			cost = black
 		}
 		var target string
