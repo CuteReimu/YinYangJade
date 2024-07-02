@@ -166,7 +166,7 @@ func findRole(name string) MessageChain {
 		divideCount := int(maxValue / factor)
 		var yAxisOptions []YAxisOption
 		yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(0), Max: &maxValue, DivideCount: divideCount, Unit: 1})
-		for _, diff := range []float64{0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
+		for _, diff := range []float64{0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
 			minLevel, maxLevel := math.Floor(slices.Min(levelValues)/diff)*diff, math.Ceil(slices.Max(levelValues)/diff)*diff
 			remainCount := divideCount - int(math.Round((maxLevel-minLevel)/diff))
 			if remainCount >= 0 {
@@ -428,7 +428,7 @@ func findRole2(name1, name2 string) MessageChain {
 	divideCount := int(maxValue / factor)
 	var yAxisOptions []YAxisOption
 	yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(0), Max: &maxValue, DivideCount: divideCount, Unit: 1})
-	for _, diff := range []float64{0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
+	for _, diff := range []float64{0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
 		minLevel := math.Floor(min(slices.Min(levelValues1), slices.Min(levelValues2))/diff) * diff
 		maxLevel := math.Ceil(max(slices.Max(levelValues1), slices.Max(levelValues2))/diff) * diff
 		remainCount := divideCount - int(math.Round((maxLevel-minLevel)/diff))
