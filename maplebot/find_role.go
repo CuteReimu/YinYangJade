@@ -148,6 +148,15 @@ func findRole(name string) MessageChain {
 			totalExp += expPercent1 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level1))
 			expValues = append(expValues, max(math.Round(totalExp), 0))
 		}
+		if maybeBurn {
+			for i := 1; i < len(levelValues); i++ {
+				if levelValues[i] < 260 && levelValues[i] >= 221 {
+					levelValues[i] += float64((260 - int(levelValues[i])) / 3 * 2)
+				} else if levelValues[i] < 221 {
+					levelValues[i] += 26
+				}
+			}
+		}
 		labels = labels[1:]
 		for i := range labels {
 			labels[i] = labels[i][5:]
@@ -174,9 +183,16 @@ func findRole(name string) MessageChain {
 					maxLevel += diff * float64(remainCount-remainCount/2)
 					minLevel -= diff * float64(remainCount/2)
 				}
-				if minLevel <= 220 { // 为了图表好看，最低显示220级
-					maxLevel -= minLevel - 220
-					minLevel = 220
+				if maybeBurn {
+					if minLevel <= 246 {
+						maxLevel -= minLevel - 246
+						minLevel = 246
+					}
+				} else {
+					if minLevel <= 220 { // 为了图表好看，最低显示220级
+						maxLevel -= minLevel - 220
+						minLevel = 220
+					}
 				}
 				yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(minLevel), Max: NewFloatPoint(maxLevel), DivideCount: divideCount, Unit: 1})
 				break
@@ -222,9 +238,15 @@ func findRole(name string) MessageChain {
 					opt.XAxis.FontSize = 7.5
 					opt.ValueFormatter = func(f float64) string {
 						switch {
-						case f == 220.0:
-							return "\u3000" // 不显示220级的坐标，用全角空格代替
+						case f == 0:
+							return "0"
+						case f < 260 && maybeBurn:
+							f -= float64((260 - int(f)) * 2)
+							fallthrough
 						case f < 1000.0:
+							if f == 220.0 {
+								return "\u3000" // 不显示220级的坐标，用全角空格代替
+							}
 							return fmt.Sprintf("%g", math.Round(f*1000)/1000)
 						case f < 1000000.0:
 							return fmt.Sprintf("%gK", math.Round(f)/1000)
@@ -378,7 +400,7 @@ func findRole2(name1, name2 string) MessageChain {
 		levelValues2 = append(levelValues2, calLevel(label, b))
 	}
 	// 处理一下，有可能有的数据是0级
-	dealData := func(levelValues []float64, expValues *[]float64) {
+	dealData := func(levelValues []float64, expValues *[]float64) bool {
 		for i := 1; i < len(levelValues); i++ {
 			if levelValues[i] == 0 {
 				levelValues[i] = levelValues[i-1]
@@ -406,9 +428,27 @@ func findRole2(name1, name2 string) MessageChain {
 			totalExp += expPercent1 * levelExpData.GetFloat64(fmt.Sprintf("data.%d", level1))
 			*expValues = append(*expValues, max(math.Round(totalExp), 0))
 		}
+		return maybeBurn
 	}
-	dealData(levelValues1, &expValues1)
-	dealData(levelValues2, &expValues2)
+	maybeBurn1 := dealData(levelValues1, &expValues1)
+	maybeBurn2 := dealData(levelValues2, &expValues2)
+	maybeBurn := maybeBurn1 && maybeBurn2
+	if maybeBurn {
+		for i := 1; i < len(levelValues1); i++ {
+			if levelValues1[i] < 260 && levelValues1[i] >= 221 {
+				levelValues1[i] += float64((260 - int(levelValues1[i])) / 3 * 2)
+			} else if levelValues1[i] < 221 {
+				levelValues1[i] += 26
+			}
+		}
+		for i := 1; i < len(levelValues2); i++ {
+			if levelValues2[i] < 260 && levelValues2[i] >= 221 {
+				levelValues2[i] += float64((260 - int(levelValues2[i])) / 3 * 2)
+			} else if levelValues2[i] < 221 {
+				levelValues2[i] += 26
+			}
+		}
+	}
 	labels = labels[1:]
 	for i := range labels {
 		labels[i] = labels[i][5:]
@@ -437,9 +477,16 @@ func findRole2(name1, name2 string) MessageChain {
 				maxLevel += diff * float64(remainCount-remainCount/2)
 				minLevel -= diff * float64(remainCount/2)
 			}
-			if minLevel <= 220 { // 为了图表好看，最低显示220级
-				maxLevel -= minLevel - 220
-				minLevel = 220
+			if maybeBurn {
+				if minLevel <= 246 {
+					maxLevel -= minLevel - 246
+					minLevel = 246
+				}
+			} else {
+				if minLevel <= 220 { // 为了图表好看，最低显示220级
+					maxLevel -= minLevel - 220
+					minLevel = 220
+				}
 			}
 			yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(minLevel), Max: NewFloatPoint(maxLevel), DivideCount: divideCount, Unit: 1})
 			break
@@ -474,9 +521,15 @@ func findRole2(name1, name2 string) MessageChain {
 				opt.XAxis.FontSize = 7.5
 				opt.ValueFormatter = func(f float64) string {
 					switch {
-					case f == 220.0:
-						return "\u3000" // 不显示220级的坐标，用全角空格代替
+					case f == 0:
+						return "0"
+					case f < 260 && maybeBurn:
+						f -= float64((260 - int(f)) * 2)
+						fallthrough
 					case f < 1000.0:
+						if f == 220.0 {
+							return "\u3000" // 不显示220级的坐标，用全角空格代替
+						}
 						return fmt.Sprintf("%g", math.Round(f*1000)/1000)
 					case f < 1000000.0:
 						return fmt.Sprintf("%gK", math.Round(f)/1000)
