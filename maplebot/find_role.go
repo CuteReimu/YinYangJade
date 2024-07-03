@@ -244,7 +244,7 @@ func findRole(name string) MessageChain {
 							f -= float64((260 - int(f)) * 2)
 							fallthrough
 						case f < 1000.0:
-							if f == 220.0 {
+							if f == 220.0 || f == 218.0 {
 								return "\u3000" // 不显示220级的坐标，用全角空格代替
 							}
 							return fmt.Sprintf("%g", math.Round(f*1000)/1000)
@@ -527,7 +527,7 @@ func findRole2(name1, name2 string) MessageChain {
 						f -= float64((260 - int(f)) * 2)
 						fallthrough
 					case f < 1000.0:
-						if f == 220.0 {
+						if f == 220.0 || f == 218.0 {
 							return "\u3000" // 不显示220级的坐标，用全角空格代替
 						}
 						return fmt.Sprintf("%g", math.Round(f*1000)/1000)
