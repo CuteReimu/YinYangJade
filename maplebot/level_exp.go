@@ -5,8 +5,9 @@ import (
 	"fmt"
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
-	"math"
+	"slices"
 	"strconv"
 )
 
@@ -37,44 +38,55 @@ func calculateExpBetweenLevel(start, end int64) MessageChain {
 }
 
 func calculateLevelExp() MessageChain {
-	labels := make([]string, 0, 100)
-	values := [][]float64{make([]float64, 0, 100)}
-	for i := 200; i < 300; i++ {
-		labels = append(labels, strconv.Itoa(i))
-		values[0] = append(values[0], math.Log10(levelExpData.GetFloat64(fmt.Sprintf("data.%d", i))))
+	format := func(i int64) string {
+		f := float64(i)
+		switch {
+		case f < 1000.0:
+			return fmt.Sprintf("%g", f)
+		case f < 1000000.0:
+			return fmt.Sprintf("%.2fK", f/1000)
+		case f < 1000000000.0:
+			return fmt.Sprintf("%.2fM", f/1000000)
+		case f < 1000000000000.0:
+			return fmt.Sprintf("%.2fB", f/1000000000)
+		default:
+			return fmt.Sprintf("%.2fT", f/1000000000000)
+		}
 	}
-	p, err := LineRender(
-		values,
-		ThemeOptionFunc(ThemeDark),
-		HeightOptionFunc(600),
-		WidthOptionFunc(1000),
-		PaddingOptionFunc(Box{Top: 30, Left: 10, Right: 10, Bottom: 10}),
-		XAxisDataOptionFunc(labels),
-		YAxisOptionFunc(YAxisOption{Min: NewFloatPoint(9), Max: NewFloatPoint(16), DivideCount: 7, Unit: 1}),
-		func(opt *ChartOption) {
-			opt.XAxis.TextRotation = -math.Pi / 4
-			opt.XAxis.LabelOffset = Box{Top: -5, Left: 7}
-			opt.XAxis.FontSize = 7.5
-			opt.XAxis.FirstAxis = 1
-			opt.XAxis.SplitNumber = 5
-			opt.XAxis.FirstAxis = -2
-			opt.ValueFormatter = func(f float64) string {
-				f = math.Pow(10, f)
-				switch {
-				case f < 1000.0:
-					return fmt.Sprintf("%g", math.Round(f*1000)/1000)
-				case f < 1000000.0:
-					return fmt.Sprintf("%gK", math.Round(f)/1000)
-				case f < 1000000000.0:
-					return fmt.Sprintf("%gM", math.Round(f)/1000000)
-				case f < 1000000000000.0:
-					return fmt.Sprintf("%gB", math.Round(f)/1000000000)
-				default:
-					return fmt.Sprintf("%gT", math.Round(f)/1000000000000)
-				}
+	var accumulate int64
+	cur := make([]string, 0, 100)
+	acc := make([]string, 0, 100)
+	for i := 201; i <= 300; i++ {
+		v := levelExpData.GetInt64(fmt.Sprintf("data.%d", i))
+		cur = append(cur, format(v))
+		acc = append(acc, format(accumulate))
+		accumulate += v
+	}
+	labels := []string{"当前等级", "升级经验", "累计经验"}
+	textAligns := []string{AlignRight, AlignRight, AlignRight}
+	labels = slices.Concat(labels, labels, labels, labels)
+	textAligns = slices.Concat(textAligns, textAligns, textAligns, textAligns)
+	values := make([][]string, 0, 25)
+	for i := 201; i <= 225; i++ {
+		line := make([]string, 0, 12)
+		for j := 0; j < 4; j++ {
+			level := i + j*25
+			line = append(line, strconv.Itoa(level), cur[level-201], acc[level-201])
+		}
+		values = append(values, line)
+	}
+	p, err := TableOptionRender(TableChartOption{
+		Header:     labels,
+		Data:       values,
+		Width:      1100,
+		TextAligns: textAligns,
+		CellStyle: func(cell TableCell) *Style {
+			if cell.Column%3 == 0 {
+				return &Style{FillColor: drawing.Color{R: 180, G: 180, B: 180, A: 128}}
 			}
+			return nil
 		},
-	)
+	})
 	if err != nil {
 		slog.Error("render chart failed", "error", err)
 	} else if buf, err := p.Bytes(); err != nil {
