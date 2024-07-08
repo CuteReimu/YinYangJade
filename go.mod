@@ -7,7 +7,7 @@ require (
 	github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20240624033337-c0ede07dcd93
-	github.com/dlclark/regexp2 v1.11.0
+	github.com/dlclark/regexp2 v1.11.1
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
