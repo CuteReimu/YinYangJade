@@ -110,6 +110,13 @@ func handleGroupMessage(message *GroupMessage) bool {
 			} else if text.Text == "升级经验" {
 				sendGroupMessage(message, calculateLevelExp()...)
 				return true
+			} else if text.Text == "等级压制" {
+				sendGroupMessage(message, calculateExpDamageTable()...)
+				return true
+			} else if strings.HasPrefix(text.Text, "等级压制 ") {
+				content := strings.TrimSpace(text.Text[len("等级压制"):])
+				sendGroupMessage(message, calculateExpDamage(content)...)
+				return true
 			} else if strings.HasPrefix(text.Text, "生成表格 ") {
 				content := strings.TrimSpace(text.Text[len("升级经验"):])
 				sendGroupMessage(message, genTable(content)...)
