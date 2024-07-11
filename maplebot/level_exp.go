@@ -97,53 +97,6 @@ func calculateLevelExp() MessageChain {
 	return nil
 }
 
-func calculateExpDamageTable() MessageChain {
-	var values [][]string
-	for j := 5; j >= -10; j-- {
-		var value []string
-		for i := j; i >= -40; i -= 16 {
-			switch {
-			case i >= 5:
-				value = append(value, "+5 or higher", "+20%")
-			case i > 0:
-				value = append(value, fmt.Sprintf("+%d", i), fmt.Sprintf("+%d%%", i*2+10))
-			case i == 0:
-				value = append(value, "0", "+10%")
-			case i == -1:
-				value = append(value, "-1", "+5%")
-			case i == -2:
-				value = append(value, "-2", "0%")
-			case i == -3:
-				value = append(value, "-3", "-5%")
-			case i > -40:
-				value = append(value, strconv.Itoa(i), fmt.Sprintf("%g%%", 2.5*float64(i)))
-			default:
-				value = append(value, "-40 or lower", "-100%")
-			}
-		}
-		values = append(values, value)
-	}
-	p, err := TableOptionRender(TableChartOption{
-		Header: []string{"你的等级减去柽物等级", "最终伤害的減少", "你的等级减去柽物等级", "最终伤害的減少", "你的等级减去柽物等级", "最终伤害的減少"},
-		Data:   values,
-		Width:  1200,
-		CellStyle: func(cell TableCell) *Style {
-			if cell.Column%2 == 0 {
-				return &Style{FillColor: drawing.Color{R: 180, G: 180, B: 180, A: 128}}
-			}
-			return nil
-		},
-	})
-	if err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
-	}
-	return nil
-}
-
 func calculateExpDamage(s string) MessageChain {
 	i, err := strconv.Atoi(s)
 	if err != nil {
