@@ -9,6 +9,7 @@ import (
 	"fmt"
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
 	"math"
 	"math/rand/v2"
@@ -16,6 +17,50 @@ import (
 	"strconv"
 	"strings"
 )
+
+func calStarForceCostPerformance() MessageChain {
+	experiment := func(cur, des int, thirtyOff, fiveTenFifteen bool) string {
+		var mesos float64
+		for range 1000 {
+			m, _, _ := performExperiment(cur, des, 150, false, thirtyOff, fiveTenFifteen)
+			mesos += m
+		}
+		v := 11 + 4*(cur-6)
+		if cur == 21 {
+			v += 4
+		}
+		return fmt.Sprintf("%.2fB", mesos/1000/float64(v)*(9*3)/1000000000)
+	}
+	values := make([][]string, 0, 7)
+	for i := 15; i <= 21; i++ {
+		v := make([]string, 0, 5)
+		v = append(v, fmt.Sprintf("%d★ → %d★", i, i+1))
+		v = append(v, experiment(i, i+1, false, false))
+		v = append(v, experiment(i, i+1, true, false))
+		v = append(v, experiment(i, i+1, false, true))
+		v = append(v, experiment(i, i+1, true, true))
+		values = append(values, v)
+	}
+	p, err := TableOptionRender(TableChartOption{
+		Header: []string{"150装备升星", "无活动", "七折", "必成", "超必"},
+		Data:   values,
+		Width:  700,
+		CellStyle: func(cell TableCell) *Style {
+			if cell.Column == 0 {
+				return &Style{FillColor: drawing.Color{R: 180, G: 180, B: 180, A: 128}}
+			}
+			return nil
+		},
+	})
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else if buf, err := p.Bytes(); err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else {
+		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
+	}
+	return nil
+}
 
 func makeMesoFn(divisor int, currentStarExp0 ...float64) func(int, int) float64 {
 	currentStarExp := 2.7

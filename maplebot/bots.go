@@ -204,6 +204,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 					sendGroupMessage(message, &Text{Text: "你还未绑定"})
 				}
 				return true
+			} else if text.Text == "升星性价比" {
+				sendGroupMessage(message, calStarForceCostPerformance()...)
 			} else if strings.HasPrefix(text.Text, "模拟升星 ") || strings.HasPrefix(text.Text, "模拟上星 ") ||
 				strings.HasPrefix(text.Text, "升星期望 ") || strings.HasPrefix(text.Text, "上星期望 ") {
 				content := strings.TrimSpace(text.Text[len("模拟升星"):])
