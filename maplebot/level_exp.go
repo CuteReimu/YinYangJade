@@ -116,7 +116,7 @@ func calculateExpDamage(s string) MessageChain {
 	case i == -3:
 		return MessageChain{&Text{Text: "你比怪物等级低3级时，终伤-5%"}}
 	case i > -40:
-		return MessageChain{&Text{Text: fmt.Sprintf("你比怪物等级低%d级时，终伤-%g%%", -i, 2.5*float64(i))}}
+		return MessageChain{&Text{Text: fmt.Sprintf("你比怪物等级低%d级时，终伤%g%%", -i, 2.5*float64(i))}}
 	default:
 		return MessageChain{&Text{Text: "你比怪物等级低40级以上时，终伤-100%"}}
 	}
