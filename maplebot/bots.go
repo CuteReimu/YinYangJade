@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -164,14 +163,15 @@ func handleGroupMessage(message *GroupMessage) bool {
 					name1, name2 := parts[0], parts[1]
 					if !slices.ContainsFunc([]byte(name1), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) &&
 						!slices.ContainsFunc([]byte(name2), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
-						go func() {
-							defer func() {
-								if err := recover(); err != nil {
-									slog.Error("panic recovered", "error", err, "stack", debug.Stack())
-								}
-							}()
-							sendGroupMessage(message, findRole2(name1, name2)...)
-						}()
+						sendGroupMessage(message, &Text{Text: "查询两个角色功能暂不可用"})
+						//go func() {
+						//	defer func() {
+						//		if err := recover(); err != nil {
+						//			slog.Error("panic recovered", "error", err, "stack", debug.Stack())
+						//		}
+						//	}()
+						//	sendGroupMessage(message, findRole2(name1, name2)...)
+						//}()
 					}
 				}
 				return true
