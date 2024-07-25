@@ -73,40 +73,6 @@ var B *Bot
 func Init(b *Bot) {
 	B = b
 	B.ListenPrivateMessage(handlePrivateMessage)
-	B.ListenFriendRequest(handleNewFriendRequest)
-}
-
-func handleNewFriendRequest(request *FriendRequest) bool {
-	groupList, err := B.GetGroupList()
-	if err != nil {
-		slog.Error("获取群列表失败", "error", err)
-		err = request.Reply(B, false, "")
-		if err != nil {
-			slog.Error("处理好友请求失败", "error", err)
-		}
-	} else {
-		for _, groupInfo := range groupList {
-			memberList, err := B.GetGroupMemberList(groupInfo.GroupId)
-			if err != nil {
-				slog.Error("获取群成员列表失败", "error", err)
-				continue
-			}
-			for _, member := range memberList {
-				if member.UserId == request.UserId {
-					err = request.Reply(B, true, "")
-					if err != nil {
-						slog.Error("处理好友请求失败", "error", err)
-					}
-					return true
-				}
-			}
-		}
-		err = request.Reply(B, false, "")
-		if err != nil {
-			slog.Error("处理好友请求失败", "error", err)
-		}
-	}
-	return true
 }
 
 var alphaImageList = make(map[int64]int)

@@ -81,30 +81,34 @@ func init() {
 	}
 }
 
+var B *onebot.Bot
+
 func main() {
 	var err error
 	host := mainConfig.GetString("host")
 	port := mainConfig.GetInt("port")
 	verifyKey := mainConfig.GetString("verifyKey")
 	qq := mainConfig.GetInt64("qq")
-	b, err := onebot.Connect(host, port, onebot.WsChannelAll, verifyKey, qq, false)
+	B, err = onebot.Connect(host, port, onebot.WsChannelAll, verifyKey, qq, false)
 	if err != nil {
 		slog.Error("connect failed", "error", err)
 		os.Exit(1)
 	}
-	b.SetLimiter("drop", rate.NewLimiter(rate.Every(3*time.Second), 5))
-	tfcc.Init(b)
-	fengsheng.Init(b)
-	maplebot.Init(b)
-	hkbot.Init(b)
-	imageutil.Init(b)
-	checkQQGroups(b)
+	B.SetLimiter("drop", rate.NewLimiter(rate.Every(3*time.Second), 5))
+	tfcc.Init(B)
+	fengsheng.Init(B)
+	maplebot.Init(B)
+	hkbot.Init(B)
+	imageutil.Init(B)
+	B.ListenFriendRequest(handleNewFriendRequest)
+	B.ListenGroupRequest(handleInviteQQGroup)
+	checkQQGroups()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
 }
 
-func checkQQGroups(b *onebot.Bot) {
+func checkQQGroups() {
 	go func() {
 		for range time.Tick(30 * time.Second) {
 			go func() {
@@ -114,14 +118,14 @@ func checkQQGroups(b *onebot.Bot) {
 					}
 				}()
 				groups := mainConfig.GetIntSlice("check_qq_groups")
-				groupList, err := b.GetGroupList()
+				groupList, err := B.GetGroupList()
 				if err != nil {
 					slog.Error("get group list failed", "error", err)
 					return
 				}
 				for _, group := range groupList {
 					if !slices.Contains(groups, int(group.GroupId)) {
-						if err = b.SetGroupLeave(group.GroupId, false); err != nil {
+						if err = B.SetGroupLeave(group.GroupId, false); err != nil {
 							slog.Error("quit group failed", "error", err)
 						}
 					}
@@ -129,4 +133,57 @@ func checkQQGroups(b *onebot.Bot) {
 			}()
 		}
 	}()
+}
+
+func handleNewFriendRequest(request *onebot.FriendRequest) bool {
+	groupList, err := B.GetGroupList()
+	if err != nil {
+		slog.Error("获取群列表失败", "error", err)
+		err = request.Reply(B, false, "")
+		if err != nil {
+			slog.Error("处理好友请求失败", "error", err)
+		}
+	} else {
+		for _, groupInfo := range groupList {
+			memberList, err := B.GetGroupMemberList(groupInfo.GroupId)
+			if err != nil {
+				slog.Error("获取群成员列表失败", "error", err)
+				continue
+			}
+			for _, member := range memberList {
+				if member.UserId == request.UserId {
+					err = request.Reply(B, true, "")
+					if err != nil {
+						slog.Error("处理好友请求失败", "error", err)
+					}
+					return true
+				}
+			}
+		}
+		err = request.Reply(B, false, "")
+		if err != nil {
+			slog.Error("处理好友请求失败", "error", err)
+		}
+	}
+	return true
+}
+
+func handleInviteQQGroup(request *onebot.GroupRequest) bool {
+	if request.SubType != onebot.GroupRequestInvite {
+		return true
+	}
+	var approve bool
+	groups := mainConfig.GetIntSlice("check_qq_groups")
+	if slices.Contains(groups, int(request.GroupId)) {
+		approve = true
+	} else {
+		approve = false
+	}
+	err := request.Reply(B, approve, "")
+	if err != nil {
+		slog.Error("处理邀请请求失败", "approve", approve, "error", err)
+	} else {
+		slog.Info("处理邀请请求成功", "approve", approve, "error", err)
+	}
+	return true
 }
