@@ -1,10 +1,12 @@
 package tfcc
 
 import (
+	"encoding/base64"
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -96,6 +98,19 @@ func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMess
 		return
 	}
 	f := func(messages []SingleMessage) error {
+		for _, m := range messages {
+			if img, ok := m.(*Image); ok && len(img.File) > 0 {
+				if strings.HasPrefix(img.File, "file://") {
+					fileName := img.File[len("file://"):]
+					buf, err := os.ReadFile(fileName)
+					if err != nil {
+						slog.Error("read file failed", "error", err)
+						continue
+					}
+					img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
+				}
+			}
+		}
 		if !reply {
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err
