@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/CuteReimu/YinYangJade/db"
 	"github.com/CuteReimu/YinYangJade/fengsheng"
 	"github.com/CuteReimu/YinYangJade/hkbot"
 	"github.com/CuteReimu/YinYangJade/imageutil"
@@ -84,6 +85,8 @@ func init() {
 var B *onebot.Bot
 
 func main() {
+	db.Init()
+	defer db.Stop()
 	var err error
 	host := mainConfig.GetString("host")
 	port := mainConfig.GetInt("port")
@@ -92,7 +95,7 @@ func main() {
 	B, err = onebot.Connect(host, port, onebot.WsChannelAll, verifyKey, qq, false)
 	if err != nil {
 		slog.Error("connect failed", "error", err)
-		os.Exit(1)
+		panic(err)
 	}
 	B.SetLimiter("drop", rate.NewLimiter(rate.Every(3*time.Second), 5))
 	tfcc.Init(B)
