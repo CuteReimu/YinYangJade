@@ -21,7 +21,6 @@ func init() {
 	addCmdListener(&addNotifyOnStart{})
 	addCmdListener(&addNotifyOnEnd{})
 	addCmdListener(&atPlayer{})
-	addCmdListener(&updateTitle{})
 	addCmdListener(&removeTitle{})
 	addCmdListener(&resetPwd{})
 	addCmdListener(&sign{})
@@ -320,45 +319,6 @@ func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 		}
 	}
 	return MessageChain{&Text{Text: "没能找到此玩家，可能还未绑定"}}
-}
-
-type updateTitle struct{}
-
-func (u *updateTitle) Name() string {
-	return "修改称号"
-}
-
-func (u *updateTitle) ShowTips(_ int64, senderId int64) string {
-	data := permData.GetStringMapString("playerMap")
-	if _, ok := data[strconv.FormatInt(senderId, 10)]; ok {
-		return "修改称号 称号"
-	}
-	return ""
-}
-
-func (u *updateTitle) CheckAuth(int64, int64) bool {
-	return true
-}
-
-func (u *updateTitle) Execute(msg *GroupMessage, content string) MessageChain {
-	title := strings.TrimSpace(content)
-	if len(title) == 0 {
-		return MessageChain{&Text{Text: "命令格式：\n修改称号 称号"}}
-	}
-	data := permData.GetStringMapString("playerMap")
-	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
-	if len(name) == 0 {
-		return MessageChain{&Text{Text: "请先注册"}}
-	}
-	result, returnError := httpGetBool("/updatetitle", map[string]string{"name": name, "title": title})
-	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
-	}
-	if !result {
-		return MessageChain{&Text{Text: "你的段位太低，请提升段位后再来使用此功能"}}
-	}
-	return MessageChain{&Text{Text: "修改称号成功"}}
 }
 
 type removeTitle struct{}
