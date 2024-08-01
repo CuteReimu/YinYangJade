@@ -124,11 +124,11 @@ func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
 type seasonRankList struct{}
 
 func (r *seasonRankList) Name() string {
-	return "赛季排行"
+	return "赛季最高分排行"
 }
 
 func (r *seasonRankList) ShowTips(int64, int64) string {
-	return "赛季排行"
+	return "赛季最高分排行"
 }
 
 func (r *seasonRankList) CheckAuth(int64, int64) bool {
