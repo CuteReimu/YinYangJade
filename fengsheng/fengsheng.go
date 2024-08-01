@@ -15,6 +15,7 @@ func init() {
 	addCmdListener(&getMyScore{})
 	addCmdListener(&getScore{})
 	addCmdListener(&rankList{})
+	addCmdListener(&seasonRankList{})
 	addCmdListener(&winRate{})
 	addCmdListener(&register{})
 	addCmdListener(&addNotifyOnStart{})
@@ -109,6 +110,37 @@ func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	resp, err := restyClient.R().Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
+	if err != nil {
+		slog.Error("请求失败", "error", err)
+		return nil
+	}
+	if resp.StatusCode() != 200 {
+		slog.Error("请求失败", "status", resp.StatusCode())
+		return nil
+	}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())}}
+}
+
+type seasonRankList struct{}
+
+func (r *seasonRankList) Name() string {
+	return "赛季排行"
+}
+
+func (r *seasonRankList) ShowTips(int64, int64) string {
+	return "赛季排行"
+}
+
+func (r *seasonRankList) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (r *seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
+	content = strings.TrimSpace(content)
+	if len(content) > 0 {
+		return nil
+	}
+	resp, err := restyClient.R().SetQueryParam("season_rank", "true").Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
