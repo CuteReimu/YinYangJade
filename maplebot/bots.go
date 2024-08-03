@@ -327,13 +327,12 @@ func handleGroupMessage(message *GroupMessage) bool {
 				return true
 			} else if strings.HasPrefix(text.Text, "订阅开车") {
 				data := strings.TrimSpace(text.Text[len("订阅开车"):])
-				if len(data) == 0 {
-					sendGroupMessage(message, &Text{Text: "这是去幼儿园的车"})
-				} else {
-					userId := strconv.Itoa(int(message.Sender.UserId))
-					arr := getBossNumber(data)
-					subscribe(arr, userId)
+				userId := strconv.Itoa(int(message.Sender.UserId))
+				arr := getBossNumber(data)
+				if subscribe(arr, userId) {
 					sendGroupMessage(message, &Text{Text: "订阅成功 " + string(arr)})
+				} else {
+					sendGroupMessage(message, &Text{Text: "这是去幼儿园的车"})
 				}
 				return true
 			} else if strings.HasPrefix(text.Text, "取消订阅") {
@@ -472,13 +471,14 @@ func handleGroupMessage(message *GroupMessage) bool {
 	return true
 }
 
-func subscribe(arr []rune, userId string) {
+func subscribe(arr []rune, userId string) (ok bool) {
 	for _, num := range arr {
 		subscribed, _ := db.Get("boss_subscribe_" + string(num))
 		subArr := strings.Split(subscribed, ",")
 		if slices.Contains(subArr, userId) {
 			continue
 		}
+		ok = true
 		subArr = append(subArr, userId)
 		if len(subArr) > 50 { // 最多存50个人，多了就把旧的删了
 			subArr = subArr[:50]
@@ -486,6 +486,7 @@ func subscribe(arr []rune, userId string) {
 		subscribed = strings.Join(subArr, ",")
 		db.Set("boss_subscribe_"+string(num), subscribed)
 	}
+	return
 }
 
 func unSubscribe(arr []rune, userId string) {
