@@ -35,6 +35,7 @@ func init() {
 }
 
 var B *Bot
+var bossList = []byte{'3', '6', '7', '8', '9', '4', 'M'}
 
 func Init(b *Bot) {
 	initConfig()
@@ -276,25 +277,34 @@ func handleGroupMessage(message *GroupMessage) bool {
 					}
 				}
 				return true
-			} else if strings.HasPrefix(text.Text, "我要开车 ") {
+			} else if strings.HasPrefix(text.Text, "我要开车") {
 				data := strings.TrimSpace(text.Text[len("我要开车"):])
 				if len(data) == 0 {
 					sendGroupMessage(message, &Text{Text: "不准开车!"})
 				} else {
 					arr := getBossNumber(data)
+					if len(arr) == 0 {
+						sendGroupMessage(message, &Text{Text: "不准开车!"})
+						return true
+					}
 					var messageArr []SingleMessage
+					var handledQQ []string
 					messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
 					for _, num := range data {
 						subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
 						subArr := strings.Split(subscribed, ",")
 						for _, qqNUmber := range subArr {
+							if slices.Contains(handledQQ, qqNUmber) {
+								continue
+							}
 							messageArr = append(messageArr, &At{QQ: qqNUmber})
+							handledQQ = append(handledQQ, qqNUmber)
 						}
 					}
 					sendGroupMessage(message, messageArr...)
 				}
 				return true
-			} else if strings.HasPrefix(text.Text, "订阅开车 ") {
+			} else if strings.HasPrefix(text.Text, "订阅开车") {
 				data := strings.TrimSpace(text.Text[len("订阅开车"):])
 				if len(data) == 0 {
 					sendGroupMessage(message, &Text{Text: "这是去幼儿园的车"})
@@ -307,14 +317,23 @@ func handleGroupMessage(message *GroupMessage) bool {
 						if slices.Contains(subArr, userId) {
 							continue
 						}
-						if len(subscribed) > 0 {
-							subscribed += "," + userId
-						} else {
-							subscribed += userId
-						}
+						subArr = append(subArr, userId)
+						subscribed = strings.Join(subArr, ",")
 						db.Set(fmt.Sprintf("boss_subscribe_%d", num), subscribed)
 					}
 					sendGroupMessage(message, &Text{Text: "订阅成功 " + string(arr)})
+				}
+				return true
+			} else if strings.HasPrefix(text.Text, "取消订阅") {
+				data := strings.TrimSpace(text.Text[len("取消订阅"):])
+				userId := strconv.Itoa(int(message.Sender.UserId))
+				if len(data) == 0 {
+					unSubscribe(bossList, userId)
+					sendGroupMessage(message, &Text{Text: "取消全部订阅成功"})
+				} else {
+					arr := getBossNumber(data)
+					unSubscribe(arr, userId)
+					sendGroupMessage(message, &Text{Text: "取消订阅成功 " + string(arr)})
 				}
 				return true
 			} else if perm && strings.HasPrefix(text.Text, "添加词条 ") {
@@ -441,10 +460,28 @@ func handleGroupMessage(message *GroupMessage) bool {
 	return true
 }
 
+func unSubscribe(arr []byte, userId string) {
+	for _, num := range arr {
+		subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
+		subArr := strings.Split(subscribed, ",")
+		modified := false
+		for pos, qqNumber := range subArr {
+			if qqNumber == userId {
+				subArr = append(subArr[:pos], subArr[pos+1:]...)
+				modified = true
+			}
+		}
+		if modified {
+			subscribed = strings.Join(subArr, ",")
+			db.Set(fmt.Sprintf("boss_subscribe_%d", num), subscribed)
+		}
+	}
+}
+
 func getBossNumber(numberString string) []byte {
 	var result []byte
 	for _, char := range numberString {
-		if char >= '3' && char <= '9' { // 我要开车 36789
+		if slices.Contains(bossList, byte(char)) {
 			if slices.Contains(result, byte(char)) {
 				continue
 			}
