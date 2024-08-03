@@ -2,24 +2,28 @@ package fengsheng
 
 import (
 	"encoding/base64"
+	"fmt"
 	. "github.com/CuteReimu/onebot"
 	"log/slog"
+	"math/rand/v2"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func init() {
 	addCmdListener(&getMyScore{})
 	addCmdListener(&getScore{})
 	addCmdListener(&rankList{})
+	addCmdListener(&seasonRankList{})
 	addCmdListener(&winRate{})
 	addCmdListener(&register{})
 	addCmdListener(&addNotifyOnStart{})
 	addCmdListener(&addNotifyOnEnd{})
 	addCmdListener(&atPlayer{})
-	addCmdListener(&updateTitle{})
 	addCmdListener(&removeTitle{})
 	addCmdListener(&resetPwd{})
+	addCmdListener(&sign{})
 }
 
 type getMyScore struct{}
@@ -105,6 +109,37 @@ func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	resp, err := restyClient.R().Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
+	if err != nil {
+		slog.Error("请求失败", "error", err)
+		return nil
+	}
+	if resp.StatusCode() != 200 {
+		slog.Error("请求失败", "status", resp.StatusCode())
+		return nil
+	}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())}}
+}
+
+type seasonRankList struct{}
+
+func (r *seasonRankList) Name() string {
+	return "赛季最高分排行"
+}
+
+func (r *seasonRankList) ShowTips(int64, int64) string {
+	return "赛季最高分排行"
+}
+
+func (r *seasonRankList) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (r *seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
+	content = strings.TrimSpace(content)
+	if len(content) > 0 {
+		return nil
+	}
+	resp, err := restyClient.R().SetQueryParam("season_rank", "true").Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
@@ -286,45 +321,6 @@ func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 	return MessageChain{&Text{Text: "没能找到此玩家，可能还未绑定"}}
 }
 
-type updateTitle struct{}
-
-func (u *updateTitle) Name() string {
-	return "修改称号"
-}
-
-func (u *updateTitle) ShowTips(_ int64, senderId int64) string {
-	data := permData.GetStringMapString("playerMap")
-	if _, ok := data[strconv.FormatInt(senderId, 10)]; ok {
-		return "修改称号 称号"
-	}
-	return ""
-}
-
-func (u *updateTitle) CheckAuth(int64, int64) bool {
-	return true
-}
-
-func (u *updateTitle) Execute(msg *GroupMessage, content string) MessageChain {
-	title := strings.TrimSpace(content)
-	if len(title) == 0 {
-		return MessageChain{&Text{Text: "命令格式：\n修改称号 称号"}}
-	}
-	data := permData.GetStringMapString("playerMap")
-	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
-	if len(name) == 0 {
-		return MessageChain{&Text{Text: "请先注册"}}
-	}
-	result, returnError := httpGetBool("/updatetitle", map[string]string{"name": name, "title": title})
-	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
-	}
-	if !result {
-		return MessageChain{&Text{Text: "你的段位太低，请提升段位后再来使用此功能"}}
-	}
-	return MessageChain{&Text{Text: "修改称号成功"}}
-}
-
 type removeTitle struct{}
 
 func (u *removeTitle) Name() string {
@@ -413,4 +409,60 @@ func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	return MessageChain{&Text{Text: result}}
+}
+
+type sign struct{}
+
+func (s *sign) Name() string {
+	return "签到"
+}
+
+func (s *sign) ShowTips(int64, int64) string {
+	return "签到"
+}
+
+func (s *sign) CheckAuth(_ int64, _ int64) bool {
+	return true
+}
+
+func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
+	if len(strings.TrimSpace(content)) != 0 {
+		return nil
+	}
+	qq := strconv.FormatInt(msg.Sender.UserId, 10)
+	data := permData.GetStringMapString("playerMap")
+	name := data[qq]
+	if len(name) == 0 {
+		return MessageChain{&Text{Text: "请先注册"}}
+	}
+	lastSignTime := signData.GetInt64("data." + qq)
+	now := time.Now()
+	y1, m1, d1 := time.UnixMilli(lastSignTime).Date()
+	y2, m2, d2 := now.Date()
+	if y1 == y2 && m1 == m2 && d1 == d2 {
+		return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
+	}
+	energy := rand.IntN(10)/3 + 1
+	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if !success {
+		return MessageChain{&Text{Text: "签到失败"}}
+	}
+	signData.Set("data."+qq, now.UnixMilli())
+	if err := signData.WriteConfig(); err != nil {
+		slog.Error("write data failed", "error", err)
+	}
+	switch energy {
+	case 1:
+		return MessageChain{&Text{Text: "太背了，获得1点精力"}}
+	case 2:
+		return MessageChain{&Text{Text: "运气还行，获得2点精力"}}
+	case 3:
+		return MessageChain{&Text{Text: "运气不错，获得3点精力"}}
+	default:
+		return MessageChain{&Text{Text: fmt.Sprintf("运气爆棚，获得%d点精力", energy)}}
+	}
 }

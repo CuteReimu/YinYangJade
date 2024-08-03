@@ -1,9 +1,11 @@
 package maplebot
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/CuteReimu/YinYangJade/slicegame"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
 	"log/slog"
@@ -36,14 +38,20 @@ func Init(b *Bot) {
 	initConfig()
 	B = b
 	go func() {
+		B.Run(clearExpiredImages)
+		B.Run(clearExpiredImages2)
 		for range time.Tick(24 * time.Hour) {
 			B.Run(clearExpiredImages)
+			B.Run(clearExpiredImages2)
 		}
 	}()
 	B.ListenGroupMessage(handleGroupMessage)
 }
 
-var addDbQQList = make(map[int64]string)
+var (
+	addDbQQList          = make(map[int64]string)
+	updateClassImageList = make(map[int64]string)
+)
 
 func handleGroupMessage(message *GroupMessage) bool {
 	if len(message.Message) <= 0 {
@@ -77,23 +85,46 @@ func handleGroupMessage(message *GroupMessage) bool {
 		if text, ok := message.Message[0].(*Text); ok {
 			perm := message.Sender.Role == RoleAdmin || message.Sender.Role == RoleOwner ||
 				config.GetInt64("admin") == message.Sender.UserId
+			if perm {
+				perm = slices.Contains(config.GetIntSlice("admin_groups"), int(message.GroupId))
+			}
 			if text.Text == "ping" {
 				sendGroupMessage(message, &Text{Text: "pong"})
 				return true
 			} else if text.Text == "roll" {
-				replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))}) //nolint:gosec
+				replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
 				return true
 			} else if strings.HasPrefix(text.Text, "roll ") {
 				upperLimit, _ := strconv.Atoi(strings.TrimSpace(text.Text[len("roll"):]))
 				if upperLimit > 0 {
-					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)}) //nolint:gosec
+					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
 				}
+				return true
+			} else if text.Text == "滑块" {
+				sendGroupMessage(message, slicegame.DoStuff()...)
 				return true
 			} else if text.Text == "8421" {
 				sendGroupMessage(message, calculatePotion()...)
 				return true
 			} else if text.Text == "升级经验" {
 				sendGroupMessage(message, calculateLevelExp()...)
+				return true
+			} else if strings.HasPrefix(text.Text, "等级压制 ") {
+				content := strings.TrimSpace(text.Text[len("等级压制"):])
+				sendGroupMessage(message, calculateExpDamage(content)...)
+				return true
+			} else if strings.HasPrefix(text.Text, "生成表格 ") {
+				content := strings.TrimSpace(text.Text[len("升级经验"):])
+				sendGroupMessage(message, genTable(content)...)
+				return true
+			} else if strings.HasPrefix(text.Text, "升级经验 ") {
+				content := strings.TrimSpace(text.Text[len("升级经验"):])
+				parts := strings.SplitN(content, " ", 2)
+				if len(parts) == 2 {
+					start, _ := strconv.Atoi(parts[0])
+					end, _ := strconv.Atoi(parts[1])
+					sendGroupMessage(message, calculateExpBetweenLevel(int64(start), int64(end))...)
+				}
 				return true
 			} else if text.Text == "爆炸次数" || strings.HasPrefix(text.Text, "爆炸次数 ") {
 				sendGroupMessage(message, calculateBoomCount(text.Text[len("爆炸次数"):])...)
@@ -116,15 +147,32 @@ func handleGroupMessage(message *GroupMessage) bool {
 				return true
 			} else if strings.HasPrefix(text.Text, "查询 ") {
 				name := strings.TrimSpace(text.Text[len("查询"):])
-				if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
-					go func() {
-						defer func() {
-							if err := recover(); err != nil {
-								slog.Error("panic recovered", "error", err)
-							}
+				parts := strings.Split(name, " ")
+				if len(parts) <= 1 {
+					if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
+						go func() {
+							defer func() {
+								if err := recover(); err != nil {
+									slog.Error("panic recovered", "error", err)
+								}
+							}()
+							sendGroupMessage(message, findRole(name)...)
 						}()
-						sendGroupMessage(message, findRole(name)...)
-					}()
+					}
+				} else {
+					name1, name2 := parts[0], parts[1]
+					if !slices.ContainsFunc([]byte(name1), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) &&
+						!slices.ContainsFunc([]byte(name2), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
+						sendGroupMessage(message, &Text{Text: "查询两个角色功能暂不可用"})
+						//go func() {
+						//	defer func() {
+						//		if err := recover(); err != nil {
+						//			slog.Error("panic recovered", "error", err, "stack", debug.Stack())
+						//		}
+						//	}()
+						//	sendGroupMessage(message, findRole2(name1, name2)...)
+						//}()
+					}
 				}
 				return true
 			} else if strings.HasPrefix(text.Text, "绑定 ") {
@@ -156,6 +204,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 					sendGroupMessage(message, &Text{Text: "你还未绑定"})
 				}
 				return true
+			} else if text.Text == "升星性价比" {
+				sendGroupMessage(message, calStarForceCostPerformance()...)
 			} else if strings.HasPrefix(text.Text, "模拟升星 ") || strings.HasPrefix(text.Text, "模拟上星 ") ||
 				strings.HasPrefix(text.Text, "升星期望 ") || strings.HasPrefix(text.Text, "上星期望 ") {
 				content := strings.TrimSpace(text.Text[len("模拟升星"):])
@@ -201,6 +251,28 @@ func handleGroupMessage(message *GroupMessage) bool {
 				return true
 			} else if strings.HasPrefix(text.Text, "洗魔方 ") {
 				sendGroupMessage(message, calculateCube(strings.TrimSpace(text.Text[len("洗魔方"):]))...)
+				return true
+			} else if perm && strings.HasPrefix(text.Text, "修改职业图片 ") {
+				key := strings.TrimSpace(text.Text[len("修改职业图片"):])
+				if len(key) > 0 {
+					if _, ok := ClassNameMap[key]; !ok {
+						sendGroupMessage(message, &Text{Text: "不存在的职业"})
+					} else {
+						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+						updateClassImageList[message.Sender.UserId] = key
+					}
+				}
+				return true
+			} else if strings.HasPrefix(text.Text, "查询职业图片 ") {
+				key := strings.TrimSpace(text.Text[len("查询职业图片"):])
+				if len(key) > 0 {
+					if img, err := GetClassOriginImageBuff(key); err != nil {
+						slog.Error("找不到职业图片", "error", err)
+						sendGroupMessage(message, &Text{Text: "找不到职业图片"})
+					} else {
+						sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(img)})
+					}
+				}
 				return true
 			} else if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
@@ -275,7 +347,19 @@ func handleGroupMessage(message *GroupMessage) bool {
 			}
 		}
 	}
-	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
+	if key, ok := updateClassImageList[message.Sender.UserId]; ok { // 修改职业图片
+		delete(updateClassImageList, message.Sender.UserId)
+		if len(message.Message) != 1 {
+			sendGroupMessage(message, &Text{Text: "提供的不是一张图片，修改失败"})
+		} else if img, ok := message.Message[0].(*Image); !ok {
+			sendGroupMessage(message, &Text{Text: "提供的不是一张图片，修改失败"})
+		} else if len(img.Url) == 0 {
+			sendGroupMessage(message, &Text{Text: "无法识别图片，修改失败"})
+		} else {
+			sendGroupMessage(message, SetClassImage(key, img)...)
+		}
+		return true
+	} else if key, ok = addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
 		if err := saveImage(message.Message); err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
@@ -356,6 +440,19 @@ func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMess
 		return
 	}
 	f := func(messages []SingleMessage) error {
+		for _, m := range messages {
+			if img, ok := m.(*Image); ok && len(img.File) > 0 {
+				if strings.HasPrefix(img.File, "file://") {
+					fileName := img.File[len("file://"):]
+					buf, err := os.ReadFile(fileName)
+					if err != nil {
+						slog.Error("read file failed", "error", err)
+						continue
+					}
+					img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
+				}
+			}
+		}
 		if !reply {
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err

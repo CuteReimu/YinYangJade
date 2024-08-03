@@ -65,12 +65,12 @@ var (
 	accessorySelections  = append(defaultSelections,
 		"lineMeso+1", "lineDrop+1", "lineMesoOrDrop+1",
 		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
-		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
+		"lineMeso+3", "lineDrop+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
 	)
 	accessorySelections160 = append(defaultSelections160,
 		"lineMeso+1", "lineDrop+1", "lineMesoOrDrop+1",
 		"lineMeso+2", "lineDrop+2", "lineMesoOrDrop+2",
-		"lineMeso+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
+		"lineMeso+3", "lineDrop+3", "lineMeso+1&lineStat+1", "lineDrop+1&lineStat+1", "lineMesoOrDrop+1&lineStat+1",
 	)
 	hatSelections = append(defaultSelections,
 		"secCooldown+2", "secCooldown+3", "secCooldown+4", "secCooldown+5", "secCooldown+6",
@@ -176,7 +176,7 @@ func calculateCubeAll() MessageChain {
 		}
 		names = append(names, s)
 	}
-	selections := defaultSelections160[2:]
+	selections := defaultSelections160
 	ss := make([][]string, len(names))
 	styles := make(map[string][]*Style, len(names))
 	costs := make(map[string]int64, len(names))
@@ -194,10 +194,10 @@ func calculateCubeAll() MessageChain {
 				cost int64
 			)
 			if red <= black {
-				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 0, G: 132, B: 199, A: 96}})
 				cost = red
 			} else {
-				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{A: 32}})
+				styles[ss[i][0]] = append(styles[ss[i][0]], &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 				cost = black
 			}
 			ss[i] = append(ss[i], formatInt64(cost))
@@ -224,6 +224,7 @@ func calculateCubeAll() MessageChain {
 		header = append(header, target)
 	}
 	p, err := TableOptionRender(TableChartOption{
+		Width:           770,
 		Header:          header,
 		Data:            ss,
 		HeaderFontColor: Color{R: 35, G: 35, B: 35, A: 255},
@@ -260,8 +261,8 @@ func calculateCube(s string) MessageChain {
 		if err != nil {
 			return nil
 		}
-		if level < 100 {
-			return MessageChain{&Text{Text: "不能低于100级"}}
+		if level < 71 {
+			return MessageChain{&Text{Text: "不能低于71级"}}
 		} else if level > 300 {
 			return MessageChain{&Text{Text: "不能高于300级"}}
 		}
@@ -274,10 +275,10 @@ func calculateCube(s string) MessageChain {
 	_, eToLB := runCalculator(nameLevel.name, "black", 1, nameLevel.level, 3, "")
 	var eToLCost int64
 	if eToLR < eToLB {
-		styles = append(styles, &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
+		styles = append(styles, &Style{FillColor: drawing.Color{R: 0, G: 132, B: 199, A: 96}})
 		eToLCost = eToLR
 	} else {
-		styles = append(styles, &Style{FillColor: drawing.Color{A: 32}})
+		styles = append(styles, &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 		eToLCost = eToLB
 	}
 	ss := make([][]string, 0, len(selections)+1)
@@ -287,10 +288,10 @@ func calculateCube(s string) MessageChain {
 		_, black := runCalculator(nameLevel.name, "black", 3, nameLevel.level, 3, it)
 		var cost int64
 		if red <= black {
-			styles = append(styles, &Style{FillColor: drawing.Color{R: 255, G: 130, B: 171, A: 128}})
+			styles = append(styles, &Style{FillColor: drawing.Color{R: 0, G: 132, B: 199, A: 96}})
 			cost = red
 		} else {
-			styles = append(styles, &Style{FillColor: drawing.Color{A: 32}})
+			styles = append(styles, &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 			cost = black
 		}
 		var target string
@@ -846,9 +847,9 @@ var (
 	MAX_CATEGORY_COUNT = map[string]int{
 		CATEGORY_DECENT_SKILL:    1,
 		CATEGORY_INVINCIBLE_TIME: 1,
-		CATEGORY_IED_PERC:        2,
-		CATEGORY_BOSSDMG_PERC:    2,
-		CATEGORY_DROP_PERC:       2,
+		CATEGORY_IED_PERC:        3,
+		CATEGORY_BOSSDMG_PERC:    3,
+		CATEGORY_DROP_PERC:       3,
 		CATEGORY_IGNOREDMG_PERC:  2,
 		CATEGORY_INVINCIBLE_PERC: 2,
 	}

@@ -1,4 +1,4 @@
-package fengsheng
+package hkbot
 
 import (
 	"encoding/base64"
@@ -21,7 +21,7 @@ func handleDictionary(message *GroupMessage) bool {
 	if len(message.Message) == 0 {
 		return true
 	}
-	if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(message.GroupId)) {
+	if !slices.Contains(hkConfig.GetIntSlice("speedrun_push_qq_group"), int(message.GroupId)) {
 		return true
 	}
 	if len(message.Message) == 1 {
@@ -152,11 +152,11 @@ func saveImage(message MessageChain) error {
 				slog.Error("userInput is not a valid URL, reject it", "error", err)
 				return err
 			}
-			if err := os.MkdirAll("dictionary-images", 0755); err != nil {
+			if err := os.MkdirAll("hk-images", 0755); err != nil {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
-			p := filepath.Join("dictionary-images", img.File)
+			p := filepath.Join("hk-images", img.File)
 			abs, err := filepath.Abs(p)
 			if err != nil {
 				slog.Error("filepath.Abs() failed", "error", err)
@@ -255,13 +255,13 @@ func clearExpiredImages() {
 			}
 		}
 	}
-	files, err := os.ReadDir("dictionary-images")
+	files, err := os.ReadDir("hk-images")
 	if err != nil {
 		slog.Error("read dir failed", "error", err)
 	}
 	for _, file := range files {
 		if !data2[file.Name()] {
-			if err = os.Remove(filepath.Join("dictionary-images", file.Name())); err != nil {
+			if err = os.Remove(filepath.Join("hk-images", file.Name())); err != nil {
 				slog.Error("remove file failed", "error", err)
 			}
 		}
