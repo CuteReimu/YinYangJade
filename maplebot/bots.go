@@ -35,7 +35,7 @@ func init() {
 }
 
 var B *Bot
-var bossList = []byte{'3', '6', '7', '8', '9', '4', 'M'}
+var bossList = []rune{'3', '6', '7', '8', '9', '4', 'M', '绿', '黑'}
 
 func Init(b *Bot) {
 	initConfig()
@@ -288,17 +288,38 @@ func handleGroupMessage(message *GroupMessage) bool {
 						return true
 					}
 					var messageArr []SingleMessage
-					var handledQQ []string
+					qqNumbers := make(map[string]bool) // 用map，随机顺序取人，公平一些
 					messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
 					for _, num := range data {
-						subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
+						subscribed, _ := db.Get("boss_subscribe_" + string(num))
 						subArr := strings.Split(subscribed, ",")
-						for _, qqNUmber := range subArr {
-							if slices.Contains(handledQQ, qqNUmber) {
+						for _, qqNumber := range subArr {
+							qqNumbers[qqNumber] = true
+						}
+					}
+					delete(qqNumbers, strconv.Itoa(int(message.Sender.UserId))) // 自己发车不要艾特自己
+					members, err := B.GetGroupMemberList(message.GroupId)
+					if err != nil {
+						slog.Error("获取群成员列表失败", "error", err, "group_id", message.GroupId)
+					}
+					groupMembers := make(map[int64]bool) // 把list转成map，方便查找
+					for _, member := range members {
+						groupMembers[member.UserId] = true
+					}
+					for qqNumber := range qqNumbers {
+						if err == nil { // 获取群成员列表失败，就不检查了
+							qq, err2 := strconv.ParseInt(qqNumber, 10, 64)
+							if err2 != nil {
+								slog.Error("QQ号解析错误", "error", err2, "qq", qqNumber)
 								continue
 							}
-							messageArr = append(messageArr, &At{QQ: qqNUmber})
-							handledQQ = append(handledQQ, qqNUmber)
+							if !groupMembers[qq] { // 群里无此人
+								continue
+							}
+						}
+						messageArr = append(messageArr, &At{QQ: qqNumber})
+						if len(messageArr) > 20 { // 最多艾特20个人
+							break
 						}
 					}
 					sendGroupMessage(message, messageArr...)
@@ -311,16 +332,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 				} else {
 					userId := strconv.Itoa(int(message.Sender.UserId))
 					arr := getBossNumber(data)
-					for _, num := range arr {
-						subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
-						subArr := strings.Split(subscribed, ",")
-						if slices.Contains(subArr, userId) {
-							continue
-						}
-						subArr = append(subArr, userId)
-						subscribed = strings.Join(subArr, ",")
-						db.Set(fmt.Sprintf("boss_subscribe_%d", num), subscribed)
-					}
+					subscribe(arr, userId)
 					sendGroupMessage(message, &Text{Text: "订阅成功 " + string(arr)})
 				}
 				return true
@@ -460,32 +472,43 @@ func handleGroupMessage(message *GroupMessage) bool {
 	return true
 }
 
-func unSubscribe(arr []byte, userId string) {
+func subscribe(arr []rune, userId string) {
 	for _, num := range arr {
-		subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
+		subscribed, _ := db.Get("boss_subscribe_" + string(num))
 		subArr := strings.Split(subscribed, ",")
-		modified := false
-		for pos, qqNumber := range subArr {
-			if qqNumber == userId {
-				subArr = append(subArr[:pos], subArr[pos+1:]...)
-				modified = true
-			}
+		if slices.Contains(subArr, userId) {
+			continue
 		}
-		if modified {
+		subArr = append(subArr, userId)
+		if len(subArr) > 50 { // 最多存50个人，多了就把旧的删了
+			subArr = subArr[:50]
+		}
+		subscribed = strings.Join(subArr, ",")
+		db.Set("boss_subscribe_"+string(num), subscribed)
+	}
+}
+
+func unSubscribe(arr []rune, userId string) {
+	for _, num := range arr {
+		subscribed, _ := db.Get("boss_subscribe_" + string(num))
+		subArr := strings.Split(subscribed, ",")
+		pos := slices.Index(subArr, userId)
+		if pos >= 0 {
+			subArr = append(subArr[:pos], subArr[pos+1:]...)
 			subscribed = strings.Join(subArr, ",")
-			db.Set(fmt.Sprintf("boss_subscribe_%d", num), subscribed)
+			db.Set("boss_subscribe_"+string(num), subscribed)
 		}
 	}
 }
 
-func getBossNumber(numberString string) []byte {
-	var result []byte
+func getBossNumber(numberString string) []rune {
+	var result []rune
 	for _, char := range numberString {
-		if slices.Contains(bossList, byte(char)) {
-			if slices.Contains(result, byte(char)) {
+		if slices.Contains(bossList, char) {
+			if slices.Contains(result, char) {
 				continue
 			}
-			result = append(result, byte(char))
+			result = append(result, char)
 		}
 	}
 	return result
