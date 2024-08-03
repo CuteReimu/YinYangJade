@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/CuteReimu/YinYangJade/slicegame"
-	. "github.com/CuteReimu/onebot"
-	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"math/rand/v2"
 	"net/url"
@@ -18,6 +15,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/db"
+	"github.com/CuteReimu/YinYangJade/slicegame"
+	. "github.com/CuteReimu/onebot"
+	"github.com/go-resty/resty/v2"
 )
 
 var restyClient = resty.New()
@@ -274,6 +276,47 @@ func handleGroupMessage(message *GroupMessage) bool {
 					}
 				}
 				return true
+			} else if strings.HasPrefix(text.Text, "我要开车 ") {
+				data := strings.TrimSpace(text.Text[len("我要开车"):])
+				if len(data) == 0 {
+					sendGroupMessage(message, &Text{Text: "不准开车!"})
+				} else {
+					arr := getBossNumber(data)
+					var messageArr []SingleMessage
+					messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
+					for _, num := range data {
+						subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
+						subArr := strings.Split(subscribed, ",")
+						for _, qqNUmber := range subArr {
+							messageArr = append(messageArr, &At{QQ: qqNUmber})
+						}
+					}
+					sendGroupMessage(message, messageArr...)
+				}
+				return true
+			} else if strings.HasPrefix(text.Text, "订阅开车 ") {
+				data := strings.TrimSpace(text.Text[len("订阅开车"):])
+				if len(data) == 0 {
+					sendGroupMessage(message, &Text{Text: "这是去幼儿园的车"})
+				} else {
+					userId := strconv.Itoa(int(message.Sender.UserId))
+					arr := getBossNumber(data)
+					for _, num := range arr {
+						subscribed, _ := db.Get(fmt.Sprintf("boss_subscribe_%d", num))
+						subArr := strings.Split(subscribed, ",")
+						if slices.Contains(subArr, userId) {
+							continue
+						}
+						if len(subscribed) > 0 {
+							subscribed += "," + userId
+						} else {
+							subscribed += userId
+						}
+						db.Set(fmt.Sprintf("boss_subscribe_%d", num), subscribed)
+					}
+					sendGroupMessage(message, &Text{Text: "订阅成功 " + string(arr)})
+				}
+				return true
 			} else if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
@@ -396,6 +439,19 @@ func handleGroupMessage(message *GroupMessage) bool {
 		}
 	}
 	return true
+}
+
+func getBossNumber(numberString string) []byte {
+	var result []byte
+	for _, char := range numberString {
+		if char >= '3' && char <= '9' { // 我要开车 36789
+			if slices.Contains(result, byte(char)) {
+				continue
+			}
+			result = append(result, byte(char))
+		}
+	}
+	return result
 }
 
 func saveImage(message MessageChain) error {
