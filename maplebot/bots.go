@@ -502,6 +502,7 @@ func unSubscribe(arr []rune, userId string) {
 }
 
 func getBossNumber(numberString string) []rune {
+	numberString = strings.ToUpper(numberString)
 	var result []rune
 	for _, char := range numberString {
 		if slices.Contains(bossList, char) {
