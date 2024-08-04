@@ -178,6 +178,20 @@ func handleGroupMessage(message *GroupMessage) bool {
 					}
 				}
 				return true
+			} else if strings.HasPrefix(text.Text, "查询绑定 ") {
+				qqNumber := strings.TrimSpace(text.Text[len("查询绑定"):])
+				qq, err := strconv.ParseInt(qqNumber, 10, 64)
+				if err != nil {
+					sendGroupMessage(message, &Text{Text: "命令格式：“查询绑定 QQ号”"})
+					return true
+				}
+				data := findRoleData.GetStringMapString("data")
+				if name := data[strconv.FormatInt(qq, 10)]; name != "" {
+					sendGroupMessage(message, &Text{Text: "该玩家绑定了：" + name})
+				} else {
+					sendGroupMessage(message, &Text{Text: "该玩家还未绑定"})
+				}
+				return true
 			} else if strings.HasPrefix(text.Text, "绑定 ") {
 				data := findRoleData.GetStringMapString("data")
 				if data[strconv.FormatInt(message.Sender.UserId, 10)] != "" {
