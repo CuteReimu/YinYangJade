@@ -277,20 +277,16 @@ func handleGroupMessage(message *GroupMessage) bool {
 					}
 				}
 				return true
-			} else if strings.HasPrefix(text.Text, "我要开车") {
+			} else if strings.HasPrefix(text.Text, "我要开车") || strings.HasPrefix(text.Text, "我要发车") {
 				data := strings.TrimSpace(text.Text[len("我要开车"):])
-				if len(data) == 0 {
+				arr := getBossNumber(data)
+				if len(arr) == 0 {
 					sendGroupMessage(message, &Text{Text: "不准开车!"})
 				} else {
-					arr := getBossNumber(data)
-					if len(arr) == 0 {
-						sendGroupMessage(message, &Text{Text: "不准开车!"})
-						return true
-					}
 					var messageArr []SingleMessage
 					qqNumbers := make(map[string]bool) // 用map，随机顺序取人，公平一些
 					messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
-					for _, num := range data {
+					for _, num := range arr {
 						subscribed, _ := db.Get("boss_subscribe_" + string(num))
 						subArr := strings.Split(subscribed, ",")
 						for _, qqNumber := range subArr {
@@ -325,7 +321,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 					sendGroupMessage(message, messageArr...)
 				}
 				return true
-			} else if strings.HasPrefix(text.Text, "订阅开车") {
+			} else if strings.HasPrefix(text.Text, "订阅开车") || strings.HasPrefix(text.Text, "订阅发车") {
 				data := strings.TrimSpace(text.Text[len("订阅开车"):])
 				arr := getBossNumber(data)
 				if len(arr) == 0 {
