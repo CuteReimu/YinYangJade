@@ -17,7 +17,7 @@ require (
 	github.com/tidwall/gjson v1.17.3
 	github.com/vicanso/go-charts/v2 v2.6.9
 	github.com/wcharczuk/go-chart/v2 v2.1.1
-	golang.org/x/time v0.5.0
+	golang.org/x/time v0.6.0
 )
 
 require (
