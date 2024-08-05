@@ -8,7 +8,7 @@ require (
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20240729190603-3708a43ab90d
 	github.com/dgraph-io/badger/v4 v4.2.0
-	github.com/dlclark/regexp2 v1.11.2
+	github.com/dlclark/regexp2 v1.11.4
 	github.com/go-resty/resty/v2 v2.14.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
