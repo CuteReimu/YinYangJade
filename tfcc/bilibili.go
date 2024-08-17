@@ -40,5 +40,6 @@ func initBilibili() {
 		}
 		cookiesString := bili.GetCookiesString()
 		bilibiliData.Set("cookies", strings.Split(cookiesString, "\n"))
+		fmt.Println("B站登录成功")
 	}
 }
