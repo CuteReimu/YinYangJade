@@ -241,12 +241,15 @@ func (a *forbidRole) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n禁用角色 名字"}}
 	}
-	result, returnError := httpGetString("/forbidrole", map[string]string{"name": name})
+	result, returnError := httpGetBool("/forbidrole", map[string]string{"name": name})
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	return MessageChain{&Text{Text: result}}
+	if result {
+		return MessageChain{&Text{Text: "禁用成功"}}
+	}
+	return MessageChain{&Text{Text: "禁用失败"}}
 }
 
 type releaseRole struct{}
@@ -266,14 +269,17 @@ func (a *releaseRole) CheckAuth(_ int64, senderId int64) bool {
 func (a *releaseRole) Execute(_ *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
-		return MessageChain{&Text{Text: "命令格式：\n解封 名字"}}
+		return MessageChain{&Text{Text: "命令格式：\n启用角色 名字"}}
 	}
-	result, returnError := httpGetString("/forbidrole", map[string]string{"name": name})
+	result, returnError := httpGetBool("/releaserole", map[string]string{"name": name})
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	return MessageChain{&Text{Text: result}}
+	if result {
+		return MessageChain{&Text{Text: "启用成功"}}
+	}
+	return MessageChain{&Text{Text: "启用失败"}}
 }
 
 type setVersion struct{}
