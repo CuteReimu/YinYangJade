@@ -140,7 +140,7 @@ func findRole(name string) MessageChain {
 		}
 	}
 
-	s := fmt.Sprintf("角色名：%s\n职业：%s\n等级：%s\n联盟：%s\n", rawName, class, levelExp, legionLevel)
+	s := fmt.Sprintf("角色名：%s\n职业：%s\n等级：%s\n联盟：%s\n", rawName, TranslateClassName(class), levelExp, legionLevel)
 
 	expValues := make([]float64, 0, 30)
 	levelValues := make([]float64, 0, 30)
