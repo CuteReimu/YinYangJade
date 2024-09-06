@@ -402,6 +402,14 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 	if y1 == y2 && m1 == m2 && d1 == d2 {
 		return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
 	}
+	lastTime, returnError := httpGetInt("/getlasttime", map[string]string{"name": name})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if lastTime >= 7*24*1000 {
+		return MessageChain{&Text{Text: "太久未进行过游戏，签到失败"}}
+	}
 	energy := rand.IntN(10)/3 + 1
 	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
 	if returnError != nil {
