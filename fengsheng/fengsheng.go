@@ -407,7 +407,7 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	if lastTime >= 7*24*1000 {
+	if lastTime >= 7*24*3600*1000 {
 		return MessageChain{&Text{Text: "太久未进行过游戏，签到失败"}}
 	}
 	energy := rand.IntN(10)/3 + 1
