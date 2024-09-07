@@ -408,7 +408,8 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	if lastTime >= 7*24*3600*1000 {
-		return MessageChain{&Text{Text: "太久未进行过游戏，签到失败"}}
+		lastTime1 := time.Now().Add(time.Duration(lastTime) * time.MilliSecond)
+		return MessageChain{&Text{Text: "一周内未进行过游戏，无法进行签到 最近时间为：%s",lastTime1.Format("2006-01-02 15:04:05")}}
 	}
 	energy := rand.IntN(10)/3 + 1
 	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
