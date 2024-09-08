@@ -408,7 +408,7 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	if lastTime >= 7*24*3600*1000 {
-		lastTime1 := time.Now().Add(time.Duration(lastTime) * time.Millisecond)
+		lastTime1 := time.Now().Add(-(time.Duration(lastTime) * time.Millisecond))
 		return MessageChain{&Text{Text: "一周内未进行过游戏，无法进行签到 最近时间为：" + lastTime1.Format("2006-01-02 15:04:05")}}
 	}
 	energy := rand.IntN(10)/3 + 1
