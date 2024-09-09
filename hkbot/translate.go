@@ -188,4 +188,5 @@ var symbols = map[rune]bool{
 	'\'': true,
 	'"':  true,
 	',':  true,
+	'.':  true,
 }
