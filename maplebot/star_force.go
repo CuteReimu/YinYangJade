@@ -155,6 +155,26 @@ func determineOutcome(currentStar int, boomProtect, fiveTenFifteen bool) starFor
 	return _SUCCESS
 }
 
+func perform20To22(itemLevel int, thirtyOff bool) (starForceResult, float64) {
+	var (
+		currentStar = 20
+		totalMesos  float64
+	)
+	for currentStar < 22 {
+		totalMesos += attemptCost(currentStar, itemLevel, false, thirtyOff, false, false)
+		switch determineOutcome(currentStar, false, false) {
+		case _SUCCESS:
+			currentStar++
+		case _DECREASE:
+			currentStar--
+		case _MAINTAIN:
+		case _BOOM:
+			return _BOOM, totalMesos
+		}
+	}
+	return _SUCCESS, totalMesos
+}
+
 // performExperiment return (totalMesos, totalBooms, totalCount)
 func performExperiment(currentStar, desiredStar, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool) (float64, int, int) {
 	var (
@@ -193,6 +213,48 @@ func formatInt64(i int64) string {
 		return fmt.Sprintf("%.2fB", float64(i)/1000000000.0)
 	}
 	return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
+}
+
+func calculate20To22() MessageChain {
+	const testCount = 10000
+	var (
+		totalBooms int
+		ss         = make([][]string, 0, 5)
+	)
+	for _, level := range []int{140, 150, 160, 200, 250} {
+		var mesos, mesosThirtyOff float64
+		for range testCount {
+			b, m := perform20To22(level, false)
+			mesos += m
+			if b == _BOOM {
+				totalBooms++
+			}
+			b, m = perform20To22(level, true)
+			mesosThirtyOff += m
+			if b == _BOOM {
+				totalBooms++
+			}
+		}
+		ss = append(ss, []string{
+			fmt.Sprintf("%d级", level),
+			formatInt64(int64(math.Round(mesos / float64(testCount)))),
+			formatInt64(int64(math.Round(mesosThirtyOff / float64(testCount)))),
+		})
+	}
+	ret := MessageChain{&Text{Text: fmt.Sprintf("20★ → 22★，有%.2f%%的几率中途爆炸，平均消耗%.1f个备件能成功", float64(totalBooms)/testCount*10, testCount*10/float64(totalBooms))}}
+	p, err := TableOptionRender(TableChartOption{
+		Width:  300,
+		Header: []string{"平均花费", "无活动", "七折"},
+		Data:   ss,
+	})
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else if buf, err := p.Bytes(); err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else {
+		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	}
+	return ret
 }
 
 func calculateBoomCount(content string) MessageChain {

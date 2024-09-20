@@ -223,6 +223,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 				return true
 			} else if text.Text == "升星性价比" {
 				sendGroupMessage(message, calStarForceCostPerformance()...)
+			} else if text.Text == "20升22" || text.Text == "20上22" {
+				sendGroupMessage(message, calculate20To22()...)
 			} else if strings.HasPrefix(text.Text, "模拟升星 ") || strings.HasPrefix(text.Text, "模拟上星 ") ||
 				strings.HasPrefix(text.Text, "升星期望 ") || strings.HasPrefix(text.Text, "上星期望 ") {
 				content := strings.TrimSpace(text.Text[len("模拟升星"):])
