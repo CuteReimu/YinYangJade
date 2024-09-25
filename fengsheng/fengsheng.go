@@ -58,6 +58,17 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
+	if strings.Contains(result, "\n") {
+		var ret string
+		for i, s := range strings.Split(result, "\n") {
+			if i == 0 {
+				ret += s
+			} else if strings.HasPrefix(s, "剩余精力") {
+				ret += "，" + s
+			}
+		}
+		result = ret + "\n想要查询详细信息，请输入”查询详情“"
+	}
 	return MessageChain{&Text{Text: result}}
 }
 
@@ -84,6 +95,17 @@ func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
+	}
+	if strings.Contains(result, "\n") {
+		var ret string
+		for i, s := range strings.Split(result, "\n") {
+			if i == 0 {
+				ret += s
+			} else if strings.HasPrefix(s, "剩余精力") {
+				ret += "，" + s
+			}
+		}
+		result = ret + "\n想要查询详细信息，请输入”查询详情“"
 	}
 	return MessageChain{&Text{Text: result}}
 }
