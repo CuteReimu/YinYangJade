@@ -2,14 +2,46 @@ package fengsheng
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"math/rand/v2"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func dealGetScore(name, result string) string {
+	if strings.Contains(result, "\n") {
+		var ret string
+		for i, s := range strings.Split(result, "\n") {
+			if i == 0 {
+				ret += s
+			} else if strings.HasPrefix(s, "剩余精力") {
+				ret += "，" + s
+			}
+		}
+		m := qunDb.GetStringMapString("data")
+		s := m["查询详情"]
+		if len(s) > 0 {
+			var ms MessageChain
+			if err := json.Unmarshal([]byte(s), &ms); err != nil {
+				slog.Error("unmarshal failed", "error", err)
+			} else if len(ms) == 1 {
+				if text, ok := ms[0].(*Text); ok {
+					arr := strings.SplitN(text.Text, " ", 2)
+					result = ret + "\n详情见：" + arr[0] + "?name=" + url.QueryEscape(name)
+					if len(arr) > 1 {
+						result += " " + arr[1]
+					}
+				}
+			}
+		}
+	}
+	return result
+}
 
 func init() {
 	addCmdListener(&getMyScore{})
@@ -58,18 +90,7 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	if strings.Contains(result, "\n") {
-		var ret string
-		for i, s := range strings.Split(result, "\n") {
-			if i == 0 {
-				ret += s
-			} else if strings.HasPrefix(s, "剩余精力") {
-				ret += "，" + s
-			}
-		}
-		result = ret + "\n想要查询详细信息，请输入”查询详情“"
-	}
-	return MessageChain{&Text{Text: result}}
+	return MessageChain{&Text{Text: dealGetScore(name, result)}}
 }
 
 type getScore struct{}
@@ -96,18 +117,7 @@ func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	if strings.Contains(result, "\n") {
-		var ret string
-		for i, s := range strings.Split(result, "\n") {
-			if i == 0 {
-				ret += s
-			} else if strings.HasPrefix(s, "剩余精力") {
-				ret += "，" + s
-			}
-		}
-		result = ret + "\n想要查询详细信息，请输入”查询详情“"
-	}
-	return MessageChain{&Text{Text: result}}
+	return MessageChain{&Text{Text: dealGetScore(name, result)}}
 }
 
 type rankList struct{}
