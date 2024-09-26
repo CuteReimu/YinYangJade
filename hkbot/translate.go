@@ -30,7 +30,7 @@ func init() {
 			if len(arr) >= 2 {
 				val = arr[1]
 			}
-			if !translateDict.PutIfAbsent(key, val) {
+			if !translateDict.Put(key, val) {
 				panic(fmt.Sprint("出现重复数据：", string(line)))
 			}
 		}
@@ -38,52 +38,53 @@ func init() {
 			break
 		}
 	}
-	translateDict.PutIfAbsent("beat the WR", "打破了世界纪录：")
-	translateDict.PutIfAbsent("in Hollow Knight Category Extensions", "")
-	translateDict.PutIfAbsent("in Hollow Knight Category Extensions -", "")
-	translateDict.PutIfAbsent("King's Pass: Level", "国王山道")
-	translateDict.PutIfAbsent("in Hollow Knight", "")
-	translateDict.PutIfAbsent("in Hollow Knight -", "")
-	translateDict.PutIfAbsent("The new WR is", "新的世界纪录是")
-	translateDict.PutIfAbsent("Their time is", "时间是")
-	translateDict.PutIfAbsent("Its time is", "时间是")
-	translateDict.PutIfAbsent("The time is", "时间是")
-	translateDict.PutIfAbsent("His time is", "时间是")
-	translateDict.PutIfAbsent("Her time is", "时间是")
-	translateDict.PutIfAbsent("got a new top 3 PB", "获得了前三：")
-	translateDict.PutIfAbsent("Pantheon of the Master: Level", "大师万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Master Level", "大师万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Artist: Level", "艺术家万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Artist Level", "艺术家万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Sage: Level", "贤者万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Sage Level", "贤者万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Knight: Level", "骑士万神殿")
-	translateDict.PutIfAbsent("Pantheon of the Knight Level", "骑士万神殿")
-	translateDict.PutIfAbsent("Pantheon of Hallownest: Level", "圣巢万神殿")
-	translateDict.PutIfAbsent("Pantheon of Hallownest Level", "圣巢万神殿")
-	translateDict.PutIfAbsent("White Palace: Level", "白色宫殿")
-	translateDict.PutIfAbsent("White Palace Level", "白色宫殿")
-	translateDict.PutIfAbsent("Path of Pain: Level", "苦痛之路")
-	translateDict.PutIfAbsent("Path of Pain Level", "苦痛之路")
-	translateDict.PutIfAbsent("Trial of the Warrior: Level", "勇士的试炼")
-	translateDict.PutIfAbsent("Trial of the Warrior Level", "勇士的试炼")
-	translateDict.PutIfAbsent("Trial of the Conqueror: Level", "征服者的试炼")
-	translateDict.PutIfAbsent("Trial of the Conqueror Level", "征服者的试炼")
-	translateDict.PutIfAbsent("Trial of the Fool: Level", "愚人的试炼")
-	translateDict.PutIfAbsent("Trial of the Fool Level", "愚人的试炼")
-	translateDict.PutIfAbsent("NMG.", "无主要邪道.")
-	translateDict.PutIfAbsent("- NMG", "- 无主要邪道")
-	translateDict.PutIfAbsent("- NMG.", "- 无主要邪道.")
-	translateDict.PutIfAbsent("Console Runs", "主机速通")
-	translateDict.PutIfAbsent("Any Bindings", "任意锁")
-	translateDict.PutIfAbsent("Abyss Climb: Level", "深渊攀爬")
-	translateDict.PutIfAbsent("Abyss Climb Level", "深渊攀爬")
-	translateDict.PutIfAbsent("King's Pass: Level", "国王山道")
-	translateDict.PutIfAbsent("King's Pass Level", "国王山道")
-	translateDict.PutIfAbsent("NG", "新存档")
-	translateDict.PutIfAbsent("NG+", "无需新存档")
-	translateDict.PutIfAbsent("NMG NG+", "无主要邪道无需新存档")
-	translateDict.PutIfAbsent("Warpless", "禁SL")
+	translateDict.Put("beat the WR", "打破了世界纪录：")
+	translateDict.Put("in Hollow Knight Category Extensions", "")
+	translateDict.Put("in Hollow Knight Category Extensions -", "")
+	translateDict.Put("King's Pass: Level", "国王山道")
+	translateDict.Put("in Hollow Knight", "")
+	translateDict.Put("in Hollow Knight -", "")
+	translateDict.Put("The new WR is", "新的世界纪录是")
+	translateDict.Put("Their time is", "时间是")
+	translateDict.Put("Its time is", "时间是")
+	translateDict.Put("The time is", "时间是")
+	translateDict.Put("His time is", "时间是")
+	translateDict.Put("Her time is", "时间是")
+	translateDict.Put("got a new top 3 PB", "获得了前三：")
+	translateDict.Put("Pantheon of the Master: Level", "大师万神殿")
+	translateDict.Put("Pantheon of the Master Level", "大师万神殿")
+	translateDict.Put("Pantheon of the Artist: Level", "艺术家万神殿")
+	translateDict.Put("Pantheon of the Artist Level", "艺术家万神殿")
+	translateDict.Put("Pantheon of the Sage: Level", "贤者万神殿")
+	translateDict.Put("Pantheon of the Sage Level", "贤者万神殿")
+	translateDict.Put("Pantheon of the Knight: Level", "骑士万神殿")
+	translateDict.Put("Pantheon of the Knight Level", "骑士万神殿")
+	translateDict.Put("Pantheon of Hallownest: Level", "圣巢万神殿")
+	translateDict.Put("Pantheon of Hallownest Level", "圣巢万神殿")
+	translateDict.Put("White Palace: Level", "白色宫殿")
+	translateDict.Put("White Palace Level", "白色宫殿")
+	translateDict.Put("Path of Pain: Level", "苦痛之路")
+	translateDict.Put("Path of Pain Level", "苦痛之路")
+	translateDict.Put("Trial of the Warrior: Level", "勇士的试炼")
+	translateDict.Put("Trial of the Warrior Level", "勇士的试炼")
+	translateDict.Put("Trial of the Conqueror: Level", "征服者的试炼")
+	translateDict.Put("Trial of the Conqueror Level", "征服者的试炼")
+	translateDict.Put("Trial of the Fool: Level", "愚人的试炼")
+	translateDict.Put("Trial of the Fool Level", "愚人的试炼")
+	translateDict.Put("NMG", "无主要邪道")
+	translateDict.Put("NMG.", "无主要邪道.")
+	translateDict.Put("- NMG", "- 无主要邪道")
+	translateDict.Put("- NMG.", "- 无主要邪道.")
+	translateDict.Put("Console Runs", "主机速通")
+	translateDict.Put("Any Bindings", "任意锁")
+	translateDict.Put("Abyss Climb: Level", "深渊攀爬")
+	translateDict.Put("Abyss Climb Level", "深渊攀爬")
+	translateDict.Put("King's Pass: Level", "国王山道")
+	translateDict.Put("King's Pass Level", "国王山道")
+	translateDict.Put("NG", "新存档")
+	translateDict.Put("NG+", "无需新存档")
+	translateDict.Put("NMG NG+", "无主要邪道无需新存档")
+	translateDict.Put("Warpless", "禁SL")
 }
 
 func translate(s string) string {
@@ -105,7 +106,7 @@ type Trie struct {
 	root trieNode
 }
 
-func (t *Trie) PutIfAbsent(key, value string) bool {
+func (t *Trie) Put(key, value string) bool {
 	node := &t.root
 	for _, c := range strings.ToLower(key) {
 		var n *trieNode
@@ -121,12 +122,10 @@ func (t *Trie) PutIfAbsent(key, value string) bool {
 			node = newNode
 		}
 	}
-	if node.exists {
-		return false
-	}
+	notExists := !node.exists
 	node.exists = true
 	node.value = value
-	return true
+	return notExists
 }
 
 func (t *Trie) getLongest(s string) (string, string) {
