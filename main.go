@@ -104,7 +104,7 @@ func main() {
 	hkbot.Init(B)
 	imageutil.Init(B)
 	B.ListenFriendRequest(handleNewFriendRequest)
-	B.ListenGroupRequest(handleInviteQQGroup)
+	B.ListenGroupRequest(handleGroupRequest)
 	checkQQGroups()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
@@ -171,22 +171,30 @@ func handleNewFriendRequest(request *onebot.FriendRequest) bool {
 	return true
 }
 
-func handleInviteQQGroup(request *onebot.GroupRequest) bool {
-	if request.SubType != onebot.GroupRequestInvite {
-		return true
-	}
-	var approve bool
-	groups := mainConfig.GetIntSlice("check_qq_groups")
-	if slices.Contains(groups, int(request.GroupId)) {
-		approve = true
-	} else {
-		approve = false
-	}
-	err := request.Reply(B, approve, "")
-	if err != nil {
-		slog.Error("处理邀请请求失败", "approve", approve, "error", err)
-	} else {
-		slog.Info("处理邀请请求成功", "approve", approve, "error", err)
+func handleGroupRequest(request *onebot.GroupRequest) bool {
+	if request.SubType == onebot.GroupRequestInvite {
+		var approve bool
+		groups := mainConfig.GetIntSlice("check_qq_groups")
+		if slices.Contains(groups, int(request.GroupId)) {
+			approve = true
+		} else {
+			approve = false
+		}
+		err := request.Reply(B, approve, "")
+		if err != nil {
+			slog.Error("处理邀请请求失败", "approve", approve, "error", err)
+		} else {
+			slog.Info("处理邀请请求成功", "approve", approve, "error", err)
+		}
+	} else if request.SubType == onebot.GroupRequestAdd {
+		if strings.Contains(request.Comment, "管理员你好") {
+			err := request.Reply(B, false, "")
+			if err != nil {
+				slog.Error("拒绝申请请求失败", "approve", false, "error", err)
+			} else {
+				slog.Info("拒绝申请请求成功", "approve", false, "error", err)
+			}
+		}
 	}
 	return true
 }
