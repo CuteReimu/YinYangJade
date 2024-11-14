@@ -164,7 +164,7 @@ func saveImage(message MessageChain) error {
 			}
 			cmd := exec.Command("curl", "-o", p, u)
 			if out, err := cmd.CombinedOutput(); err != nil {
-				slog.Error("cmd.Run() failed", "error", err)
+				slog.Error("cmd.Run() failed", "error", err, "p", p, "u", u)
 				return errors.New("保存图片失败")
 			} else {
 				slog.Debug(string(out))
