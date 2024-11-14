@@ -1,12 +1,14 @@
 module github.com/CuteReimu/YinYangJade
 
-go 1.22
+go 1.22.0
+
+toolchain go1.22.3
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.0.0-20240825052828-6b33e2855cdd
+	github.com/CuteReimu/bilibili/v2 v2.0.0-20241113063130-315d3cdfb9dd
 	github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
-	github.com/CuteReimu/onebot v0.0.0-20240806033605-7a8cb66b1241
+	github.com/CuteReimu/onebot v0.0.0-20241114044244-86e0bad4287c
 	github.com/dgraph-io/badger/v4 v4.4.0
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/go-resty/resty/v2 v2.16.0
@@ -25,7 +27,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.0.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -53,13 +55,13 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
-	golang.org/x/image v0.20.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
+	golang.org/x/image v0.22.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
+	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
