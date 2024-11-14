@@ -1,8 +1,6 @@
 module github.com/CuteReimu/YinYangJade
 
-go 1.22.0
-
-toolchain go1.22.3
+go 1.22
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20241113063130-315d3cdfb9dd
