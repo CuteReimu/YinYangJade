@@ -136,6 +136,10 @@ func SetClassImage(name string, img *Image) MessageChain {
 		slog.Error("mkdir failed", "error", err)
 		return MessageChain{&Text{Text: "保存图片失败"}}
 	}
+	nameLen := len(filepath.Ext(img.File)) + 32
+	if len(img.File) > nameLen {
+		img.File = img.File[len(img.File)-nameLen:]
+	}
 	p := filepath.Join("class_image", img.File)
 	cmd := exec.Command("curl", "-o", p, u)
 	if out, err := cmd.CombinedOutput(); err != nil {

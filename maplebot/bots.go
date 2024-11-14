@@ -540,6 +540,10 @@ func saveImage(message MessageChain) error {
 				slog.Error("mkdir failed", "error", err)
 				return errors.New("保存图片失败")
 			}
+			nameLen := len(filepath.Ext(img.File)) + 32
+			if len(img.File) > nameLen {
+				img.File = img.File[len(img.File)-nameLen:]
+			}
 			p := filepath.Join("chat-images", img.File)
 			abs, err := filepath.Abs(p)
 			if err != nil {
