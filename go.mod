@@ -1,6 +1,7 @@
 module github.com/CuteReimu/YinYangJade
 
 go 1.22
+toolchain go1.22.5
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20241113063130-315d3cdfb9dd
@@ -9,7 +10,7 @@ require (
 	github.com/CuteReimu/onebot v0.0.0-20241114044244-86e0bad4287c
 	github.com/dgraph-io/badger/v4 v4.4.0
 	github.com/dlclark/regexp2 v1.11.4
-	github.com/go-resty/resty/v2 v2.16.0
+	github.com/go-resty/resty/v2 v2.16.1
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.9.1
