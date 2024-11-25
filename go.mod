@@ -1,11 +1,10 @@
 module github.com/CuteReimu/YinYangJade
 
-go 1.22
-toolchain go1.22.5
+go 1.23
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.0.0-20241113063130-315d3cdfb9dd
-	github.com/CuteReimu/goutil v0.0.0-20240422034935-940ce604f878
+	github.com/CuteReimu/bilibili/v2 v2.0.0-20241125025513-8c0de18830ca
+	github.com/CuteReimu/goutil v0.0.0-20241125080311-363c2b24f74b
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20241114044244-86e0bad4287c
 	github.com/dgraph-io/badger/v4 v4.4.0
@@ -60,7 +59,7 @@ require (
 	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
