@@ -20,6 +20,8 @@ func init() {
 	addCmdListener(&forceEnd{})
 	addCmdListener(&setNotice{})
 	addCmdListener(&setWaitSecond{})
+	addCmdListener(&createAccount{})
+	addCmdListener(&addEnergy{})
 }
 
 type bind struct{}
@@ -387,4 +389,73 @@ func (s *setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	return MessageChain{&Text{Text: "默认出牌时间已修改为" + content + "秒"}}
+}
+
+type createAccount struct{}
+
+func (c *createAccount) Name() string {
+	return "创号"
+}
+
+func (c *createAccount) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (c *createAccount) CheckAuth(_ int64, senderId int64) bool {
+	return IsSuperAdmin(senderId)
+}
+
+func (c *createAccount) Execute(msg *GroupMessage, content string) MessageChain {
+	name := strings.TrimSpace(content)
+	if len(name) == 0 {
+		return MessageChain{&Text{Text: "命令格式：\n创号 名字"}}
+	}
+	result, returnError := httpGetBool("/register", map[string]string{"name": name})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if !result {
+		return MessageChain{&Text{Text: "用户名重复"}}
+	}
+	return MessageChain{&Text{Text: "创号成功"}}
+}
+
+type addEnergy struct{}
+
+func (c *addEnergy) Name() string {
+	return "增加体力"
+}
+
+func (c *addEnergy) ShowTips(int64, int64) string {
+	return "增加体力 名字 数量"
+}
+
+func (c *addEnergy) CheckAuth(_ int64, senderId int64) bool {
+	return IsSuperAdmin(senderId)
+}
+
+func (c *addEnergy) Execute(msg *GroupMessage, content string) MessageChain {
+	arr := strings.Split(strings.TrimSpace(content), " ")
+	if len(arr) != 2 {
+		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
+	}
+	name := strings.TrimSpace(arr[0])
+	if len(name) == 0 {
+		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
+	}
+	energy := strings.TrimSpace(arr[1])
+	_, err := strconv.Atoi(energy)
+	if err != nil {
+		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
+	}
+	result, returnError := httpGetBool("/add_energy", map[string]string{"name": name, "energy": energy})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if !result {
+		return MessageChain{&Text{Text: "增加体力失败"}}
+	}
+	return MessageChain{&Text{Text: "增加体力成功"}}
 }
