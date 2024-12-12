@@ -424,11 +424,11 @@ func (c *createAccount) Execute(msg *GroupMessage, content string) MessageChain 
 type addEnergy struct{}
 
 func (c *addEnergy) Name() string {
-	return "增加体力"
+	return "增加精力"
 }
 
 func (c *addEnergy) ShowTips(int64, int64) string {
-	return "增加体力 名字 数量"
+	return "增加精力 名字 数量"
 }
 
 func (c *addEnergy) CheckAuth(_ int64, senderId int64) bool {
@@ -438,16 +438,16 @@ func (c *addEnergy) CheckAuth(_ int64, senderId int64) bool {
 func (c *addEnergy) Execute(msg *GroupMessage, content string) MessageChain {
 	arr := strings.Split(strings.TrimSpace(content), " ")
 	if len(arr) != 2 {
-		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
+		return MessageChain{&Text{Text: "命令格式：\n增加精力 名字 数量"}}
 	}
 	name := strings.TrimSpace(arr[0])
 	if len(name) == 0 {
-		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
+		return MessageChain{&Text{Text: "命令格式：\n增加精力 名字 数量"}}
 	}
 	energy := strings.TrimSpace(arr[1])
 	_, err := strconv.Atoi(energy)
 	if err != nil {
-		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
+		return MessageChain{&Text{Text: "命令格式：\n增加精力 名字 数量"}}
 	}
 	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": energy})
 	if returnError != nil {
@@ -455,7 +455,7 @@ func (c *addEnergy) Execute(msg *GroupMessage, content string) MessageChain {
 		return returnError.message
 	}
 	if !success {
-		return MessageChain{&Text{Text: "增加体力失败"}}
+		return MessageChain{&Text{Text: "增加精力失败"}}
 	}
-	return MessageChain{&Text{Text: "增加体力成功"}}
+	return MessageChain{&Text{Text: "增加精力成功"}}
 }
