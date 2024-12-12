@@ -449,12 +449,12 @@ func (c *addEnergy) Execute(msg *GroupMessage, content string) MessageChain {
 	if err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n增加体力 名字 数量"}}
 	}
-	result, returnError := httpGetBool("/add_energy", map[string]string{"name": name, "energy": energy})
+	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": energy})
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	if !result {
+	if !success {
 		return MessageChain{&Text{Text: "增加体力失败"}}
 	}
 	return MessageChain{&Text{Text: "增加体力成功"}}
