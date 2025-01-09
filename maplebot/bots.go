@@ -35,7 +35,7 @@ func init() {
 }
 
 var B *Bot
-var bossList = []rune{'3', '6', '7', '8', '9', '4', 'M', '绿', '黑'}
+var bossList = []rune{'3', '6', '7', '8', '9', '4', 'M', '绿', '黑', '赛', '狗'}
 
 func Init(b *Bot) {
 	initConfig()
