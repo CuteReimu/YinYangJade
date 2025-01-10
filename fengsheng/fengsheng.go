@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/CuteReimu/YinYangJade/db"
 	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"math/rand/v2"
@@ -427,12 +428,18 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "请先注册"}}
 	}
-	lastSignTime := signData.GetInt64("data." + qq)
+	var lastSignTime int64
+	lastSignTimeStr, ok := db.Get("fengsheng_sign:" + qq)
+	if ok {
+		lastSignTime, _ = strconv.ParseInt(lastSignTimeStr, 10, 64)
+	}
 	now := time.Now()
-	y1, m1, d1 := time.UnixMilli(lastSignTime).Date()
-	y2, m2, d2 := now.Date()
-	if y1 == y2 && m1 == m2 && d1 == d2 {
-		return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
+	if lastSignTime > 0 {
+		y1, m1, d1 := time.UnixMilli(lastSignTime).Date()
+		y2, m2, d2 := now.Date()
+		if y1 == y2 && m1 == m2 && d1 == d2 {
+			return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
+		}
 	}
 	lastTime, returnError := httpGetInt("/getlasttime", map[string]string{"name": name})
 	if returnError != nil {
@@ -452,10 +459,7 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 	if !success {
 		return MessageChain{&Text{Text: "签到失败"}}
 	}
-	signData.Set("data."+qq, now.UnixMilli())
-	if err := signData.WriteConfig(); err != nil {
-		slog.Error("write data failed", "error", err)
-	}
+	db.Set("fengsheng_sign:"+qq, strconv.FormatInt(now.UnixMilli(), 10), time.Hour*48)
 	switch energy {
 	case 1:
 		return MessageChain{&Text{Text: "太背了，获得1点精力"}}

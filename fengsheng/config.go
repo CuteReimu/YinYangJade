@@ -10,7 +10,6 @@ var (
 	fengshengConfig = viper.New()
 	permData        = viper.New()
 	qunDb           = viper.New()
-	signData        = viper.New()
 )
 
 func initConfig() {
@@ -46,14 +45,6 @@ func initConfig() {
 	qunDb.SetConfigType("yml")
 	_ = qunDb.SafeWriteConfigAs(filepath.Join("data", "com.fengsheng.bot", "QunDb.yml"))
 	if err := qunDb.ReadInConfig(); err != nil {
-		panic(err)
-	}
-
-	signData.AddConfigPath(filepath.Join("data", "com.fengsheng.bot"))
-	signData.SetConfigName("SignData")
-	signData.SetConfigType("yml")
-	_ = signData.SafeWriteConfigAs(filepath.Join("data", "com.fengsheng.bot", "SignData.yml"))
-	if err := signData.ReadInConfig(); err != nil {
 		panic(err)
 	}
 }
