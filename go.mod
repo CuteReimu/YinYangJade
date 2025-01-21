@@ -9,7 +9,7 @@ require (
 	github.com/CuteReimu/onebot v0.0.0-20250108064953-d89e185e2e00
 	github.com/dgraph-io/badger/v4 v4.5.0
 	github.com/dlclark/regexp2 v1.11.4
-	github.com/go-resty/resty/v2 v2.16.3
+	github.com/go-resty/resty/v2 v2.16.4
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.9.1
