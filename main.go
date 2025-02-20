@@ -142,7 +142,7 @@ func handleNewFriendRequest(request *onebot.FriendRequest) bool {
 	groupList, err := B.GetGroupList()
 	if err != nil {
 		slog.Error("获取群列表失败", "error", err)
-		err = request.Reply(B, false, "")
+		err = B.SetFriendAddRequest(request.Flag, false, "")
 		if err != nil {
 			slog.Error("处理好友请求失败", "error", err)
 		}
@@ -155,7 +155,7 @@ func handleNewFriendRequest(request *onebot.FriendRequest) bool {
 			}
 			for _, member := range memberList {
 				if member.UserId == request.UserId {
-					err = request.Reply(B, true, "")
+					err = B.SetFriendAddRequest(request.Flag, true, "")
 					if err != nil {
 						slog.Error("处理好友请求失败", "error", err)
 					}
@@ -163,7 +163,7 @@ func handleNewFriendRequest(request *onebot.FriendRequest) bool {
 				}
 			}
 		}
-		err = request.Reply(B, false, "")
+		err = B.SetFriendAddRequest(request.Flag, false, "")
 		if err != nil {
 			slog.Error("处理好友请求失败", "error", err)
 		}
@@ -180,7 +180,7 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 		} else {
 			approve = false
 		}
-		err := request.Reply(B, approve, "")
+		err := B.SetGroupAddRequest(request.Flag, request.SubType, approve, "")
 		if err != nil {
 			slog.Error("处理邀请请求失败", "approve", approve, "error", err)
 		} else {
@@ -188,7 +188,7 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 		}
 	} else if request.SubType == onebot.GroupRequestAdd {
 		if strings.Contains(request.Comment, "管理员你好") {
-			err := request.Reply(B, false, "")
+			err := B.SetGroupAddRequest(request.Flag, request.SubType, false, "")
 			if err != nil {
 				slog.Error("拒绝申请请求失败", "approve", false, "error", err)
 			} else {

@@ -64,7 +64,9 @@ func bilibiliAnalysis(message *GroupMessage) bool {
 			slog.Error("解析类型异常", "result", reflect.TypeOf(result))
 			return true
 		}
-		err = message.Reply(B, MessageChain{image, test}, true)
+		_, err := B.SendGroupMessage(message.GroupId, MessageChain{
+			&Reply{Id: strconv.FormatInt(int64(message.MessageId), 10)}, image, test,
+		})
 		if err != nil {
 			slog.Error("发送群消息失败", "error", err)
 		}

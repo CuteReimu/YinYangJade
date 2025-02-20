@@ -115,7 +115,10 @@ func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMess
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err
 		}
-		return context.Reply(B, messages, false)
+		_, err := B.SendGroupMessage(context.GroupId, append(MessageChain{
+			&Reply{Id: strconv.FormatInt(int64(context.MessageId), 10)},
+		}, messages...))
+		return err
 	}
 	if err := f(messages); err != nil {
 		slog.Error("send group message failed", "error", err)
