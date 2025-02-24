@@ -53,6 +53,7 @@ func init() {
 	addCmdListener(&register{})
 	addCmdListener(&addNotifyOnStart{})
 	addCmdListener(&addNotifyOnEnd{})
+	addCmdListener(&addNotifyOnEnd2{})
 	addCmdListener(&atPlayer{})
 	addCmdListener(&resetPwd{})
 	addCmdListener(&sign{})
@@ -318,6 +319,38 @@ func (a *addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain
 		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
 	}
 	return MessageChain{&Text{Text: "好的，结束喊你"}}
+}
+
+type addNotifyOnEnd2 struct{}
+
+func (a *addNotifyOnEnd2) Name() string {
+	return "好了喊我"
+}
+
+func (a *addNotifyOnEnd2) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (a *addNotifyOnEnd2) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (a *addNotifyOnEnd2) Execute(msg *GroupMessage, content string) MessageChain {
+	if len(strings.TrimSpace(content)) > 0 {
+		return nil
+	}
+	result, returnError := httpGetBool("/addnotify", map[string]string{
+		"qq":   strconv.FormatInt(msg.Sender.UserId, 10),
+		"when": "1",
+	})
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	if !result {
+		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
+	}
+	return MessageChain{&Text{Text: "好的，好了喊你"}}
 }
 
 type atPlayer struct{}
