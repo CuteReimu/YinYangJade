@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -156,7 +157,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 						go func() {
 							defer func() {
 								if err := recover(); err != nil {
-									slog.Error("panic recovered", "error", err)
+									slog.Error("panic recovered", "error", err, "stack", string(debug.Stack()))
 								}
 							}()
 							sendGroupMessage(message, findRole(name)...)
@@ -168,7 +169,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 						go func() {
 							defer func() {
 								if err := recover(); err != nil {
-									slog.Error("panic recovered", "error", err, "stack", debug.Stack())
+									slog.Error("panic recovered", "error", err, "stack", string(debug.Stack()))
 								}
 							}()
 							sendGroupMessage(message, findRole2(name1, name2)...)
