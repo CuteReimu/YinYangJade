@@ -197,7 +197,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 					sendGroupMessage(message, &Text{Text: "你已经绑定过了，如需更换请先解绑"})
 				} else {
 					name := strings.TrimSpace(text.Text[len("绑定"):])
-					if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
+					if len(name) > 0 {
 						data[strconv.FormatInt(message.Sender.UserId, 10)] = name
 						findRoleData.Set("data", data)
 						if err := findRoleData.WriteConfig(); err != nil {
