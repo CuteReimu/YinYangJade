@@ -37,7 +37,7 @@ type findRoleReturnData struct {
 }
 
 var (
-	nameRegex   = regexp.MustCompile(`<h3 class="card-title text-nowrap">([A-Za-z0-9 ]+)</h3>`)
+	nameRegex   = regexp.MustCompile(`<h3 class="card-title text-nowrap">(.+?)</h3>`)
 	imgRegex    = regexp.MustCompile(`<img src="(.*?)"`)
 	levelRegex  = regexp.MustCompile(`<h5 class="card-text">([A-Za-z0-9.% ()]+)</h5>`)
 	classRegex  = regexp.MustCompile(`<p class="card-text mb-0">([A-Za-z0-9 ]*?) in`)
