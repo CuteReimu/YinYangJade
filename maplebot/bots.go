@@ -152,7 +152,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 				name := strings.TrimSpace(text.Text[len("查询"):])
 				parts := strings.Split(name, " ")
 				if len(parts) <= 1 {
-					if !slices.ContainsFunc([]byte(name), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
+					if len(name) > 0 {
 						go func() {
 							defer func() {
 								if err := recover(); err != nil {
@@ -163,18 +163,16 @@ func handleGroupMessage(message *GroupMessage) bool {
 						}()
 					}
 				} else {
-					name1, name2 := parts[0], parts[1]
-					if !slices.ContainsFunc([]byte(name1), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) &&
-						!slices.ContainsFunc([]byte(name2), func(b byte) bool { return (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') }) {
-						sendGroupMessage(message, &Text{Text: "查询两个角色功能暂不可用"})
-						//go func() {
-						//	defer func() {
-						//		if err := recover(); err != nil {
-						//			slog.Error("panic recovered", "error", err, "stack", debug.Stack())
-						//		}
-						//	}()
-						//	sendGroupMessage(message, findRole2(name1, name2)...)
-						//}()
+					name1, name2 := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+					if len(name1) > 0 && len(name2) > 0 {
+						go func() {
+							defer func() {
+								if err := recover(); err != nil {
+									slog.Error("panic recovered", "error", err, "stack", debug.Stack())
+								}
+							}()
+							sendGroupMessage(message, findRole2(name1, name2)...)
+						}()
 					}
 				}
 				return true
