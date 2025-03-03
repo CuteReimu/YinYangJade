@@ -187,7 +187,7 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 			slog.Info("处理邀请请求成功", "approve", approve, "error", err)
 		}
 	} else if request.SubType == onebot.GroupRequestAdd {
-		if strings.Contains(request.Comment, "管理员你好") || len(request.Comment) == 0 {
+		if strings.Contains(request.Comment, "管理员你好") || len(strings.TrimSpace(request.Comment)) == 0 {
 			err := B.SetGroupAddRequest(request.Flag, request.SubType, false, "")
 			if err != nil {
 				slog.Error("拒绝申请请求失败", "approve", false, "error", err)
