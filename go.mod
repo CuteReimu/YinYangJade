@@ -8,7 +8,7 @@ require (
 	github.com/CuteReimu/bilibili/v2 v2.0.0-20250225070148-11338540614b
 	github.com/CuteReimu/goutil v0.0.0-20241125080311-363c2b24f74b
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
-	github.com/CuteReimu/onebot v0.0.0-20250306031643-4bd4caf6e201
+	github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b
 	github.com/dgraph-io/badger/v4 v4.6.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/go-resty/resty/v2 v2.16.5

@@ -8,6 +8,12 @@ github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb h1:y2i7+TFgJnIT
 github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb/go.mod h1:zvj+S0WHyq62Wy7X9LTafhLatHb9NgES9WYUATemaF8=
 github.com/CuteReimu/onebot v0.0.0-20250306031643-4bd4caf6e201 h1:z4ED+nCjXnd+fgIcQBpOthbhOBA/Se/uLEWTlQH4H/w=
 github.com/CuteReimu/onebot v0.0.0-20250306031643-4bd4caf6e201/go.mod h1:ivhs6V7q6FcABuCfNptp42hWHQILb7uPcmCzdNlEwag=
+github.com/CuteReimu/onebot v0.0.0-20250306103015-8838858f8466 h1:Mt7ihbGka/P/3r96ege89r4MfBWSYSCl3fi4E+0h/cM=
+github.com/CuteReimu/onebot v0.0.0-20250306103015-8838858f8466/go.mod h1:ivhs6V7q6FcABuCfNptp42hWHQILb7uPcmCzdNlEwag=
+github.com/CuteReimu/onebot v0.0.0-20250306104116-dee36702fa13 h1:3rXvxem96grX5Vnt8rtXYwOBDVG7XVTtdS8ZeUz1nlM=
+github.com/CuteReimu/onebot v0.0.0-20250306104116-dee36702fa13/go.mod h1:ivhs6V7q6FcABuCfNptp42hWHQILb7uPcmCzdNlEwag=
+github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b h1:65GvvplHOkD+Loby13+eYp6/fhD82q8ceb6hVpey1zM=
+github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b/go.mod h1:ivhs6V7q6FcABuCfNptp42hWHQILb7uPcmCzdNlEwag=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

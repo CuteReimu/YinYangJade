@@ -446,9 +446,11 @@ func handleGroupMessage(message *GroupMessage) bool {
 		return true
 	} else if key, ok = addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
-		if err := saveImage(message.Message); err != nil {
+		if msg, err := saveImage(message.Message); err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
+		} else {
+			message.Message = msg
 		}
 		buf, err := json.Marshal(&message.Message)
 		if err != nil {
@@ -526,18 +528,18 @@ func getBossNumber(numberString string) []rune {
 	return result
 }
 
-func saveImage(message MessageChain) error {
+func saveImage(message MessageChain) (MessageChain, error) {
 	for _, m := range message {
 		if img, ok := m.(*Image); ok && len(img.Url) > 0 {
 			u := img.Url
 			_, err := url.Parse(u)
 			if err != nil {
 				slog.Error("userInput is not a valid URL, reject it", "error", err)
-				return err
+				return message, err
 			}
 			if err := os.MkdirAll("chat-images", 0755); err != nil {
 				slog.Error("mkdir failed", "error", err)
-				return errors.New("保存图片失败")
+				return message, errors.New("保存图片失败")
 			}
 			nameLen := len(filepath.Ext(img.File)) + 32
 			if len(img.File) > nameLen {
@@ -547,20 +549,37 @@ func saveImage(message MessageChain) error {
 			abs, err := filepath.Abs(p)
 			if err != nil {
 				slog.Error("filepath.Abs() failed", "error", err)
-				return errors.New("保存图片失败")
+				return message, errors.New("保存图片失败")
 			}
 			cmd := exec.Command("curl", "-o", p, u)
 			if out, err := cmd.CombinedOutput(); err != nil {
 				slog.Error("cmd.Run() failed", "error", err)
-				return errors.New("保存图片失败")
+				return message, errors.New("保存图片失败")
 			} else {
 				slog.Debug(string(out))
 			}
 			img.File = "file://" + abs
 			img.Url = ""
+		} else if forward, ok := m.(*Forward); ok {
+			msgs, err := B.GetForwardMessage(forward.Id)
+			if err != nil {
+				slog.Error("获取转发消息失败", "forwardId", forward.Id)
+				return message, errors.New("获取转发消息失败")
+			}
+			var ret MessageChain
+			for _, msg := range msgs {
+				if m, ok := msg.(*GroupMessage); ok {
+					ret = append(ret, &Node{
+						UserId:   strconv.FormatInt(m.UserId, 10),
+						Nickname: m.Sender.Nickname,
+						Content:  m.Message,
+					})
+				}
+			}
+			return ret, nil
 		}
 	}
-	return nil
+	return message, nil
 }
 
 func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
