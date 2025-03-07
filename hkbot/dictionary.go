@@ -187,10 +187,14 @@ func saveImage(message MessageChain) (MessageChain, error) {
 			var ret MessageChain
 			for _, msg := range msgs {
 				if m, ok := msg.(*GroupMessage); ok {
+					newMsg, err := saveImage(m.Message)
+					if err != nil {
+						slog.Error("嵌套saveImage失败", "error", err)
+					}
 					ret = append(ret, &Node{
 						UserId:   strconv.FormatInt(m.UserId, 10),
 						Nickname: m.Sender.Nickname,
-						Content:  m.Message,
+						Content:  newMsg,
 					})
 				}
 			}
@@ -270,17 +274,23 @@ func clearExpiredImages() {
 	}()
 	data := qunDb.GetStringMapString("data")
 	data2 := make(map[string]bool)
+	var f func(ms MessageChain)
+	f = func(ms MessageChain) {
+		for _, m := range ms {
+			if img, ok := m.(*Image); ok && len(img.File) > 0 && strings.HasPrefix(img.File, "file://") {
+				data2[filepath.Base(img.File[len("file://"):])] = true
+			} else if node, ok := m.(*Node); ok {
+				f(node.Content)
+			}
+		}
+	}
 	for _, v := range data {
 		var ms MessageChain
 		if err := json.Unmarshal([]byte(v), &ms); err != nil {
 			slog.Error("json unmarshal failed", "error", err)
 			continue
 		}
-		for _, m := range ms {
-			if img, ok := m.(*Image); ok && len(img.File) > 0 && strings.HasPrefix(img.File, "file://") {
-				data2[filepath.Base(img.File[len("file://"):])] = true
-			}
-		}
+		f(ms)
 	}
 	files, err := os.ReadDir("hk-images")
 	if err != nil {
