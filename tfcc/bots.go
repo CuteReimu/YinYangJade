@@ -98,19 +98,25 @@ func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMess
 		return
 	}
 	f := func(messages []SingleMessage) error {
-		for _, m := range messages {
-			if img, ok := m.(*Image); ok && len(img.File) > 0 {
-				if strings.HasPrefix(img.File, "file://") {
-					fileName := img.File[len("file://"):]
-					buf, err := os.ReadFile(fileName)
-					if err != nil {
-						slog.Error("read file failed", "error", err)
-						continue
+		var f1 func(messages []SingleMessage)
+		f1 = func(messages []SingleMessage) {
+			for _, m := range messages {
+				if img, ok := m.(*Image); ok && len(img.File) > 0 {
+					if strings.HasPrefix(img.File, "file://") {
+						fileName := img.File[len("file://"):]
+						buf, err := os.ReadFile(fileName)
+						if err != nil {
+							slog.Error("read file failed", "error", err)
+							continue
+						}
+						img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
 					}
-					img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
+				} else if node, ok := m.(*Node); ok {
+					f1(node.Content)
 				}
 			}
 		}
+		f1(messages)
 		if !reply {
 			_, err := B.SendGroupMessage(context.GroupId, messages)
 			return err
