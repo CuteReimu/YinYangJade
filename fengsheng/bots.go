@@ -106,7 +106,7 @@ func searchAt(message *GroupMessage) bool {
 							sendGroupMessage(message, returnError.message...)
 							return
 						}
-						sendGroupMessage(message, &Text{Text: dealGetScore(name, result)})
+						sendGroupMessage(message, dealGetScore(result)...)
 					}()
 				}
 			}

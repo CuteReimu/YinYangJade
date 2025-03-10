@@ -2,46 +2,101 @@ package fengsheng
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/CuteReimu/YinYangJade/db"
 	. "github.com/CuteReimu/onebot"
+	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"math/rand/v2"
-	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func dealGetScore(name, result string) string {
-	if strings.Contains(result, "\n") {
-		var ret string
-		for i, s := range strings.Split(result, "\n") {
-			if i == 0 {
-				ret += s
-			} else if strings.HasPrefix(s, "剩余精力") {
-				ret += "，" + s
-			}
+var tierName = map[string]string{
+	"🥉":  "青铜",
+	"🥈":  "白银",
+	"🥇":  "黄金",
+	"💍":  "铂金",
+	"💠":  "钻石",
+	"👑":  "大师",
+	"☀️": "至尊",
+}
+
+func dealGetScore(result string) MessageChain {
+	var isWinRate, isHistory bool
+	var resultBuilder strings.Builder
+	var winRateData, historyData [][]string
+	for _, line := range strings.Split(result, "\n") {
+		if len(line) == 0 {
+			continue
 		}
-		m := qunDb.GetStringMapString("data")
-		s := m["查询详情"]
-		if len(s) > 0 {
-			var ms MessageChain
-			if err := json.Unmarshal([]byte(s), &ms); err != nil {
-				slog.Error("unmarshal failed", "error", err)
-			} else if len(ms) == 1 {
-				if text, ok := ms[0].(*Text); ok {
-					arr := strings.SplitN(text.Text, " ", 2)
-					result = ret + "\n详情见：" + arr[0] + "?name=" + url.QueryEscape(name)
-					if len(arr) > 1 {
-						result += " " + arr[1]
-					}
-				}
+		if line == "---------------------------------" {
+			if !isWinRate {
+				isWinRate = true
+			} else {
+				isWinRate = false
+				isHistory = true
 			}
+			continue
+		}
+		if strings.HasPrefix(line, "剩余精力") {
+			_, _ = resultBuilder.WriteString("，" + line)
+		} else if strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") || strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩") {
+		} else if isWinRate {
+			var r []string
+			for _, s := range strings.Split(line, "\t") {
+				r = append(r, strings.TrimSpace(s))
+			}
+			winRateData = append(winRateData, r)
+		} else if isHistory {
+			arr := strings.Split(line, ",")
+			identity := strings.ReplaceAll(strings.ReplaceAll(arr[1], "神秘人[", ""), "]", "")
+			role := strings.ReplaceAll(arr[0], "(死亡)", "")
+			alive := "存活"
+			if strings.Contains(arr[0], "(死亡)") {
+				alive = "死亡"
+			}
+			tier := arr[3]
+			for t, t1 := range tierName {
+				tier = strings.Replace(tier, t, t1, 1)
+			}
+			historyData = append(historyData, []string{role, alive, identity, arr[2], tier, arr[4]})
+		} else {
+			_, _ = resultBuilder.WriteString(line)
 		}
 	}
-	return result
+	slices.Reverse(historyData)
+	ret := make(MessageChain, 0, 3)
+	ret = append(ret, &Text{Text: resultBuilder.String()})
+	p, err := TableOptionRender(TableChartOption{
+		Header:     []string{"身份", "胜率", "平均胜率", "场次"},
+		Data:       winRateData,
+		Width:      440,
+		TextAligns: []string{AlignLeft, AlignLeft, AlignLeft, AlignLeft},
+	})
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else if buf, err := p.Bytes(); err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else {
+		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	}
+	p, err = TableOptionRender(TableChartOption{
+		Header:     []string{"角色", "存活", "身份", "胜负", "段位", "分数"},
+		Data:       historyData,
+		Width:      720,
+		TextAligns: []string{AlignLeft, AlignLeft, AlignLeft, AlignLeft, AlignLeft, AlignLeft},
+	})
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else if buf, err := p.Bytes(); err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else {
+		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	}
+	return ret
 }
 
 func init() {
@@ -92,7 +147,7 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	return MessageChain{&Text{Text: dealGetScore(name, result)}}
+	return dealGetScore(result)
 }
 
 type getScore struct{}
@@ -119,7 +174,7 @@ func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
 	}
-	return MessageChain{&Text{Text: dealGetScore(name, result)}}
+	return dealGetScore(result)
 }
 
 type rankList struct{}
