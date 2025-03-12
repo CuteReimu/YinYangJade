@@ -101,7 +101,7 @@ var (
 		"lineAttOrBoss+1", "lineAttOrBoss+2", "lineAttOrBoss+3",
 	}
 	wsSelections160 = []string{
-		"percAtt+21", "percAtt+24", "percAtt+33", "percAtt+36", "percAtt+39",
+		"percAtt+20", "percAtt+23", "percAtt+26", "percAtt+33", "percAtt+36", "percAtt+39",
 		"lineIed+1&percAtt+20", "lineIed+1&percAtt+23", "lineIed+1&percAtt+26",
 		"lineAttOrBossOrIed+1", "lineAttOrBossOrIed+2", "lineAttOrBossOrIed+3",
 		"lineAtt+1&lineAttOrBossOrIed+2", "lineAtt+1&lineAttOrBossOrIed+3", "lineAtt+2&lineAttOrBossOrIed+3",
@@ -117,7 +117,7 @@ var (
 		"lineAtt+1&lineAttOrBossOrIed+2", "lineAtt+1&lineAttOrBossOrIed+3", "lineAtt+2&lineAttOrBossOrIed+3",
 	}
 	eSelections160 = []string{
-		"percAtt+21", "percAtt+24", "percAtt+33", "percAtt+36", "percAtt+39",
+		"percAtt+20", "percAtt+23", "percAtt+26", "percAtt+33", "percAtt+36", "percAtt+39",
 		"lineIed+1&percAtt+20", "lineIed+1&percAtt+23", "lineIed+1&percAtt+26",
 		"lineAttOrBossOrIed+1", "lineAttOrBossOrIed+2", "lineAttOrBossOrIed+3",
 		"lineAtt+1&lineAttOrBossOrIed+2", "lineAtt+1&lineAttOrBossOrIed+3", "lineAtt+2&lineAttOrBossOrIed+3",
