@@ -131,7 +131,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 				}
 				return true
 			} else if text.Text == "爆炸次数" || strings.HasPrefix(text.Text, "爆炸次数 ") {
-				sendGroupMessage(message, calculateBoomCount(text.Text[len("爆炸次数"):])...)
+				sendGroupMessage(message, slices.Concat(calculateBoomCount(text.Text[len("爆炸次数"):], rates), calculateBoomCount(text.Text[len("爆炸次数"):], rates2))...)
 				return true
 			} else if text.Text == "查询我" {
 				data := findRoleData.GetStringMapString("data")

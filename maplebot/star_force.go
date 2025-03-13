@@ -22,7 +22,7 @@ func calStarForceCostPerformance() MessageChain {
 	experiment := func(cur, des int, thirtyOff, fiveTenFifteen bool) string {
 		var mesos float64
 		for range 1000 {
-			m, _, _ := performExperiment(cur, des, 150, false, thirtyOff, fiveTenFifteen)
+			m, _, _ := performExperiment(rates, cur, des, 150, false, thirtyOff, fiveTenFifteen)
 			mesos += m
 		}
 		v := 11 + 4*(cur-6)
@@ -107,7 +107,7 @@ func saviorCost(currentStar, itemLevel int) float64 {
 func attemptCost(currentStar int, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, chanceTime bool) float64 {
 	multiplier := 1.0
 	if boomProtect && !(fiveTenFifteen && currentStar == 15) && !chanceTime && (currentStar == 15 || currentStar == 16) {
-		multiplier += 1.0
+		multiplier += 1.0 // TODO 新版需要改为200%
 	}
 	if thirtyOff {
 		multiplier -= 0.3
@@ -117,7 +117,7 @@ func attemptCost(currentStar int, itemLevel int, boomProtect, thirtyOff, fiveTen
 }
 
 // determineOutcome return either _SUCCESS, _MAINTAIN, _DECREASE, or _BOOM
-func determineOutcome(currentStar int, boomProtect, fiveTenFifteen bool) starForceResult {
+func determineOutcome(rates [][]float64, currentStar int, boomProtect, fiveTenFifteen bool) starForceResult {
 	if fiveTenFifteen && (currentStar == 5 || currentStar == 10 || currentStar == 15) {
 		return _SUCCESS
 	}
@@ -162,7 +162,7 @@ func perform20To22(itemLevel int, thirtyOff bool) (starForceResult, float64) {
 	)
 	for currentStar < 22 {
 		totalMesos += attemptCost(currentStar, itemLevel, false, thirtyOff, false, false)
-		switch determineOutcome(currentStar, false, false) {
+		switch determineOutcome(rates, currentStar, false, false) {
 		case _SUCCESS:
 			currentStar++
 		case _DECREASE:
@@ -176,7 +176,7 @@ func perform20To22(itemLevel int, thirtyOff bool) (starForceResult, float64) {
 }
 
 // performExperiment return (totalMesos, totalBooms, totalCount)
-func performExperiment(currentStar, desiredStar, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool) (float64, int, int) {
+func performExperiment(rates [][]float64, currentStar, desiredStar, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool) (float64, int, int) {
 	var (
 		totalMesos                            float64
 		totalBooms, totalCount, decreaseCount int
@@ -189,7 +189,7 @@ func performExperiment(currentStar, desiredStar, itemLevel int, boomProtect, thi
 			decreaseCount = 0
 			currentStar++
 		} else {
-			switch determineOutcome(currentStar, boomProtect, fiveTenFifteen) {
+			switch determineOutcome(rates, currentStar, boomProtect, fiveTenFifteen) {
 			case _SUCCESS:
 				decreaseCount = 0
 				currentStar++
@@ -257,11 +257,14 @@ func calculate20To22() MessageChain {
 	return ret
 }
 
-func calculateBoomCount(content string) MessageChain {
+func calculateBoomCount(content string, rates [][]float64) MessageChain {
 	boomProtect := strings.Contains(content, "保护")
 	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
-	title := "0-22星爆炸次数"
+	title := "旧0-22星爆炸次数"
+	if len(rates) == len(rates2) {
+		title = "新0-22星爆炸次数"
+	}
 	if thirtyOff && !fiveTenFifteen {
 		title += "(七折)"
 	}
@@ -276,7 +279,7 @@ func calculateBoomCount(content string) MessageChain {
 	}
 	booms := make(map[int]int)
 	for range 1000 {
-		_, b, _ := performExperiment(0, 22, 200, boomProtect, thirtyOff, fiveTenFifteen)
+		_, b, _ := performExperiment(rates, 0, 22, 200, boomProtect, thirtyOff, fiveTenFifteen)
 		booms[b]++
 	}
 	values := make([]float64, 0, len(booms))
@@ -358,7 +361,7 @@ func calculateStarForce1(content string) MessageChain {
 		testCount = 20
 	}
 	for range testCount {
-		m, b, c := performExperiment(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+		m, b, c := performExperiment(rates, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
 		mesos += m
 		booms += b
 		count += c
@@ -386,7 +389,7 @@ func calculateStarForce1(content string) MessageChain {
 	s += fmt.Sprintf("\n共测试了%d次\n", testCount)
 	s += fmt.Sprintf("%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos/float64(testCount), testCount)
+	image := drawStarForce(rates, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos/float64(testCount), testCount)
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
 	}
@@ -410,12 +413,12 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 	)
 	for range 1000 {
 		if maxStar > 17 {
-			m, b, c := performExperiment(0, 17, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+			m, b, c := performExperiment(rates, 0, 17, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
 			mesos17 += m
 			booms17 += b
 			count17 += c
 		}
-		m, b, c := performExperiment(cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+		m, b, c := performExperiment(rates, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
 		mesos22 += m
 		booms22 += b
 		count22 += c
@@ -454,14 +457,14 @@ func calculateStarForce2(itemLevel int, thirtyOff, fiveTenFifteen bool) MessageC
 	}
 	s += fmt.Sprintf("%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos22/1000, 1000)
+	image := drawStarForce(rates, 0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, mesos22/1000, 1000)
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
 	}
 	return MessageChain{&Text{Text: s}}
 }
 
-func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool, totalMesos float64, testCount int) *Image {
+func drawStarForce(rates [][]float64, cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen bool, totalMesos float64, testCount int) *Image {
 	var labels []string
 	var values []float64
 	add := func(cur1, des1 int) {
@@ -480,7 +483,7 @@ func drawStarForce(cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifte
 		labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
 		var a float64
 		for range testCount {
-			m, _, _ := performExperiment(cur1, des1, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
+			m, _, _ := performExperiment(rates, cur1, des1, itemLevel, boomProtect, thirtyOff, fiveTenFifteen)
 			a += m
 		}
 		values = append(values, a/float64(testCount))
@@ -576,6 +579,40 @@ var rates = [][]float64{
 	{0.03, 0.0, 0.776, 0.194},
 	{0.02, 0.0, 0.686, 0.294},
 	{0.01, 0.0, 0.594, 0.396},
+}
+
+// current_star => (success, maintain, decrease, boom)
+var rates2 = [][]float64{
+	{0.95, 0.05, 0.0, 0.0},
+	{0.9, 0.1, 0.0, 0.0},
+	{0.85, 0.15, 0.0, 0.0},
+	{0.85, 0.15, 0.0, 0.0},
+	{0.80, 0.2, 0.0, 0.0},
+	{0.75, 0.25, 0.0, 0.0},
+	{0.7, 0.3, 0.0, 0.0},
+	{0.65, 0.35, 0.0, 0.0},
+	{0.6, 0.4, 0.0, 0.0},
+	{0.55, 0.45, 0.0, 0.0},
+	{0.5, 0.5, 0.0, 0.0},
+	{0.45, 0.55, 0.0, 0.0},
+	{0.4, 0.6, 0.0, 0.0},
+	{0.35, 0.65, 0.0, 0.0},
+	{0.3, 0.7, 0.0, 0.0},
+	{0.3, 0.679, 0.0, 0.021},
+	{0.3, 0.679, 0.0, 0.021},
+	{0.15, 0.782, 0.0, 0.068},
+	{0.15, 0.782, 0.0, 0.068},
+	{0.15, 0.765, 0.0, 0.085},
+	{0.3, 0.595, 0.0, 0.105},
+	{0.15, 0.7225, 0.0, 0.1275},
+	{0.15, 0.68, 0.0, 0.17},
+	{0.1, 0.72, 0.0, 0.18},
+	{0.1, 0.72, 0.0, 0.18},
+	{0.1, 0.72, 0.0, 0.18},
+	{0.07, 0.744, 0.0, 0.186},
+	{0.05, 0.76, 0.0, 0.19},
+	{0.03, 0.776, 0.0, 0.194},
+	{0.01, 0.792, 0.0, 0.198},
 }
 
 func getMaxStar(itemLevel int) int {
