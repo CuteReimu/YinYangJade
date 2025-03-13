@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.0.0-20250225070148-11338540614b
+	github.com/CuteReimu/bilibili/v2 v2.1.0
 	github.com/CuteReimu/goutil v0.0.0-20241125080311-363c2b24f74b
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b
