@@ -132,9 +132,9 @@ func handleGroupRequest(request *GroupRequest) bool {
 		}) {
 			err := B.SetGroupAddRequest(request.Flag, request.SubType, true, "")
 			if err != nil {
-				slog.Error("同意申请请求失败", "approve", false, "error", err)
+				slog.Error("同意申请请求失败", "approve", true, "error", err)
 			} else {
-				slog.Info("同意申请请求成功", "approve", false, "error", err)
+				slog.Info("同意申请请求成功", "approve", true, "error", err)
 			}
 		}
 	}
