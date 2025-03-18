@@ -126,7 +126,14 @@ func handleGroupRequest(request *GroupRequest) bool {
 		if strings.Contains(request.Comment, "管理员你好") || len(strings.TrimSpace(request.Comment)) == 0 {
 			return true
 		}
-		comment := strings.ToLower(request.Comment)
+		comment := request.Comment
+		if index := strings.Index(comment, "\n"); index >= 0 {
+			comment = comment[index:]
+			if strings.HasPrefix(comment, "答案：") {
+				comment = comment[len("答案："):]
+			}
+		}
+		comment = strings.ToLower(comment)
 		if slices.ContainsFunc(approveGroupRequestStrings, func(s string) bool {
 			return (strings.HasPrefix(comment, s) || strings.HasSuffix(comment, s)) && len(comment) < 15
 		}) {
