@@ -23,6 +23,7 @@ func Init(b *Bot) {
 	B.ListenGroupMessage(cmdHandleFunc)
 	B.ListenGroupMessage(handleDictionary)
 	B.ListenGroupMessage(searchAt)
+	B.ListenGroupRequest(handleGroupRequest)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
@@ -109,6 +110,31 @@ func searchAt(message *GroupMessage) bool {
 						sendGroupMessage(message, dealGetScore(result)...)
 					}()
 				}
+			}
+		}
+	}
+	return true
+}
+
+var approveGroupRequestStrings = []string{"抖音", "b站", "小红书", "贴吧", "搜的", "快手", "github"}
+
+func handleGroupRequest(request *GroupRequest) bool {
+	if request.SubType == GroupRequestAdd {
+		if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(request.GroupId)) {
+			return true
+		}
+		if strings.Contains(request.Comment, "管理员你好") || len(strings.TrimSpace(request.Comment)) == 0 {
+			return true
+		}
+		comment := strings.ToLower(request.Comment)
+		if slices.ContainsFunc(approveGroupRequestStrings, func(s string) bool {
+			return (strings.HasPrefix(comment, s) || strings.HasPrefix(comment, s)) && len(comment) < 15
+		}) {
+			err := B.SetGroupAddRequest(request.Flag, request.SubType, true, "")
+			if err != nil {
+				slog.Error("同意申请请求失败", "approve", false, "error", err)
+			} else {
+				slog.Info("同意申请请求成功", "approve", false, "error", err)
 			}
 		}
 	}
