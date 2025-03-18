@@ -128,7 +128,7 @@ func handleGroupRequest(request *GroupRequest) bool {
 		}
 		comment := strings.ToLower(request.Comment)
 		if slices.ContainsFunc(approveGroupRequestStrings, func(s string) bool {
-			return (strings.HasPrefix(comment, s) || strings.HasPrefix(comment, s)) && len(comment) < 15
+			return (strings.HasPrefix(comment, s) || strings.HasSuffix(comment, s)) && len(comment) < 15
 		}) {
 			err := B.SetGroupAddRequest(request.Flag, request.SubType, true, "")
 			if err != nil {
