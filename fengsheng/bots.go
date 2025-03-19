@@ -128,7 +128,7 @@ func handleGroupRequest(request *GroupRequest) bool {
 		}
 		comment := request.Comment
 		if index := strings.Index(comment, "\n"); index >= 0 {
-			comment = comment[index:]
+			comment = comment[index+1:]
 			if strings.HasPrefix(comment, "答案：") {
 				comment = comment[len("答案："):]
 			}
