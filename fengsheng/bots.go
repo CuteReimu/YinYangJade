@@ -123,7 +123,7 @@ func handleGroupRequest(request *GroupRequest) bool {
 		if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(request.GroupId)) {
 			return true
 		}
-		if strings.Contains(request.Comment, "管理员你好") || len(strings.TrimSpace(request.Comment)) == 0 {
+		if strings.Contains(request.Comment, "管理员你好") {
 			return true
 		}
 		comment := request.Comment
