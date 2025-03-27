@@ -207,7 +207,7 @@ func performExperiment(newKms bool, currentStar, desiredStar, itemLevel int, boo
 		totalBooms, totalCount, decreaseCount int
 	)
 	for currentStar < desiredStar {
-		chanceTime := decreaseCount == 2
+		chanceTime := !newKms && decreaseCount == 2
 		totalMesos += attemptCost(newKms, currentStar, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, chanceTime)
 		totalCount++
 		if chanceTime {
