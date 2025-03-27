@@ -154,7 +154,11 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 		probabilityBoom *= 0.7
 	}
 	if boomProtect && (newKms && currentStar <= 17 || currentStar <= 16) { // boom protection enabled
-		probabilityDecrease += probabilityBoom
+		if probabilityDecrease > 0 {
+			probabilityDecrease += probabilityBoom
+		} else {
+			probabilityMaintain += probabilityBoom
+		}
 		probabilityBoom = 0.0
 	}
 	// star catch adjustment
