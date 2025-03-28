@@ -70,31 +70,35 @@ func dealGetScore(result string) MessageChain {
 	slices.Reverse(historyData)
 	ret := make(MessageChain, 0, 3)
 	ret = append(ret, &Text{Text: resultBuilder.String()})
-	p, err := TableOptionRender(TableChartOption{
-		Header:     []string{"身份", "胜率", "平均胜率", "场次"},
-		Data:       winRateData,
-		Width:      440,
-		TextAligns: []string{AlignLeft, AlignLeft, AlignLeft, AlignLeft},
-	})
-	if err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	if len(winRateData) > 0 {
+		p, err := TableOptionRender(TableChartOption{
+			Header:     []string{"身份", "胜率", "平均胜率", "场次"},
+			Data:       winRateData,
+			Width:      440,
+			TextAligns: []string{AlignLeft, AlignLeft, AlignLeft, AlignLeft},
+		})
+		if err != nil {
+			slog.Error("render chart failed", "error", err)
+		} else if buf, err := p.Bytes(); err != nil {
+			slog.Error("render chart failed", "error", err)
+		} else {
+			ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+		}
 	}
-	p, err = TableOptionRender(TableChartOption{
-		Header:     []string{"角色", "存活", "身份", "胜负", "段位", "分数"},
-		Data:       historyData,
-		Width:      720,
-		TextAligns: []string{AlignLeft, AlignLeft, AlignLeft, AlignLeft, AlignLeft, AlignLeft},
-	})
-	if err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	if len(historyData) > 0 {
+		p, err := TableOptionRender(TableChartOption{
+			Header:     []string{"角色", "存活", "身份", "胜负", "段位", "分数"},
+			Data:       historyData,
+			Width:      720,
+			TextAligns: []string{AlignLeft, AlignLeft, AlignLeft, AlignLeft, AlignLeft, AlignLeft},
+		})
+		if err != nil {
+			slog.Error("render chart failed", "error", err)
+		} else if buf, err := p.Bytes(); err != nil {
+			slog.Error("render chart failed", "error", err)
+		} else {
+			ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+		}
 	}
 	return ret
 }
