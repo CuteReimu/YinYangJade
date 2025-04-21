@@ -2,11 +2,13 @@ package fengsheng
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/CuteReimu/YinYangJade/db"
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
+	"math"
 	"math/rand/v2"
 	"slices"
 	"strconv"
@@ -116,6 +118,7 @@ func init() {
 	addCmdListener(&atPlayer{})
 	addCmdListener(&resetPwd{})
 	addCmdListener(&sign{})
+	addCmdListener(&frequency{})
 }
 
 type getMyScore struct{}
@@ -562,4 +565,105 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 	default:
 		return MessageChain{&Text{Text: fmt.Sprintf("运气爆棚，获得%d点精力", energy)}}
 	}
+}
+
+type frequency struct{}
+
+func (f *frequency) Name() string {
+	return "活跃"
+}
+
+func (f *frequency) ShowTips(int64, int64) string {
+	return "活跃"
+}
+
+func (f *frequency) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (f *frequency) Execute(*GroupMessage, string) MessageChain {
+	frequencyData, returnError := httpGetData("/frequency", nil)
+	if returnError != nil {
+		slog.Error("请求失败", "error", returnError.error)
+		return returnError.message
+	}
+	type DataType struct {
+		Date  string `json:"date"`
+		Count int    `json:"count"`
+		Pc    int    `json:"pc"`
+	}
+	var arr []DataType
+	err := json.Unmarshal([]byte(frequencyData.Raw), &arr)
+	if err != nil {
+		slog.Error("json unmarshal failed", "error", err)
+		return MessageChain{&Text{Text: "数据格式错误"}}
+	}
+	maxDisplayDate, err := time.Parse("2006-01-02", arr[len(arr)-1].Date)
+	if err != nil {
+		slog.Error("parse date failed", "error", err)
+		return MessageChain{&Text{Text: "数据格式错误"}}
+	}
+	minDisplayDate := maxDisplayDate.AddDate(0, 0, -30)
+	var (
+		labels       []string
+		completeData = [][]float64{{}, {}, {}}
+	)
+	currentDate := minDisplayDate
+	var maxValue float64
+
+	for range 31 {
+		dateStr := currentDate.Format("2006-01-02")
+		value := slices.IndexFunc(arr, func(value DataType) bool { return value.Date == dateStr })
+		labels = append(labels, dateStr[5:])
+		if value >= 0 {
+			completeData[0] = append(completeData[0], float64(arr[value].Count))
+			completeData[1] = append(completeData[1], float64(arr[value].Pc))
+			completeData[2] = append(completeData[2], float64(arr[value].Pc-arr[value].Count))
+		} else {
+			completeData[0] = append(completeData[0], 0)
+			completeData[1] = append(completeData[1], 0)
+			completeData[2] = append(completeData[2], 0)
+		}
+		for _, v := range completeData {
+			maxValue = max(maxValue, v[len(v)-1])
+		}
+
+		currentDate = currentDate.AddDate(0, 0, 1)
+	}
+
+	p, err := Render(
+		ChartOption{SeriesList: SeriesList{
+			NewSeriesFromValues(completeData[0], ChartTypeLine),
+			NewSeriesFromValues(completeData[1], ChartTypeLine),
+			NewSeriesFromValues(completeData[2], ChartTypeBar),
+		}},
+		LegendOptionFunc(LegendOption{
+			Data: []string{"场次", "参与人次", "活人局系数"},
+			Top:  "-30",
+		}),
+		FontFamilyOptionFunc("simhei"),
+		ThemeOptionFunc(ThemeLight),
+		PaddingOptionFunc(Box{Top: 40, Left: 10, Right: 45, Bottom: 10}),
+		XAxisDataOptionFunc(labels),
+		MarkPointOptionFunc(0, SeriesMarkDataTypeMax),
+		MarkPointOptionFunc(1, SeriesMarkDataTypeMax),
+		MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
+		MarkLineOptionFunc(1, SeriesMarkDataTypeAverage),
+		MarkLineOptionFunc(2, SeriesMarkDataTypeAverage),
+		func(opt *ChartOption) {
+			opt.XAxis.FontSize = 7.5
+			opt.XAxis.FirstAxis = -1
+			opt.YAxisOptions = []YAxisOption{{
+				Max: NewFloatPoint(math.Ceil(float64(maxValue)/50) * 50),
+			}}
+		},
+	)
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else if buf, err := p.Bytes(); err != nil {
+		slog.Error("render chart failed", "error", err)
+	} else {
+		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
+	}
+	return MessageChain{&Text{Text: "render chart failed"}}
 }

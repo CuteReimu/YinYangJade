@@ -2,6 +2,9 @@ package fengsheng
 
 import (
 	"github.com/spf13/viper"
+	"github.com/vicanso/go-charts/v2"
+	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 )
@@ -47,4 +50,42 @@ func initConfig() {
 	if err := qunDb.ReadInConfig(); err != nil {
 		panic(err)
 	}
+}
+
+func init() {
+	var ok bool
+	_ = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
+		if info != nil && info.Name() == "simhei.ttf" {
+			buf, err := os.ReadFile(path)
+			if err != nil {
+				slog.Error("读取字体文件失败", "error", err)
+				return err
+			}
+			err = charts.InstallFont("simhei", buf)
+			if err != nil {
+				slog.Error("安装字体失败", "error", err)
+				return err
+			}
+			ok = true
+		}
+		return nil
+	})
+	if ok {
+		return
+	}
+	_ = filepath.Walk(filepath.Join("/usr", "share", "fonts"), func(path string, info fs.FileInfo, err error) error {
+		if info != nil && info.Name() == "simhei.ttf" {
+			buf, err := os.ReadFile(path)
+			if err != nil {
+				slog.Error("读取字体文件失败", "error", err)
+				return err
+			}
+			err = charts.InstallFont("simhei", buf)
+			if err != nil {
+				slog.Error("安装字体失败", "error", err)
+				return err
+			}
+		}
+		return nil
+	})
 }
