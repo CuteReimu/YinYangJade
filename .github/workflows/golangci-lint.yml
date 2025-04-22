@@ -22,7 +22,6 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: latest
-          args: --timeout 3m0s
 
       - name: Build
         run: go build -v ./...

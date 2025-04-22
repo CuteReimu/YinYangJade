@@ -49,3 +49,5 @@ linters:
         - G304
         - G306
         - G404
+run:
+  timeout: 3m
