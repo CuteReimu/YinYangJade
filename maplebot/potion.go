@@ -45,7 +45,7 @@ func calculatePotion() MessageChain {
 	keys = append([]string{"等级"}, keys...)
 	keys = append(slices.Clip(keys), keys...)
 	aligns := make([]string, 0, len(keys))
-	for i := 0; i < len(keys); i++ {
+	for range keys {
 		aligns = append(aligns, AlignRight)
 	}
 	p, err := TableOptionRender(TableChartOption{

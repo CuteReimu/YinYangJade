@@ -30,8 +30,8 @@ func RemoveBackground(buf []byte, rate int) ([]byte, error) {
 	}
 	countCache := make(map[uint8]int)
 	totalCount := img.Bounds().Dx() * img.Bounds().Dy()
-	for x := 0; x < img.Bounds().Dx(); x++ {
-		for y := 0; y < img.Bounds().Dy(); y++ {
+	for x := range img.Bounds().Dx() {
+		for y := range img.Bounds().Dy() {
 			c := img.At(x, y)
 			r, g, b, _ := c.RGBA()
 			v := (r + g + b) / 3
@@ -47,8 +47,8 @@ func RemoveBackground(buf []byte, rate int) ([]byte, error) {
 		}
 	}
 	img0 := image.NewRGBA(img.Bounds())
-	for x := 0; x < img.Bounds().Dx(); x++ {
-		for y := 0; y < img.Bounds().Dy(); y++ {
+	for x := range img.Bounds().Dx() {
+		for y := range img.Bounds().Dy() {
 			c := img.At(x, y)
 			r, g, b, _ := c.RGBA()
 			v := (r + g + b) / 3

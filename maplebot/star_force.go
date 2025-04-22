@@ -318,7 +318,7 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 	values := make([]float64, 0, len(booms))
 	labels := make([]string, 0, len(booms))
 	left := 1000
-	for k := 0; k <= 10; k++ {
+	for k := range 11 {
 		labels = append(labels, fmt.Sprintf("%d次", k))
 		values = append(values, float64(booms[k]))
 		left -= booms[k]

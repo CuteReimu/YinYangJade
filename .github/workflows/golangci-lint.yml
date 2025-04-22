@@ -19,10 +19,10 @@ jobs:
           go-version: 'stable'
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
-          args: --out-${NO_FUTURE}format line-number --timeout 3m0s -p bugs -p error -p performance -D wrapcheck -D err113 -D gosmopolitan -D gosec
+          args: --timeout 3m0s
 
       - name: Build
         run: go build -v ./...

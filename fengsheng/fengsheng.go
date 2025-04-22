@@ -605,7 +605,7 @@ func (f *frequency) Execute(*GroupMessage, string) MessageChain {
 	}
 	minDisplayDate := maxDisplayDate.AddDate(0, 0, -30)
 	var (
-		labels       []string
+		labels       = make([]string, 0, 31)
 		completeData = [][]float64{{}, {}, {}}
 	)
 	currentDate := minDisplayDate

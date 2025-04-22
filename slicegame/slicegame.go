@@ -22,7 +22,7 @@ import (
 func DoStuff() MessageChain {
 	problem := []int{1, 2, 3, 4, 5, 6, 7, 8}
 	tryCount := 0
-	reverseCount := 1
+	var reverseCount int
 	for {
 		tryCount++
 		if tryCount > 100 {
@@ -32,8 +32,8 @@ func DoStuff() MessageChain {
 			problem[i], problem[j] = problem[j], problem[i]
 		})
 		reverseCount = 0
-		for i := range len(problem) {
-			for j := 0; j < i; j++ {
+		for i := range problem {
+			for j := range i {
 				if problem[j] > problem[i] {
 					reverseCount++
 				}

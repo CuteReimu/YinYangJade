@@ -69,7 +69,7 @@ func calculateLevelExp() MessageChain {
 	values := make([][]string, 0, 25)
 	for i := 201; i <= 225; i++ {
 		line := make([]string, 0, 12)
-		for j := 0; j < 4; j++ {
+		for j := range 4 {
 			level := i + j*25
 			line = append(line, strconv.Itoa(level), cur[level-201], acc[level-201])
 		}

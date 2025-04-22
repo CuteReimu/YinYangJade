@@ -118,7 +118,7 @@ func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 		a = append(a, i)
 	}
 	ret := make([]string, 0, count/2)
-	for i := 0; i < count/2; i++ {
+	for range count / 2 {
 		a1 := a[len(a)-1]
 		a = a[:len(a)-1]
 		index := rand.IntN(len(a))
