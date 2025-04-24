@@ -1,18 +1,23 @@
 package fengsheng
 
 import (
+	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/CuteReimu/YinYangJade/db"
 	. "github.com/CuteReimu/onebot"
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/devices"
+	"github.com/go-rod/rod/lib/launcher"
 	. "github.com/vicanso/go-charts/v2"
+	"image"
+	"image/png"
 	"log/slog"
-	"math"
 	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -119,6 +124,7 @@ func init() {
 	addCmdListener(&resetPwd{})
 	addCmdListener(&sign{})
 	addCmdListener(&frequency{})
+	addCmdListener(&winRate2{})
 }
 
 type getMyScore struct{}
@@ -581,89 +587,138 @@ func (f *frequency) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (f *frequency) Execute(*GroupMessage, string) MessageChain {
-	frequencyData, returnError := httpGetData("/frequency", nil)
-	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
-	}
-	type DataType struct {
-		Date  string `json:"date"`
-		Count int    `json:"count"`
-		Pc    int    `json:"pc"`
-	}
-	var arr []DataType
-	err := json.Unmarshal([]byte(frequencyData.Raw), &arr)
-	if err != nil {
-		slog.Error("json unmarshal failed", "error", err)
-		return MessageChain{&Text{Text: "数据格式错误"}}
-	}
-	maxDisplayDate, err := time.Parse("2006-01-02", arr[len(arr)-1].Date)
-	if err != nil {
-		slog.Error("parse date failed", "error", err)
-		return MessageChain{&Text{Text: "数据格式错误"}}
-	}
-	minDisplayDate := maxDisplayDate.AddDate(0, 0, -30)
-	var (
-		labels       = make([]string, 0, 31)
-		completeData = [][]float64{{}, {}, {}}
-	)
-	currentDate := minDisplayDate
-	var maxValue float64
-
-	for range 31 {
-		dateStr := currentDate.Format("2006-01-02")
-		value := slices.IndexFunc(arr, func(value DataType) bool { return value.Date == dateStr })
-		labels = append(labels, dateStr[5:])
-		if value >= 0 {
-			completeData[0] = append(completeData[0], float64(arr[value].Count))
-			completeData[1] = append(completeData[1], float64(arr[value].Pc))
-			completeData[2] = append(completeData[2], float64(arr[value].Pc-arr[value].Count))
-		} else {
-			completeData[0] = append(completeData[0], 0)
-			completeData[1] = append(completeData[1], 0)
-			completeData[2] = append(completeData[2], 0)
+func (f *frequency) Execute(message *GroupMessage, _ string) MessageChain {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err)
+			}
+		}()
+		b := browser.Load()
+		if b == nil {
+			sendGroupMessage(message, &Text{Text: "功能暂时无法使用，请稍后再试"})
+			return
 		}
-		for _, v := range completeData {
-			maxValue = max(maxValue, v[len(v)-1])
+		url := fengshengConfig.GetString("fengshengPageUrl") + "/game/frequency.html"
+		slog.Debug("准备开始加载页面", "url", url)
+		page := b.MustPage(url)
+		if page == nil {
+			sendGroupMessage(message, &Text{Text: "获取页面失败"})
+			return
+		}
+		defer page.MustClose()
+		slog.Debug("等待页面加载")
+		canvas := page.MustElement("canvas")
+		canvas.MustWait(`
+	    	() => {
+	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
+	    	}`)
+		slog.Debug("等待1秒")
+		time.Sleep(time.Second)
+		slog.Debug("正在截图")
+		img, err := png.Decode(bytes.NewReader(page.MustScreenshot()))
+		if err != nil {
+			slog.Error("png.Decode failed", "error", err)
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
 		}
 
-		currentDate = currentDate.AddDate(0, 0, 1)
-	}
+		slog.Debug("正在处理图片")
+		croppedImg := img.(interface {
+			SubImage(r image.Rectangle) image.Image
+		}).SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1740)).(*image.RGBA)
 
-	p, err := Render(
-		ChartOption{SeriesList: SeriesList{
-			NewSeriesFromValues(completeData[0], ChartTypeLine),
-			NewSeriesFromValues(completeData[1], ChartTypeLine),
-			NewSeriesFromValues(completeData[2], ChartTypeBar),
-		}},
-		LegendOptionFunc(LegendOption{
-			Data: []string{"场次", "参与人次", "活人局系数"},
-			Top:  "-30",
-		}),
-		FontFamilyOptionFunc("simhei"),
-		ThemeOptionFunc(ThemeLight),
-		PaddingOptionFunc(Box{Top: 40, Left: 10, Right: 45, Bottom: 10}),
-		XAxisDataOptionFunc(labels),
-		MarkPointOptionFunc(0, SeriesMarkDataTypeMax),
-		MarkPointOptionFunc(1, SeriesMarkDataTypeMax),
-		MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
-		MarkLineOptionFunc(1, SeriesMarkDataTypeAverage),
-		MarkLineOptionFunc(2, SeriesMarkDataTypeAverage),
-		func(opt *ChartOption) {
-			opt.XAxis.FontSize = 7.5
-			opt.XAxis.FirstAxis = -1
-			opt.YAxisOptions = []YAxisOption{{
-				Max: NewFloatPoint(math.Ceil(float64(maxValue)/50) * 50),
-			}}
-		},
-	)
-	if err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
-	}
-	return MessageChain{&Text{Text: "render chart failed"}}
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, croppedImg); err != nil {
+			slog.Error("png.Encode failed", "error", err)
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
+		}
+		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf.Bytes())})
+	}()
+	return nil
+}
+
+type winRate2 struct{}
+
+func (r *winRate2) Name() string {
+	return "胜率图"
+}
+
+func (r *winRate2) ShowTips(int64, int64) string {
+	return "胜率图"
+}
+
+func (r *winRate2) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (r *winRate2) Execute(message *GroupMessage, _ string) MessageChain {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err)
+			}
+		}()
+		b := browser.Load()
+		if b == nil {
+			sendGroupMessage(message, &Text{Text: "功能暂时无法使用，请稍后再试"})
+			return
+		}
+		slog.Debug("等待页面加载")
+		page := b.MustPage(fengshengConfig.GetString("fengshengPageUrl") + "/game/winrate.html")
+		if page == nil {
+			sendGroupMessage(message, &Text{Text: "获取页面失败"})
+			return
+		}
+		defer page.MustClose()
+		slog.Debug("等待页面加载")
+		canvas := page.MustElement("canvas")
+		canvas.MustWait(`
+	    	() => {
+	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
+	    	}`)
+		slog.Debug("等待1秒")
+		time.Sleep(time.Second)
+		slog.Debug("正在截图")
+		img, err := png.Decode(bytes.NewReader(page.MustScreenshot()))
+		if err != nil {
+			slog.Error("png.Decode failed", "error", err)
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
+		}
+
+		croppedImg := img.(interface {
+			SubImage(r image.Rectangle) image.Image
+		}).SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1690)).(*image.RGBA)
+
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, croppedImg); err != nil {
+			slog.Error("png.Encode failed", "error", err)
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
+		}
+		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf.Bytes())})
+	}()
+	return nil
+}
+
+var browser atomic.Pointer[rod.Browser]
+
+func init() {
+	device := devices.SurfaceDuo.Landscape()
+	device.Screen.Horizontal.Width--
+	device.Screen.Horizontal.Height = 860
+	go func() {
+		b := rod.New().WithPanic(func(err any) {
+			slog.Error("rod init failed", "error", err)
+		}).DefaultDevice(device).
+			ControlURL(launcher.New().
+				Headless(true).         // 强制无头模式
+				NoSandbox(true).        // 禁用沙箱
+				Set("disable-gpu", ""). // 禁用 GPU 加速
+				MustLaunch()).
+			MustConnect()
+		browser.Store(b)
+	}()
 }

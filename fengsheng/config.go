@@ -29,6 +29,7 @@ func initConfig() {
 	fengshengConfig.SetDefault("qq.super_admin_qq", int64(12345678))
 	fengshengConfig.SetDefault("qq.qq_group", []int64{12345678})
 	fengshengConfig.SetDefault("fengshengUrl", "http://127.0.0.1:9094")
+	fengshengConfig.SetDefault("fengshengPageUrl", "http://127.0.0.1:12221")
 	fengshengConfig.SetDefault("image_expire_hours", int64(24))
 	_ = fengshengConfig.SafeWriteConfigAs(filepath.Join("config", "com.fengsheng.bot", "FengshengConfig.yml"))
 	if err := fengshengConfig.ReadInConfig(); err != nil {
