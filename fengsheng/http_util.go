@@ -105,23 +105,3 @@ func httpGetInt(endPoint string, queryParams map[string]string) (int64, *errorWi
 	}
 	return gjson.Get(body, "result").Int(), nil
 }
-
-func httpGetData(endPoint string, queryParams map[string]string) (gjson.Result, *errorWithMessage) {
-	resp, err := restyClient.R().SetQueryParams(queryParams).Get(fengshengConfig.GetString("fengshengUrl") + endPoint)
-	if err != nil {
-		return gjson.Result{}, &errorWithMessage{error: err}
-	}
-	if resp.StatusCode() != 200 {
-		err := fmt.Errorf("请求错误，错误码：%d", resp.StatusCode())
-		return gjson.Result{}, &errorWithMessage{error: err, message: MessageChain{&Text{Text: err.Error()}}}
-	}
-	body := resp.String()
-	if !gjson.Valid(body) {
-		return gjson.Result{}, &errorWithMessage{error: errors.New("json unmarshal failed")}
-	}
-	if returnError := gjson.Get(body, "error"); returnError.Exists() {
-		s := returnError.String()
-		return gjson.Result{}, &errorWithMessage{error: errors.New(s), message: MessageChain{&Text{Text: s}}}
-	}
-	return gjson.Get(body, "data"), nil
-}
