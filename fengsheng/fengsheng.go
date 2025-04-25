@@ -126,6 +126,7 @@ func init() {
 	addCmdListener(&sign{})
 	addCmdListener(&frequency{})
 	addCmdListener(&winRate2{})
+	addCmdListener(&watch{})
 }
 
 type getMyScore struct{}
@@ -229,7 +230,7 @@ func (r *seasonRankList) Name() string {
 }
 
 func (r *seasonRankList) ShowTips(int64, int64) string {
-	return "赛季最高分排行"
+	return ""
 }
 
 func (r *seasonRankList) CheckAuth(int64, int64) bool {
@@ -260,7 +261,7 @@ func (r *winRate) Name() string {
 }
 
 func (r *winRate) ShowTips(int64, int64) string {
-	return "胜率"
+	return ""
 }
 
 func (r *winRate) CheckAuth(int64, int64) bool {
@@ -581,7 +582,7 @@ func (f *frequency) Name() string {
 }
 
 func (f *frequency) ShowTips(int64, int64) string {
-	return "活跃"
+	return ""
 }
 
 func (f *frequency) CheckAuth(int64, int64) bool {
@@ -651,7 +652,7 @@ func (r *winRate2) Name() string {
 }
 
 func (r *winRate2) ShowTips(int64, int64) string {
-	return "胜率图"
+	return ""
 }
 
 func (r *winRate2) CheckAuth(int64, int64) bool {
@@ -712,7 +713,58 @@ func (r *winRate2) Execute(message *GroupMessage, _ string) MessageChain {
 	return nil
 }
 
-var browser atomic.Pointer[rod.Browser]
+type watch struct{}
+
+func (w *watch) Name() string {
+	return "观战"
+}
+
+func (w *watch) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (w *watch) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (w *watch) Execute(message *GroupMessage, _ string) MessageChain {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err)
+			}
+		}()
+		page := gameStatusPage.Load()
+		if page == nil {
+			sendGroupMessage(message, &Text{Text: "获取页面失败"})
+			return
+		}
+		slog.Debug("寻找按钮")
+		e := page.MustElement(".el-button")
+		if e == nil {
+			sendGroupMessage(message, &Text{Text: "获取页面超时"})
+			return
+		}
+		slog.Debug("点击按钮")
+		e.MustClick()
+		slog.Debug("等待1秒")
+		time.Sleep(time.Second)
+		slog.Debug("正在截图")
+		buf := page.MustScreenshotFullPage()
+		if len(buf) == 0 {
+			slog.Error("screenshot failed")
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
+		}
+		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	}()
+	return nil
+}
+
+var (
+	browser        atomic.Pointer[rod.Browser]
+	gameStatusPage atomic.Pointer[rod.Page]
+)
 
 func init() {
 	device := devices.SurfaceDuo.Landscape()
@@ -731,5 +783,11 @@ func init() {
 				MustLaunch()).
 			MustConnect()
 		browser.Store(b)
+		page := b.MustPage(fengshengConfig.GetString("fengshengPageUrl") + "/game/game_status.html")
+		if page == nil {
+			slog.Error("获取页面失败")
+			return
+		}
+		gameStatusPage.Store(page)
 	}()
 }
