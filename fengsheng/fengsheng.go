@@ -9,6 +9,7 @@ import (
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/devices"
 	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/rod/lib/utils"
 	. "github.com/vicanso/go-charts/v2"
 	"image"
 	"image/png"
@@ -609,6 +610,10 @@ func (f *frequency) Execute(message *GroupMessage, _ string) MessageChain {
 		defer page.MustClose()
 		slog.Debug("等待页面加载")
 		canvas := page.MustElement("canvas")
+		if canvas == nil {
+			sendGroupMessage(message, &Text{Text: "获取页面超时"})
+			return
+		}
 		canvas.MustWait(`
 	    	() => {
 	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
@@ -674,6 +679,10 @@ func (r *winRate2) Execute(message *GroupMessage, _ string) MessageChain {
 		defer page.MustClose()
 		slog.Debug("等待页面加载")
 		canvas := page.MustElement("canvas")
+		if canvas == nil {
+			sendGroupMessage(message, &Text{Text: "获取页面超时"})
+			return
+		}
 		canvas.MustWait(`
 	    	() => {
 	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
@@ -710,7 +719,9 @@ func init() {
 	device.Screen.Horizontal.Width--
 	device.Screen.Horizontal.Height = 860
 	go func() {
-		b := rod.New().WithPanic(func(err any) {
+		b := rod.New().Sleeper(func() utils.Sleeper {
+			return utils.EachSleepers(rod.DefaultSleeper(), utils.CountSleeper(30))
+		}).WithPanic(func(err any) {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
