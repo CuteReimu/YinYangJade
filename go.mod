@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/CuteReimu/bilibili/v2 v2.1.0
+	github.com/CuteReimu/bilibili/v2 v2.2.1
 	github.com/CuteReimu/goutil v0.0.0-20241125080311-363c2b24f74b
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b
@@ -61,10 +61,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/image v0.25.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
