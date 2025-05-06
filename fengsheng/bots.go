@@ -116,7 +116,7 @@ func searchAt(message *GroupMessage) bool {
 	return true
 }
 
-var approveGroupRequestStrings = []string{"抖音", "b站", "小红书", "贴吧", "搜的", "快手", "github"}
+var approveGroupRequestStrings = []string{"抖音", "b站", "bilibili", "哔哩哔哩", "小红书", "贴吧", "搜的", "快手", "github"}
 
 func handleGroupRequest(request *GroupRequest) bool {
 	if request.SubType == GroupRequestAdd {
