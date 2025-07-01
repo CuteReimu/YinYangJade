@@ -73,7 +73,7 @@ func (s *startLive) Execute(msg *GroupMessage, content string) MessageChain {
 	ret, err := bili.StartLive(bilibili.StartLiveParam{
 		RoomId:   rid,
 		AreaV2:   area,
-		Platform: "pc",
+		Platform: "pc_link",
 	})
 	if err != nil {
 		slog.Error("开启直播间失败", "error", err)
@@ -130,11 +130,12 @@ func (s *stopLive) Execute(msg *GroupMessage, content string) MessageChain {
 	}
 	rid := tfccConfig.GetInt("bilibili.room_id")
 	stopLiveResult, err := bili.StopLive(bilibili.StopLiveParam{
+		Platform: "pc_link",
 		RoomId: rid,
 	})
 	if err != nil {
 		slog.Error("关闭直播间失败", "error", err)
-		return nil
+		return MessageChain{&Text{Text: "关闭直播失败，" + err.Error()}}
 	}
 	bilibiliData.Set("live", 0)
 	if err = bilibiliData.WriteConfig(); err != nil {
@@ -174,7 +175,7 @@ func (c *changeLiveTitle) Execute(msg *GroupMessage, content string) MessageChai
 		}
 	}
 	rid := tfccConfig.GetInt("bilibili.room_id")
-	err := bili.UpdateLiveRoomTitle(bilibili.UpdateLiveRoomTitleParam{
+	_, err := bili.UpdateLiveRoomTitle(bilibili.UpdateLiveRoomTitleParam{
 		RoomId: rid,
 		Title:  content,
 	})
