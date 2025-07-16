@@ -3,6 +3,8 @@ linters:
   default: all
   disable:
     - wsl
+    - wsl_v5
+    - embeddedstructfieldcheck
     - varnamelen
     - gocognit
     - funlen
