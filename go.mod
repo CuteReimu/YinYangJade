@@ -9,7 +9,7 @@ require (
 	github.com/CuteReimu/goutil v0.0.0-20250319114149-4d3965d6581c
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b
-	github.com/dgraph-io/badger/v4 v4.7.0
+	github.com/dgraph-io/badger/v4 v4.8.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/go-rod/rod v0.116.2
@@ -63,7 +63,7 @@ require (
 	golang.org/x/image v0.28.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
