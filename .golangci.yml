@@ -5,6 +5,7 @@ linters:
     - wsl
     - wsl_v5
     - embeddedstructfieldcheck
+    - noinlineerr
     - varnamelen
     - gocognit
     - funlen
