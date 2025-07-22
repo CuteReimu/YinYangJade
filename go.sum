@@ -4,6 +4,8 @@ github.com/CuteReimu/bilibili/v2 v2.3.1 h1:ri7AIEUu1bbikY5ljdh84SrAml5T/hT8g+GRF
 github.com/CuteReimu/bilibili/v2 v2.3.1/go.mod h1:peL3DoBy/JsozebNr70/jieu8Cx1pc8lD3Od/oD+gSE=
 github.com/CuteReimu/bilibili/v2 v2.3.4 h1:+/w5FjyDv7QwN2h8vL+T72wued71k8Fqiaiy6UYA6Ug=
 github.com/CuteReimu/bilibili/v2 v2.3.4/go.mod h1:FHKH1cc04M/qpQhF+DaFIBFleLtvgMwYfZCNhHK/kBQ=
+github.com/CuteReimu/bilibili/v2 v2.3.5 h1:0MpBOJL6Q7kP3lFItC7NQ3MLG/I1uIzZBjemXIE0CRM=
+github.com/CuteReimu/bilibili/v2 v2.3.5/go.mod h1:FHKH1cc04M/qpQhF+DaFIBFleLtvgMwYfZCNhHK/kBQ=
 github.com/CuteReimu/goutil v0.0.0-20250319114149-4d3965d6581c h1:ZFfrFaO0O30j/pY+1dPEKdsRwq7A0gyovQRGk1jv7+M=
 github.com/CuteReimu/goutil v0.0.0-20250319114149-4d3965d6581c/go.mod h1:V2hZ6Hcawpca/FPdpFSWyvnRnNeYnzO4sWrdvjDN4ME=
 github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb h1:y2i7+TFgJnITu8NJQsnm9xCeHcCnLI3HfcP7m6cD9jI=

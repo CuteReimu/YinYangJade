@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
-	"time"
 )
 
 func init() {
@@ -83,9 +82,6 @@ func (s *startLive) Execute(msg *GroupMessage, content string) MessageChain {
 		Platform: "pc_link",
 		Version:  result.CurrVersion,
 		Build:    result.Build,
-		Appkey:   "aae92bc66f3edfab",
-		Sign:     "", // 不知道填啥
-		Ts:       int(time.Now().Unix()),
 	})
 	if err != nil {
 		slog.Error("开启直播间失败", "error", err)
