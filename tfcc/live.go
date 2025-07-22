@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -70,10 +71,21 @@ func (s *startLive) Execute(msg *GroupMessage, content string) MessageChain {
 	}
 	rid := tfccConfig.GetInt("bilibili.room_id")
 	area := tfccConfig.GetInt("bilibili.area_v2")
+	result, err := bili.GetHomePageLiveVersion(bilibili.GetHomePageLiveVersionParam{SystemVersion: 2})
+	if err != nil {
+		slog.Error("获取直播间版本失败", "error", err)
+		return MessageChain{&Text{Text: "获取直播间版本失败，" + err.Error()}}
+	}
+	slog.Info("获取直播间版本成功", "version", result.CurrVersion, "build", result.Build)
 	ret, err := bili.StartLive(bilibili.StartLiveParam{
 		RoomId:   rid,
 		AreaV2:   area,
 		Platform: "pc_link",
+		Version:  result.CurrVersion,
+		Build:    result.Build,
+		Appkey:   "aae92bc66f3edfab",
+		Sign:     "", // 不知道填啥
+		Ts:       int(time.Now().Unix()),
 	})
 	if err != nil {
 		slog.Error("开启直播间失败", "error", err)
@@ -131,7 +143,7 @@ func (s *stopLive) Execute(msg *GroupMessage, content string) MessageChain {
 	rid := tfccConfig.GetInt("bilibili.room_id")
 	stopLiveResult, err := bili.StopLive(bilibili.StopLiveParam{
 		Platform: "pc_link",
-		RoomId: rid,
+		RoomId:   rid,
 	})
 	if err != nil {
 		slog.Error("关闭直播间失败", "error", err)
