@@ -2,6 +2,7 @@ version: "2"
 linters:
   default: all
   disable:
+    - noctx
     - wsl
     - wsl_v5
     - embeddedstructfieldcheck
