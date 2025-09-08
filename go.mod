@@ -1,6 +1,6 @@
 module github.com/CuteReimu/YinYangJade
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.1
 
@@ -20,7 +20,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/vicanso/go-charts/v2 v2.6.10
 	github.com/wcharczuk/go-chart/v2 v2.1.2
-	golang.org/x/time v0.12.0
+	golang.org/x/time v0.13.0
 )
 
 require (
