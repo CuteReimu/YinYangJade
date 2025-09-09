@@ -1,6 +1,7 @@
 package fengsheng
 
 import (
+	"fmt"
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
 	"log/slog"
@@ -24,6 +25,7 @@ func Init(b *Bot) {
 	B.ListenGroupMessage(handleDictionary)
 	B.ListenGroupMessage(searchAt)
 	B.ListenGroupRequest(handleGroupRequest)
+	B.ListenPrivateMessage(handlePrivateRequest)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
@@ -116,7 +118,7 @@ func searchAt(message *GroupMessage) bool {
 	return true
 }
 
-var approveGroupRequestStrings = []string{"抖音", "b站", "bilibili", "哔哩哔哩", "小红书", "贴吧", "搜的", "快手", "github"}
+var approveGroupRequestStrings = []string{"抖音", "b站", "bilibili", "哔哩哔哩", "小红书", "百度贴吧", "贴吧", "搜的", "快手", "github"}
 
 func handleGroupRequest(request *GroupRequest) bool {
 	if request.SubType == GroupRequestAdd {
@@ -144,4 +146,100 @@ func handleGroupRequest(request *GroupRequest) bool {
 		}
 	}
 	return true
+}
+
+func handlePrivateRequest(request *PrivateMessage) bool {
+	if IsSuperAdmin(request.Sender.UserId) && len(request.Message) == 1 {
+		if text, ok := request.Message[0].(*Text); ok && text.Text == "管理" {
+			qqGroups := fengshengConfig.GetIntSlice("qq.qq_group")
+			if len(qqGroups) == 0 {
+				return true
+			}
+			qqGroup := int64(qqGroups[0])
+			data := permData.GetStringMapString("playerMap")
+			reverseMap := make(map[string]int64, len(data))
+			for qq, name := range data {
+				qqInt, err := strconv.ParseInt(qq, 10, 64)
+				if err != nil {
+					slog.Error("QQ号转换失败", "qq", qq, "error", err)
+					sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "格式错误"}})
+					continue
+				}
+				reverseMap[name] = qqInt
+			}
+			result, returnError := httpGetString("/ranklist2", nil)
+			if returnError != nil {
+				slog.Error("请求失败", "error", returnError.error)
+				sendPrivateMessage(request.UserId, returnError.message)
+				return true
+			}
+			infos, err := B.GetGroupMemberList(qqGroup)
+			if err != nil {
+				slog.Error("获取群成员列表失败", "group", qqGroup, "error", err)
+				sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "获取群成员列表失败"}})
+				return true
+			}
+			oldAdmins := make(map[int64]struct{}, 20)
+			memberMap := make(map[int64]bool)
+			memberName := make(map[int64]string)
+			for _, info := range infos {
+				memberMap[info.UserId] = info.Role == RoleOwner || info.Role == RoleAdmin
+				memberName[info.UserId] = info.CardOrNickname()
+				if (info.Role == RoleOwner || info.Role == RoleAdmin) && info.UserId != B.QQ {
+					oldAdmins[info.UserId] = struct{}{}
+				}
+			}
+			var adminCount int
+			var newAdmin, removeAdmin []string
+			for _, line := range strings.Split(result, "\n") {
+				if adminCount >= 20 {
+					break
+				}
+				arr := strings.SplitN(line, "：", 2)
+				if len(arr) != 2 {
+					slog.Error("格式错误", "line", line)
+					sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "格式错误"}})
+					return true
+				}
+				line = arr[1]
+				arr = strings.SplitN(line, "·", 2)
+				if len(arr) != 2 {
+					slog.Error("格式错误", "line", line)
+					sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "格式错误"}})
+					return true
+				}
+				name := arr[0]
+				qq := reverseMap[name]
+				if qq == 0 {
+					slog.Error("该玩家未绑定", "name", name)
+					continue
+				}
+				isAdmin, isMember := memberMap[qq]
+				if !isMember {
+					continue
+				}
+				adminCount++
+				delete(oldAdmins, qq)
+				if !isAdmin {
+					newAdmin = append(newAdmin, fmt.Sprintf("%d(%s)", qq, name))
+				}
+			}
+			for qq := range oldAdmins {
+				removeAdmin = append(removeAdmin, fmt.Sprintf("%d(%s)", qq, memberName[qq]))
+			}
+			if len(oldAdmins) > 0 || len(removeAdmin) > 0 {
+				sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "需要增加的管理员：\r\n" + strings.Join(newAdmin, "，") + "\r\n需要移除的管理员：\r\n" + strings.Join(removeAdmin, "，")}})
+			} else {
+				sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "无需调整"}})
+			}
+		}
+	}
+	return true
+}
+
+func sendPrivateMessage(userId int64, messages MessageChain) {
+	_, err := B.SendPrivateMessage(userId, messages)
+	if err != nil {
+		slog.Error("发送私聊消息失败", "error", err)
+	}
 }
