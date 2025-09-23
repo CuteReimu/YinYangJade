@@ -166,14 +166,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 				} else {
 					name1, name2 := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
 					if len(name1) > 0 && len(name2) > 0 {
-						go func() {
-							defer func() {
-								if err := recover(); err != nil {
-									slog.Error("panic recovered", "error", err, "stack", string(debug.Stack()))
-								}
-							}()
-							sendGroupMessage(message, findRole2(name1, name2)...)
-						}()
+						sendGroupMessage(message, &Text{Text: "查询两个角色功能暂不可用"})
 					}
 				}
 				return true
