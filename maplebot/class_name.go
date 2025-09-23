@@ -80,7 +80,7 @@ func init() {
 
 func TranslateClassName(s string) string {
 	if len(s) == 0 {
-		s = "Lynn"
+		return ""
 	}
 	if name, ok := ClassNameMap[strings.ToLower(s)]; ok {
 		return name

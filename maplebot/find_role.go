@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	. "github.com/CuteReimu/onebot"
+	"github.com/tidwall/gjson"
 	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"math"
@@ -42,6 +43,8 @@ func findRole(name string) MessageChain {
 	switch resp.StatusCode() {
 	case 404:
 		return MessageChain{&Text{Text: name + "已身死道消"}}
+	case 400:
+		return MessageChain{&Text{Text: gjson.GetBytes(resp.Body(), "message").String()}}
 	case 200:
 	default:
 		slog.Error("请求失败", "status", resp.StatusCode())
