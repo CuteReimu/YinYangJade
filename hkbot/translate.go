@@ -85,6 +85,9 @@ func init() {
 	translateDict.Put("NG+", "无需新存档")
 	translateDict.Put("NMG NG+", "无主要邪道无需新存档")
 	translateDict.Put("Warpless", "禁SL")
+	translateDict.Put("Hollow Knight: Silksong", "丝之歌")
+	translateDict.Put("Judgement", "末日裁决者")
+	translateDict.Put("Twisted", "畸芽")
 }
 
 func translate(s string) string {
