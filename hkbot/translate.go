@@ -88,6 +88,8 @@ func init() {
 	translateDict.Put("Hollow Knight: Silksong", "丝之歌")
 	translateDict.Put("Judgement", "末日裁决者")
 	translateDict.Put("Twisted", "畸芽")
+	translateDict.Put("Tools", "工具")
+	translateDict.Put("Awoo", "全跳蚤")
 }
 
 func translate(s string) string {
