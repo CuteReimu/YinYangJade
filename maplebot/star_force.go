@@ -10,6 +10,7 @@ import (
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
+	"gonum.org/v1/gonum/mat"
 	"log/slog"
 	"math"
 	"math/rand/v2"
@@ -133,17 +134,15 @@ func attemptCost(newKms bool, currentStar int, itemLevel int, boomProtect, thirt
 	return math.Round(cost)
 }
 
-// determineOutcome return either _SUCCESS, _MAINTAIN, _DECREASE, or _BOOM
-func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen, boomEvent bool) starForceResult {
+func getProbable(newKms bool, currentStar int, boomProtect, fiveTenFifteen, boomEvent bool) (float64, float64, float64, float64) {
 	if fiveTenFifteen && (currentStar == 5 || currentStar == 10 || currentStar == 15) {
-		return _SUCCESS
+		return 1, 0, 0, 0
 	}
 	rates := rates
 	if newKms {
 		rates = rates2
 	}
 	var (
-		outcome             = rand.Float64()
 		probabilitySuccess  = rates[currentStar][_SUCCESS]
 		probabilityMaintain = rates[currentStar][_MAINTAIN]
 		probabilityDecrease = rates[currentStar][_DECREASE]
@@ -171,6 +170,16 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 		probabilityDecrease *= leftOver / (probabilityDecrease + probabilityBoom)
 		probabilityBoom = leftOver - probabilityDecrease
 	}
+	return probabilitySuccess, probabilityMaintain, probabilityDecrease, probabilityBoom
+}
+
+// determineOutcome return either _SUCCESS, _MAINTAIN, _DECREASE, or _BOOM
+func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen, boomEvent bool) starForceResult {
+	if fiveTenFifteen && (currentStar == 5 || currentStar == 10 || currentStar == 15) {
+		return _SUCCESS
+	}
+	outcome := rand.Float64()
+	probabilitySuccess, probabilityMaintain, probabilityDecrease, probabilityBoom := getProbable(newKms, currentStar, boomProtect, fiveTenFifteen, boomEvent)
 	if outcome < probabilitySuccess {
 		return _SUCCESS
 	} else if outcome < probabilitySuccess+probabilityMaintain {
@@ -242,6 +251,75 @@ func formatInt64(i int64) string {
 		return fmt.Sprintf("%.2fB", float64(i)/1000000000.0)
 	}
 	return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
+}
+
+func calculateStarForce(newKms bool, currentStar, desiredStar, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (mesos, boom, count float64) {
+	maxStates := 3 * (desiredStar + 1)
+	fsm := mat.NewDense(maxStates, maxStates, nil)
+	ev := mat.NewVecDense(maxStates, nil)
+	for i := range desiredStar {
+		success, maintain, decrease, boom := getProbable(newKms, currentStar, boomProtect, fiveTenFifteen, boomEvent)
+		fsm.Set(i*3, i*3, 1-maintain)
+		fsm.Set(i*3, (i+1)*3, -success)
+		if i > 0 {
+			fsm.Set(i*3, (i-1)*3+1, -decrease)
+		}
+		if desiredStar >= 12 {
+			fsm.Set(i*3, 12*3, -boom)
+		}
+		ev.SetVec(i*3, 1)
+		if i <= 15 || i == 19 || i > desiredStar-2 {
+			fsm.Set(i*3+1, i*3+1, 1)
+		} else {
+			fsm.Set(i*3+1, i*3, 1-maintain)
+			fsm.Set(i*3+1, (i+1)*3, -success)
+			fsm.Set(i*3+1, (i-1)*3+2, -decrease)
+			if desiredStar >= 12 {
+				fsm.Set(i*3, 12*3, -boom)
+			}
+			ev.SetVec(i*3+1, 1)
+		}
+		if i < 15 || i == 18 || i == 19 || i >= desiredStar-2 {
+			fsm.Set(i*3+2, i*3+2, 1)
+		} else {
+			fsm.Set(i*3+2, i*3, 1)
+			fsm.Set(i*3+2, (i+1)*3, -1)
+			ev.SetVec(i*3+2, 1)
+		}
+	}
+	fsm.Set(desiredStar*3, desiredStar*3, 1)
+	fsm.Set(desiredStar*3+1, desiredStar*3+1, 1)
+	fsm.Set(desiredStar*3+2, desiredStar*3+2, 1)
+	for i1 := range maxStates {
+		for i2 := i1 + 1; i2 < maxStates; i2++ {
+			if func() bool {
+				for j := range maxStates {
+					if fsm.At(i1, j) != fsm.At(i2, j) {
+						return false
+					}
+				}
+				return true
+			}() {
+				fmt.Printf("发现重复行: %d 和 %d\n", i1, i2)
+				for j := range maxStates {
+					fmt.Printf("%+.4f ", fsm.At(i1, j))
+				}
+				fmt.Printf("%+.4f\n", ev.AtVec(i1))
+				for j := range maxStates {
+					fmt.Printf("%+.4f ", fsm.At(i2, j))
+				}
+				fmt.Printf("%+.4f\n", ev.AtVec(i2))
+			}
+		}
+	}
+	var X mat.VecDense
+	err := X.SolveVec(fsm, ev)
+	if err != nil {
+		fmt.Printf("求解失败: %v\n", err)
+		return
+	}
+	count = X.AtVec(currentStar * 3)
+	return
 }
 
 func calculate20To22() MessageChain {
@@ -347,6 +425,93 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
 	}
 	return nil
+}
+
+func calculateStarMarkov(newKms bool, content string) MessageChain {
+	arr := strings.Split(content, " ")
+	if len(arr) < 3 {
+		return nil
+	}
+	itemLevel, err := strconv.Atoi(arr[0])
+	if err != nil {
+		return nil
+	}
+	if itemLevel < 5 || itemLevel > 300 {
+		return MessageChain{&Text{Text: "装备等级不合理"}}
+	}
+	cur, err := strconv.Atoi(arr[1])
+	if err != nil {
+		return nil
+	}
+	if cur < 0 {
+		return MessageChain{&Text{Text: "当前星数不合理"}}
+	}
+	des, err := strconv.Atoi(arr[2])
+	if err != nil {
+		return nil
+	}
+	if des <= cur {
+		return MessageChain{&Text{Text: "目标星数必须大于当前星数"}}
+	}
+	maxStar := getMaxStar(itemLevel)
+	if des > maxStar {
+		return MessageChain{&Text{Text: fmt.Sprintf("%d级装备最多升到%d星", itemLevel, maxStar)}}
+	}
+	if des > 24 {
+		return MessageChain{&Text{Text: fmt.Sprintf("还想升%d星？梦里什么都有", des)}}
+	}
+	boomProtect := strings.Contains(content, "保护")
+	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
+	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
+	boomEvent := strings.Contains(content, "超爆")
+	var (
+		mesos        float64
+		booms, count int
+	)
+	testCount := 1000
+	if des >= 24 {
+		testCount = 20
+	}
+	for range testCount {
+		m, b, c := performExperiment(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+		mesos += m
+		booms += b
+		count += c
+	}
+	data := []any{
+		formatInt64(int64(math.Round(mesos / float64(testCount)))),
+		strconv.FormatFloat(float64(booms)/float64(testCount), 'f', -1, 64),
+		strconv.FormatInt(int64(math.Round(float64(count)/float64(testCount))), 10),
+	}
+	var activity []string
+	if thirtyOff {
+		activity = append(activity, "七折活动")
+	}
+	if fiveTenFifteen {
+		activity = append(activity, "5/10/15必成活动")
+	}
+	if boomEvent {
+		activity = append(activity, "超爆活动")
+	}
+	var activityStr string
+	if len(activity) > 0 {
+		activityStr = "在" + strings.Join(activity, "和") + "中"
+	}
+	s := fmt.Sprintf("%s模拟升星%d级装备", activityStr, itemLevel)
+	if boomProtect {
+		s += "（点保护）"
+	}
+	if newKms {
+		s += "（KMS新规则）"
+	}
+	s += fmt.Sprintf("\n共测试了%d次\n", testCount)
+	s += fmt.Sprintf("%d-%d星", cur, des)
+	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
+	image := drawStarForce(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent, mesos/float64(testCount), testCount)
+	if image != nil {
+		return MessageChain{&Text{Text: s}, image}
+	}
+	return MessageChain{&Text{Text: s}}
 }
 
 func calculateStarForce1(newKms bool, content string) MessageChain {

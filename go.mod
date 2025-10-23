@@ -21,6 +21,7 @@ require (
 	github.com/vicanso/go-charts/v2 v2.6.10
 	github.com/wcharczuk/go-chart/v2 v2.1.2
 	golang.org/x/time v0.14.0
+	gonum.org/v1/gonum v0.16.0
 )
 
 require (
