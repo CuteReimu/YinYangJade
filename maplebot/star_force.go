@@ -6,13 +6,16 @@ package maplebot
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
 	"math"
 	"math/rand/v2"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -349,6 +352,96 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 	return nil
 }
 
+var (
+	regRexpStarForcePythonResult1 = regexp.MustCompile(`Total mean: <(.+?)>`)
+	regRexpStarForcePythonResult2 = regexp.MustCompile(`Boom mean: <(.+?)>`)
+	regRexpStarForcePythonResult3 = regexp.MustCompile(`Tap mean: <(.+?)>`)
+)
+
+func parseFloat(s string) (float64, error) {
+	multiplier := 1.0
+	switch s[len(s)-1] {
+	case 'r', 'R':
+		multiplier = 1e18
+	case 'q', 'Q':
+		multiplier = 1e15
+	case 't', 'T':
+		multiplier = 1e12
+	case 'b', 'B':
+		multiplier = 1e9
+	case 'm', 'M':
+		multiplier = 1e6
+	case 'k', 'K':
+		multiplier = 1e3
+	}
+	if multiplier != 1.0 {
+		s = s[:len(s)-1]
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0, err
+	}
+	return v * multiplier, nil
+}
+
+func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (float64, float64, float64, error) {
+	result, err := scripts.RunPythonScript(
+		"sf_cal_shell.py",
+		strconv.Itoa(itemLevel),
+		strconv.Itoa(cur),
+		strconv.Itoa(des),
+		strconv.FormatBool(boomProtect),
+		"true",
+		strconv.FormatBool(newKms),
+		strconv.FormatBool(thirtyOff),
+		strconv.FormatBool(fiveTenFifteen),
+		"false",
+		strconv.FormatBool(boomEvent),
+	)
+	if err != nil {
+		slog.Error("计算失败", "err", err, "result", string(result))
+		return 0, 0, 0, errors.New("计算失败")
+	}
+
+	match1 := regRexpStarForcePythonResult1.FindSubmatch(result)
+	if len(match1) == 0 {
+		slog.Error("regexp star force python failed", "result", result)
+		return 0, 0, 0, errors.New("计算结果解析失败")
+	}
+
+	mesos, err := parseFloat(string(match1[1]))
+	if err != nil {
+		slog.Error("parse mesos failed", "error", err, "value", string(match1[1]))
+		return 0, 0, 0, errors.New("计算结果解析失败")
+	}
+
+	match2 := regRexpStarForcePythonResult2.FindSubmatch(result)
+	if len(match2) == 0 {
+		slog.Error("regexp star force python failed", "result", result)
+		return 0, 0, 0, errors.New("计算结果解析失败")
+	}
+
+	booms, err := parseFloat(string(match2[1]))
+	if err != nil {
+		slog.Error("parse booms failed", "error", err, "value", string(match2[1]))
+		return 0, 0, 0, errors.New("计算结果解析失败")
+	}
+
+	match3 := regRexpStarForcePythonResult3.FindSubmatch(result)
+	if len(match3) == 0 {
+		slog.Error("regexp star force python failed", "result", result)
+		return 0, 0, 0, errors.New("计算结果解析失败")
+	}
+
+	count, err := parseFloat(string(match3[1]))
+	if err != nil {
+		slog.Error("parse count failed", "error", err, "value", string(match3[1]))
+		return 0, 0, 0, errors.New("计算结果解析失败")
+	}
+
+	return mesos, booms, count, nil
+}
+
 func calculateStarForce1(newKms bool, content string) MessageChain {
 	arr := strings.Split(content, " ")
 	if len(arr) < 3 {
@@ -375,35 +468,24 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	if des <= cur {
 		return MessageChain{&Text{Text: "目标星数必须大于当前星数"}}
 	}
-	maxStar := getMaxStar(itemLevel)
+	maxStar := getMaxStar(newKms, itemLevel)
 	if des > maxStar {
 		return MessageChain{&Text{Text: fmt.Sprintf("%d级装备最多升到%d星", itemLevel, maxStar)}}
-	}
-	if des > 24 {
-		return MessageChain{&Text{Text: fmt.Sprintf("还想升%d星？梦里什么都有", des)}}
 	}
 	boomProtect := strings.Contains(content, "保护")
 	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
 	boomEvent := strings.Contains(content, "超爆")
-	var (
-		mesos        float64
-		booms, count int
-	)
-	testCount := 1000
-	if des >= 24 {
-		testCount = 20
+
+	mesos, booms, count, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	if err != nil {
+		return MessageChain{&Text{Text: err.Error()}}
 	}
-	for range testCount {
-		m, b, c := performExperiment(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-		mesos += m
-		booms += b
-		count += c
-	}
+
 	data := []any{
-		formatInt64(int64(math.Round(mesos / float64(testCount)))),
-		strconv.FormatFloat(float64(booms)/float64(testCount), 'f', -1, 64),
-		strconv.FormatInt(int64(math.Round(float64(count)/float64(testCount))), 10),
+		formatInt64(int64(mesos)),
+		strconv.FormatFloat(booms, 'f', -1, 64),
+		strconv.FormatInt(int64(math.Round(count)), 10),
 	}
 	var activity []string
 	if thirtyOff {
@@ -426,10 +508,9 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	if newKms {
 		s += "（KMS新规则）"
 	}
-	s += fmt.Sprintf("\n共测试了%d次\n", testCount)
-	s += fmt.Sprintf("%d-%d星", cur, des)
+	s += fmt.Sprintf("\n%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent, mesos/float64(testCount), testCount)
+	image := drawStarForce(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
 	}
@@ -440,41 +521,35 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 	if itemLevel < 5 || itemLevel > 300 {
 		return MessageChain{&Text{Text: "装备等级不合理"}}
 	}
-	maxStar := getMaxStar(itemLevel)
+	maxStar := getMaxStar(newKms, itemLevel)
 	var cur int
 	if maxStar > 17 {
 		cur = 17
 	}
 	var (
-		des                                = min(maxStar, 22)
-		boomProtect                        = itemLevel >= 160
-		mesos17, mesos22                   float64
-		booms17, count17, booms22, count22 int
+		des         = min(maxStar, 22)
+		boomProtect = itemLevel >= 160
 	)
-	for range 1000 {
-		if maxStar > 17 {
-			m, b, c := performExperiment(newKms, 0, 17, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-			mesos17 += m
-			booms17 += b
-			count17 += c
-		}
-		m, b, c := performExperiment(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-		mesos22 += m
-		booms22 += b
-		count22 += c
-	}
 	var data17 []any
 	if maxStar > 17 {
+		mesos, booms, count, err := pythonStarForce(newKms, itemLevel, cur, 17, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+		if err != nil {
+			return MessageChain{&Text{Text: err.Error()}}
+		}
 		data17 = []any{
-			formatInt64(int64(math.Round(mesos17 / 1000))),
-			strconv.FormatFloat(float64(booms17)/1000.0, 'f', -1, 64),
-			strconv.FormatInt(int64(math.Round(float64(count17)/1000.0)), 10),
+			formatInt64(int64(mesos)),
+			strconv.FormatFloat(booms, 'f', -1, 64),
+			strconv.FormatInt(int64(math.Round(count)), 10),
 		}
 	}
+	mesos, booms, count, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	if err != nil {
+		return MessageChain{&Text{Text: err.Error()}}
+	}
 	data := []any{
-		formatInt64(int64(math.Round(mesos22 / 1000))),
-		strconv.FormatFloat(float64(booms22)/1000.0, 'f', -1, 64),
-		strconv.FormatInt(int64(math.Round(float64(count22)/1000.0)), 10),
+		formatInt64(int64(mesos)),
+		strconv.FormatFloat(booms, 'f', -1, 64),
+		strconv.FormatInt(int64(math.Round(count)), 10),
 	}
 	var activity []string
 	if thirtyOff {
@@ -497,42 +572,30 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 	if newKms {
 		s += "（KMS新规则）"
 	}
-	s += "\n共测试了1000次\n"
 	if maxStar > 17 {
-		s += fmt.Sprintf("0-17星，平均花费了%s金币，平均炸了%s次，平均点了%s次\n", data17...)
+		s += fmt.Sprintf("\n0-17星，平均花费了%s金币，平均炸了%s次，平均点了%s次", data17...)
 	}
-	s += fmt.Sprintf("%d-%d星", cur, des)
+	s += fmt.Sprintf("\n%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(newKms, 0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent, mesos22/1000, 1000)
+	image := drawStarForce(newKms, 0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
 	}
 	return MessageChain{&Text{Text: s}}
 }
 
-func drawStarForce(newKms bool, cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool, totalMesos float64, testCount int) *Image {
+func drawStarForce(newKms bool, cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) *Image {
 	var labels []string
 	var values []float64
+	var failed bool
 	add := func(cur1, des1 int) {
-		if des1 == des {
-			var value float64
-			for _, v := range values {
-				value += v
-			}
-			value = totalMesos - value
-			if value > 0 {
-				labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
-				values = append(values, value)
-			}
+		labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
+		mesos, _, _, err := pythonStarForce(newKms, itemLevel, cur1, des1, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+		if err != nil {
+			failed = true
 			return
 		}
-		labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
-		var a float64
-		for range testCount {
-			m, _, _ := performExperiment(newKms, cur1, des1, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-			a += m
-		}
-		values = append(values, a/float64(testCount))
+		values = append(values, mesos)
 	}
 	if des <= 17 {
 		if cur < 12 {
@@ -548,6 +611,9 @@ func drawStarForce(newKms bool, cur, des, itemLevel int, boomProtect, thirtyOff,
 		for i := max(cur, 15); i < des; i++ {
 			add(i, i+1)
 		}
+	}
+	if failed {
+		return nil
 	}
 	if len(values) <= 1 {
 		return nil
@@ -661,7 +727,7 @@ var rates2 = [][]float64{
 	{0.01, 0.792, 0.0, 0.198},
 }
 
-func getMaxStar(itemLevel int) int {
+func getMaxStar(newKms bool, itemLevel int) int {
 	switch {
 	case itemLevel < 95:
 		return 5
@@ -674,6 +740,9 @@ func getMaxStar(itemLevel int) int {
 	case itemLevel < 138:
 		return 20
 	default:
+		if newKms {
+			return 30
+		}
 		return 25
 	}
 }
