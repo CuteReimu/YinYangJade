@@ -92,22 +92,9 @@ star_cost_divisor = {
 
 
 def format_number(value, decimal=2):
-    if abs(value) >= 1e18:
-        return f"{value*1e-18:.{decimal}f}r"
-    elif abs(value) >= 1e15:
-        return f"{value*1e-15:.{decimal}f}q"
-    elif abs(value) >= 1e12:
-        return f"{value*1e-12:.{decimal}f}t"
-    elif abs(value) >= 1e9:
-        return f"{value*1e-9:.{decimal}f}b"
-    elif abs(value) >= 1e6:
-        return f"{value*1e-6:.{decimal}f}m"
-    elif abs(value) >= 1e3:
-        return f"{value*1e-3:.{decimal}f}k"
-    else:
-        if value is int:
-            return f"{value:.0f}"
-        return f"{value:.{decimal}f}"
+    if value is int:
+        return f"{value:.0f}"
+    return f"{value:.{decimal}f}"
 
 
 def get_star_cap(eq_level, new_star_cap=None):
@@ -187,69 +174,60 @@ def get_meso_cost(
     return round(meso_cost * multiplier)
 
 
-def calculate_markov(P, C, init_idx):
+def calculate_markov(P, C, init_idx, absorb_count=1):
     """
-    Calculate the expected number of visits to each transient state in a Markov chain.
+    Calculate expected mean, variance, skewness, and quantiles of total cost in a Markov chain.
 
     Parameters:
-    P (scipy.sparse.csr_matrix): Transition matrix of the Markov chain.
-    x0 (int): Initial state.
+    P (numpy.ndarray): Transition probability matrix, i*2 as star state, 
+                       i*2+1 as star state after downgrade from star i+1, -1 as success state by default.
+    C (numpy.ndarray): Cost matrix (same shape as P).
+    init_idx (int): Index of initial state.
+    absorb_count (int): Number of absorbing states at the end of the matrix.
 
     Returns:
-    numpy.ndarray: Expected number of visits to each transient state.
+    tuple: (mean_cost, var_cost, skew, quartiles)
     """
 
     # print(P.shape, C.shape)
     n = P.shape[0]
-    Q = P[:-1, :-1]  # transient-to-transient
-    P_full = P[:-1, :]  # transient-to-all
-    C_full = C[:-1, :]  # cost from transient to all
+    Q = P[:-absorb_count, :-absorb_count]  # transient-to-transient
+    P_full = P[:-absorb_count, :]  # transient-to-all
+    C_full = C[:-absorb_count, :]  # cost from transient to all
 
     # r[i] = expected immediate cost at state i
     r = np.sum(P_full * C_full, axis=1)
 
-    # s[i] = expected immediate squared cost at state i
-    s = np.sum(P_full * (C_full**2), axis=1)
-
-    # u[i] = expected immediate cost^3 at state i
-    u = np.sum(P_full * (C_full**3), axis=1)  # E[c³]
-
-    # B = P_TT ⊙ C_TT
-    B = P[:-1, :-1] * C[:-1, :-1]
-
     I = np.eye(n - 1)
     g = np.linalg.solve(I - Q, r)
-    w = np.linalg.solve(I - Q, s + 2 * (B @ g))
-    t = np.linalg.solve(I - Q, u + 3 * (B @ w) + 3 * (B * C[:-1, :-1]) @ g)
 
     mean_cost = g[init_idx]
-    # print(g)
-    var_cost = w[init_idx] - mean_cost**2
-    std_cost = np.sqrt(var_cost)
 
-    mu3 = t[init_idx] - 3 * mean_cost * w[init_idx] + 2 * mean_cost**3
-    skew = mu3 / (std_cost**3 + 1e-15)
-
-    # Hard-coded z-scores for 25th and 75th percentiles
-    z25 = -0.67448975
-    z50 = 0.0
-    z75 = 0.67448975
-    z85 = 1.03643339
-    z95 = 1.64485363
-    zs = [z25, z50, z75, z85, z95]
-
-    # Cornish–Fisher quantile correction for skew
-    def _cornish_fisher(z, skew, std, mean):
-        result = z + (skew / 6) * (z**2 - 1)
-        result = result * std + mean
-        return max(result, 0)  # prevent negative cost
-
-    quartiles = [_cornish_fisher(z, skew, std_cost, mean_cost) for z in zs]
-
-    return mean_cost, var_cost, skew, quartiles
+    return mean_cost
 
 
-def fill_transition_and_cost(
+def calculate_no_boom_chance(P, init_idx):
+    """
+    Calculate expected mean and variance of total cost in a Markov chain.
+
+    Parameters:
+    P (numpy.ndarray): Transition probability matrix, with -2 as boom state and -1 as success state.
+    init_idx (int): Index of initial state.
+
+    Returns:
+    float: probability of reaching success state with no boom
+    """
+
+    Q = P[:-2, :-2]  # transient-to-transient
+    I = np.eye(Q.shape[0])
+    R = P[:-2, -2:]
+
+    B_absorb = np.linalg.solve(I - Q, R)
+    absorb_probs = B_absorb[init_idx]  # probabilities for each absorbing state
+    return absorb_probs[1]
+
+
+def fill_transition_cost_boom(
     new_system,
     get_meso_cost,
     end_star,
@@ -259,6 +237,7 @@ def fill_transition_and_cost(
     safe_guard,
     arr,
     weights,
+    no_boom_mat,
     get_odds_and_inc,
     _5_10_15,
     kms_new,
@@ -283,11 +262,16 @@ def fill_transition_and_cost(
         b = 2 * i + 2 * increment
         arr[a, b] = upgrade
         weights[(a, b)] = cost
+        if i + increment == end_star:
+            no_boom_mat[a, -1] = upgrade
+        else:
+            no_boom_mat[a, b] = upgrade
 
         # Stay
         a = 2 * i
         b = 2 * i
         arr[a, b] = fail_stay
+        no_boom_mat[a, b] = fail_stay
         if fail_stay > 0:
             weights[(a, b)] = cost
 
@@ -300,6 +284,7 @@ def fill_transition_and_cost(
                 a = 2 * i
                 b = 2 * i - 1
             arr[a, b] = fail_down
+            no_boom_mat[a, b] = fail_down
             if fail_down > 0:
                 weights[(a, b)] = cost
 
@@ -311,6 +296,7 @@ def fill_transition_and_cost(
             a = 2 * i + 1
             b = 2 * i + 2 * increment
             arr[a, b] = upgrade
+            no_boom_mat[a, b] = upgrade
             weights[(a, b)] = cost
 
             # Down then comes back
@@ -321,12 +307,14 @@ def fill_transition_and_cost(
                 i - 1, eq_level, False, job_zero, discount, new_system=new_system
             )
             arr[a, b] = fail_down
+            no_boom_mat[a, b] = fail_down
             weights[(a, b)] = cost + lower_cost
 
             # Boom
             a = 2 * i + 1
             b = 2 * 12
             arr[a, b] = fail_break
+            no_boom_mat[a, -2] += fail_break
             weights[(a, b)] = cost
 
         # Boom
@@ -334,6 +322,7 @@ def fill_transition_and_cost(
             a = 2 * i
             b = 2 * 12
             arr[a, b] = fail_break
+            no_boom_mat[a, -2] = fail_break
             weights[(a, b)] = cost
 
 
@@ -377,7 +366,7 @@ def get_boom_cost_mat(end_star):
     for i in range(end_star):
         for j in range(2):
             a = i * 2 + j
-            
+
             # Boom
             if i >= 15:
                 b = 12 * 2
@@ -466,12 +455,12 @@ if __name__ == "__main__":
 
     other_events = [_5_10_15, _1_plus_1, star_catch, boom_events]
 
-    print(f'{eq_level}: {init_star} -> {end_star}')
+    print(f"{eq_level}: {init_star} -> {end_star}")
     print(
         f"safe_guard: {safe_guard}, star_catch: {star_catch}, kms_new: {kms_new}, discount: {discount}, 5/10/15: {_5_10_15}, 1+1: {_1_plus_1}, boom_events: {boom_events}"
     )
     print()
-    
+
     if OPTION == "Markov":
         sta = time.time()
 
@@ -479,13 +468,14 @@ if __name__ == "__main__":
         arr = np.zeros((size, size))
         weights = {}
         weights_mat = np.zeros((size, size))
+        no_boom_mat = np.zeros((size + 1, size + 1))
 
         arr[end_star * 2, end_star * 2] = 1
         get_odds_and_inc = partial(
             get_odds_and_inc, safe_guard=safe_guard, kms_new=kms_new
         )
 
-        fill_transition_and_cost(
+        fill_transition_cost_boom(
             kms_new,
             get_meso_cost,
             end_star,
@@ -495,41 +485,52 @@ if __name__ == "__main__":
             safe_guard,
             arr,
             weights,
+            no_boom_mat,
             get_odds_and_inc,
             _5_10_15,
             kms_new,
         )
         for (i, j), cost in weights.items():
             weights_mat[i, j] = cost
-        tap_mat = get_tap_cost_mat(end_star)
-        boom_mat = get_boom_cost_mat(end_star)
+        tap_count_mat = get_tap_cost_mat(end_star)
+        boom_count_mat = get_boom_cost_mat(end_star)
         P = arr
 
-        total_mean, total_var, skew, quartiles = calculate_markov(
+        total_mean = calculate_markov(
             P, weights_mat, 2 * init_star
         )
-        tap_total_mean, tap_total_var, _, tap_quartiles = calculate_markov(
-            P, tap_mat, 2 * init_star
+        
+        mids = []
+        mid_results = []
+        for mid in range(init_star + 1, end_star):
+            mid_mean = calculate_markov(
+                P[: 2 * mid + 1, : 2 * mid + 1], 
+                weights_mat[ : 2 * mid + 1, : 2 * mid + 1], 
+                2 * init_star
+            )
+            mids.append(str(mid))
+            mid_results.append(f"{format_number(mid_mean)}")
+            
+        print(f"({', '.join(mids)}) Midway costs: <{', '.join(mid_results)}>")
+        
+        tap_total_mean = calculate_markov(
+            P, tap_count_mat, 2 * init_star
         )
-        boom_mean, boom_var, _, boom_quartiles = calculate_markov(
-            P, boom_mat, 2 * init_star
+        boom_mean = calculate_markov(
+            P, boom_count_mat, 2 * init_star
         )
+        no_boom_chance = calculate_no_boom_chance(no_boom_mat, 2 * init_star)
         # boom_mean, boom_var = edge_counts_to_node_24(P)
 
         print(
-            f"Total mean: <{format_number(total_mean)}>, std: <{format_number(total_var**0.5)}>"
+            f"Cost Mean: <{format_number(total_mean)}>"
         )
         print(
-            f"Skew: <{format_number(skew)}>, Approx. Quartiles (25%, 50%, 75%, 85%, 95%): <{', '.join(format_number(q) for q in quartiles)}>"
+            f"Boom mean: <{format_number(boom_mean)}>>"
         )
+        print(f"Chance of no boom: <{no_boom_chance*100:4f}%>")
         print(
-            f"Boom mean: <{format_number(boom_mean)}>, std: <{format_number(boom_var**0.5)}>"
-        )
-        print(
-            f"Approx. Boom Quartiles (25%, 50%, 75%, 85%, 95%): <{', '.join(format_number(q) for q in boom_quartiles)}>"
-        )
-        print(
-            f"Tap mean: <{format_number(tap_total_mean)}>, std: <{format_number(tap_total_var**0.5)}>"
+            f"Tap mean: <{format_number(tap_total_mean)}>>"
         )
         print(f"Time taken: {time.time() - sta:.2f}s")
 

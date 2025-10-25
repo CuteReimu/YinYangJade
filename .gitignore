@@ -1,4 +1,5 @@
 /assets/
+/maplebot/scripts/libs
 
 *.log
 *.yml

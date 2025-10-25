@@ -47,7 +47,7 @@ func RunPythonScript(scriptName string, args ...string) ([]byte, error) {
 	extractDependencies("libs")
 
 	// 执行Python脚本
-	cmd := exec.Command("python3", append([]string{scriptName}, args...)...)
+	cmd := exec.Command("python3", append([]string{tmpfile.Name()}, args...)...)
 	cmd.Env = append(cmd.Environ(), "PYTHONPATH=libs")
 	slog.Debug("Executing Python script", "cmd", cmd)
 	return cmd.Output()

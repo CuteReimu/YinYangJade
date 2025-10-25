@@ -6,6 +6,7 @@ package maplebot
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
@@ -353,9 +354,11 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 }
 
 var (
-	regRexpStarForcePythonResult1 = regexp.MustCompile(`Total mean: <(.+?)>`)
+	regRexpStarForcePythonResult1 = regexp.MustCompile(`Cost Mean: <(.+?)>`)
 	regRexpStarForcePythonResult2 = regexp.MustCompile(`Boom mean: <(.+?)>`)
 	regRexpStarForcePythonResult3 = regexp.MustCompile(`Tap mean: <(.+?)>`)
+	regRexpStarForcePythonResult4 = regexp.MustCompile(`Chance of no boom: <(.+?)%>`)
+	regRexpStarForcePythonResult5 = regexp.MustCompile(`Midway costs: <(.+?)>`)
 )
 
 func parseFloat(s string) (float64, error) {
@@ -384,7 +387,7 @@ func parseFloat(s string) (float64, error) {
 	return v * multiplier, nil
 }
 
-func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (float64, float64, float64, error) {
+func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (float64, float64, float64, float64, []float64, error) {
 	result, err := scripts.RunPythonScript(
 		"sf_cal_shell.py",
 		strconv.Itoa(itemLevel),
@@ -400,46 +403,71 @@ func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOf
 	)
 	if err != nil {
 		slog.Error("计算失败", "err", err, "result", string(result))
-		return 0, 0, 0, errors.New("计算失败")
+		return 0, 0, 0, 0, nil, errors.New("计算失败")
 	}
 
 	match1 := regRexpStarForcePythonResult1.FindSubmatch(result)
 	if len(match1) == 0 {
 		slog.Error("regexp star force python failed", "result", result)
-		return 0, 0, 0, errors.New("计算结果解析失败")
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
 	}
 
 	mesos, err := parseFloat(string(match1[1]))
 	if err != nil {
 		slog.Error("parse mesos failed", "error", err, "value", string(match1[1]))
-		return 0, 0, 0, errors.New("计算结果解析失败")
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
 	}
 
 	match2 := regRexpStarForcePythonResult2.FindSubmatch(result)
 	if len(match2) == 0 {
 		slog.Error("regexp star force python failed", "result", result)
-		return 0, 0, 0, errors.New("计算结果解析失败")
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
 	}
 
 	booms, err := parseFloat(string(match2[1]))
 	if err != nil {
 		slog.Error("parse booms failed", "error", err, "value", string(match2[1]))
-		return 0, 0, 0, errors.New("计算结果解析失败")
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
 	}
 
 	match3 := regRexpStarForcePythonResult3.FindSubmatch(result)
 	if len(match3) == 0 {
 		slog.Error("regexp star force python failed", "result", result)
-		return 0, 0, 0, errors.New("计算结果解析失败")
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
 	}
 
 	count, err := parseFloat(string(match3[1]))
 	if err != nil {
 		slog.Error("parse count failed", "error", err, "value", string(match3[1]))
-		return 0, 0, 0, errors.New("计算结果解析失败")
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
 	}
 
-	return mesos, booms, count, nil
+	match4 := regRexpStarForcePythonResult4.FindSubmatch(result)
+	if len(match4) == 0 {
+		slog.Error("regexp star force python failed", "result", result)
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
+	}
+
+	noBoom, err := parseFloat(string(match4[1]))
+	if err != nil {
+		slog.Error("parse noBoom failed", "error", err, "value", string(match3[1]))
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
+	}
+
+	match5 := regRexpStarForcePythonResult5.FindSubmatch(result)
+	if len(match5) == 0 {
+		slog.Error("regexp star force python failed", "result", result)
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
+	}
+
+	var midway []float64
+	err = json.Unmarshal([]byte(fmt.Sprintf("[%s]", match5[1])), &midway)
+	if err != nil {
+		slog.Error("parse midway failed", "error", err, "value", string(match3[1]))
+		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")
+	}
+
+	return mesos, booms, count, noBoom, midway, nil
 }
 
 func calculateStarForce1(newKms bool, content string) MessageChain {
@@ -477,15 +505,16 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
 	boomEvent := strings.Contains(content, "超爆")
 
-	mesos, booms, count, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	mesos, booms, count, noBoom, midway, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	if err != nil {
 		return MessageChain{&Text{Text: err.Error()}}
 	}
 
 	data := []any{
 		formatInt64(int64(mesos)),
-		strconv.FormatFloat(booms, 'f', -1, 64),
+		strconv.FormatFloat(booms, 'f', 2, 64),
 		strconv.FormatInt(int64(math.Round(count)), 10),
+		strconv.FormatFloat(noBoom, 'f', 2, 64),
 	}
 	var activity []string
 	if thirtyOff {
@@ -509,8 +538,8 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 		s += "（KMS新规则）"
 	}
 	s += fmt.Sprintf("\n%d-%d星", cur, des)
-	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(newKms, cur, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data...)
+	image := drawStarForce(cur, des, append(midway, mesos))
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
 	}
@@ -532,24 +561,26 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 	)
 	var data17 []any
 	if maxStar > 17 {
-		mesos, booms, count, err := pythonStarForce(newKms, itemLevel, cur, 17, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+		mesos, booms, count, noBoom, _, err := pythonStarForce(newKms, itemLevel, cur, 17, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 		if err != nil {
 			return MessageChain{&Text{Text: err.Error()}}
 		}
 		data17 = []any{
 			formatInt64(int64(mesos)),
-			strconv.FormatFloat(booms, 'f', -1, 64),
+			strconv.FormatFloat(booms, 'f', 2, 64),
 			strconv.FormatInt(int64(math.Round(count)), 10),
+			strconv.FormatFloat(noBoom, 'f', 2, 64),
 		}
 	}
-	mesos, booms, count, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	mesos, booms, count, noBoom, midway, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	if err != nil {
 		return MessageChain{&Text{Text: err.Error()}}
 	}
 	data := []any{
 		formatInt64(int64(mesos)),
-		strconv.FormatFloat(booms, 'f', -1, 64),
+		strconv.FormatFloat(booms, 'f', 2, 64),
 		strconv.FormatInt(int64(math.Round(count)), 10),
+		strconv.FormatFloat(noBoom, 'f', 2, 64),
 	}
 	var activity []string
 	if thirtyOff {
@@ -577,23 +608,23 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 	}
 	s += fmt.Sprintf("\n%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
-	image := drawStarForce(newKms, 0, des, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	image := drawStarForce(cur, des, append(midway, mesos))
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
 	}
 	return MessageChain{&Text{Text: s}}
 }
 
-func drawStarForce(newKms bool, cur, des, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) *Image {
+func drawStarForce(cur, des int, midway []float64) *Image {
 	var labels []string
 	var values []float64
-	var failed bool
 	add := func(cur1, des1 int) {
 		labels = append(labels, fmt.Sprintf("%d-%d", cur1, des1))
-		mesos, _, _, err := pythonStarForce(newKms, itemLevel, cur1, des1, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-		if err != nil {
-			failed = true
-			return
+		index1 := des1 - cur - 1
+		mesos := midway[index1]
+		index0 := cur1 - cur - 1
+		if index0 >= 0 {
+			mesos -= midway[index0]
 		}
 		values = append(values, mesos)
 	}
@@ -611,9 +642,6 @@ func drawStarForce(newKms bool, cur, des, itemLevel int, boomProtect, thirtyOff,
 		for i := max(cur, 15); i < des; i++ {
 			add(i, i+1)
 		}
-	}
-	if failed {
-		return nil
 	}
 	if len(values) <= 1 {
 		return nil
