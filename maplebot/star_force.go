@@ -358,7 +358,7 @@ var (
 	regRexpStarForcePythonResult2 = regexp.MustCompile(`Boom mean: <(.+?)>`)
 	regRexpStarForcePythonResult3 = regexp.MustCompile(`Tap mean: <(.+?)>`)
 	regRexpStarForcePythonResult4 = regexp.MustCompile(`Chance of no boom: <(.+?)%>`)
-	regRexpStarForcePythonResult5 = regexp.MustCompile(`Midway costs: <(.+?)>`)
+	regRexpStarForcePythonResult5 = regexp.MustCompile(`Midway costs: <(.*?)>`)
 )
 
 func parseFloat(s string) (float64, error) {
@@ -539,9 +539,11 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	}
 	s += fmt.Sprintf("\n%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data...)
-	image := drawStarForce(cur, des, append(midway, mesos))
-	if image != nil {
-		return MessageChain{&Text{Text: s}, image}
+	if des > cur+1 {
+		image := drawStarForce(cur, des, append(midway, mesos))
+		if image != nil {
+			return MessageChain{&Text{Text: s}, image}
+		}
 	}
 	return MessageChain{&Text{Text: s}}
 }
