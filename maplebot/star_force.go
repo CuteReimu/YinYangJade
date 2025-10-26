@@ -395,6 +395,7 @@ func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOf
 		strconv.Itoa(des),
 		strconv.FormatBool(boomProtect),
 		"true",
+		"false",
 		strconv.FormatBool(newKms),
 		strconv.FormatBool(thirtyOff),
 		strconv.FormatBool(fiveTenFifteen),
@@ -535,7 +536,9 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 		s += "（点保护）"
 	}
 	if newKms {
-		s += "（KMS新规则）"
+		s += "（GMS新规）"
+	} else {
+		s += "（GMS旧规）"
 	}
 	s += fmt.Sprintf("\n%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data...)
@@ -603,7 +606,9 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 		s += "（点保护）"
 	}
 	if newKms {
-		s += "（KMS新规则）"
+		s += "（GMS新规）"
+	} else {
+		s += "（GMS旧规）"
 	}
 	if maxStar > 17 {
 		s += fmt.Sprintf("\n0-17星，平均花费了%s金币，平均炸了%s次，平均点了%s次", data17...)

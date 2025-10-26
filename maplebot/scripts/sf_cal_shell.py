@@ -106,6 +106,22 @@ def get_star_cap(eq_level, new_star_cap=None):
     return cap
 
 
+def get_boom_star(cur_star, new_system):
+    assert cur_star >= 15, "Boom only occurs at 15 star and above"
+    if not new_system:
+        return 12
+    pairs = [
+        (15, 12),
+        (20, 15), 
+        (21, 17),
+        (23, 19),
+        (26, 20)
+    ]
+    for threshold, result in pairs[::-1]:
+        if cur_star >= threshold:
+            return result
+
+
 def get_meso_cost(
     cur_star: int,
     eq_level: int,
@@ -227,7 +243,7 @@ def calculate_no_boom_chance(P, init_idx):
     return absorb_probs[1]
 
 
-def fill_transition_cost_boom(
+def fill_transition(
     new_system,
     get_meso_cost,
     end_star,
@@ -238,9 +254,12 @@ def fill_transition_cost_boom(
     arr,
     weights,
     no_boom_mat,
+    boom_cost_mat,
+    tap_cost_mat,
     get_odds_and_inc,
     _5_10_15,
     kms_new,
+    get_boom_star
 ):
     for i in range(end_star):
         upgrade, fail_stay, fail_down, fail_break, increment = get_odds_and_inc(i)
@@ -262,6 +281,7 @@ def fill_transition_cost_boom(
         b = 2 * i + 2 * increment
         arr[a, b] = upgrade
         weights[(a, b)] = cost
+        tap_cost_mat[a, b] = 1
         if i + increment == end_star:
             no_boom_mat[a, -1] = upgrade
         else:
@@ -272,6 +292,7 @@ def fill_transition_cost_boom(
         b = 2 * i
         arr[a, b] = fail_stay
         no_boom_mat[a, b] = fail_stay
+        tap_cost_mat[a, b] = 1
         if fail_stay > 0:
             weights[(a, b)] = cost
 
@@ -284,12 +305,13 @@ def fill_transition_cost_boom(
                 a = 2 * i
                 b = 2 * i - 1
             arr[a, b] = fail_down
+            tap_cost_mat[a, b] = 1
             no_boom_mat[a, b] = fail_down
             if fail_down > 0:
                 weights[(a, b)] = cost
 
         # Chance time
-        if i >= 16 and i != 19 and i != 20 and (not kms_new):
+        if i >= 16 and i != 19 and i != 20 and (not new_system):
             upgrade, fail_stay, fail_down, fail_break, increment = get_odds_and_inc(i)
 
             # Upgrade
@@ -297,6 +319,7 @@ def fill_transition_cost_boom(
             b = 2 * i + 2 * increment
             arr[a, b] = upgrade
             no_boom_mat[a, b] = upgrade
+            tap_cost_mat[a, b] = 1
             weights[(a, b)] = cost
 
             # Down then comes back
@@ -309,89 +332,45 @@ def fill_transition_cost_boom(
             arr[a, b] = fail_down
             no_boom_mat[a, b] = fail_down
             weights[(a, b)] = cost + lower_cost
+            tap_cost_mat[a, b] = 2
 
             # Boom
             a = 2 * i + 1
-            b = 2 * 12
+            b = 2 * get_boom_star(i)
             arr[a, b] = fail_break
             no_boom_mat[a, -2] += fail_break
             weights[(a, b)] = cost
+            tap_cost_mat[a, b] = 1
+            boom_cost_mat[a, b] = 1
 
         # Boom
         if fail_break > 0:
             a = 2 * i
-            b = 2 * 12
+            b = 2 * get_boom_star(i)
             arr[a, b] = fail_break
             no_boom_mat[a, -2] = fail_break
             weights[(a, b)] = cost
-
-
-def get_tap_cost_mat(end_star):
-    size = end_star * 2 + 1
-    tap_cost_mat = np.zeros((size, size))
-    for i in range(end_star):
-        for j in range(2):
-            a = i * 2 + j
-            # Up
-            b = (i + 1) * 2
             tap_cost_mat[a, b] = 1
-
-            # Down
-            if i > 15:
-                if i == 16 or i == 21:
-                    b = (i - 1) * 2
-                else:
-                    b = (i - 1) * 2 + 1
-                tap_cost_mat[a, b] = 1
-                if j == 1:
-                    b = i * 2
-                    tap_cost_mat[a, b] = 2
-
-            # Stay
-            if i <= 15 or i == 20:
-                b = i * 2
-                tap_cost_mat[a, b] = 1
-
-            # Boom
-            if i >= 15:
-                b = 12 * 2
-                tap_cost_mat[a, b] = 1
-
-    return tap_cost_mat
+            boom_cost_mat[a, b] = 1
 
 
-def get_boom_cost_mat(end_star):
-    size = end_star * 2 + 1
-    boom_cost_mat = np.zeros((size, size))
-    for i in range(end_star):
-        for j in range(2):
-            a = i * 2 + j
-
-            # Boom
-            if i >= 15:
-                b = 12 * 2
-                boom_cost_mat[a, b] = 1
-
-    return boom_cost_mat
-
-
-def get_odds_and_inc(i, safe_guard, kms_new):
+def get_odds_and_inc(i, safe_guard, kms_new, _5_10_15, _1_plus_1, star_catch, boom_events):
     upgrade, fail_stay, fail_down, fail_break = odds[kms_new][i]
     increment = 1
 
     # 5 10 15
-    if other_events[0] and i in [5, 10, 15]:
+    if _5_10_15 and i in [5, 10, 15]:
         upgrade = 1.0
         fail_stay = 0.0
         fail_down = 0.0
         fail_break = 0.0
 
     # 1+1
-    if other_events[1] and i <= 10:
+    if _1_plus_1 and i <= 10:
         increment = 2
 
     # star catch
-    if other_events[2]:
+    if star_catch:
         upgrade *= 1.05
         if upgrade > 1.0:
             upgrade = 1.0
@@ -402,7 +381,7 @@ def get_odds_and_inc(i, safe_guard, kms_new):
 
     # boom events
     # NOTE: This event might not be the same as other servers
-    if other_events[3]:
+    if boom_events:
         if i <= 21:
             perk = fail_break * 0.3
             fail_break -= perk
@@ -426,75 +405,68 @@ def get_odds_and_inc(i, safe_guard, kms_new):
     return upgrade, fail_stay, fail_down, fail_break, increment
 
 
-if __name__ == "__main__":
-    import time
-
-    # 装备等级、当前星、目标星、保护、 是否抓星星、是否为kms新规、七折、必成、10星以下升2星、韩服加概率活动
-    (
-        eq_level,
-        cur_star,
-        end_star,
-        safe_guard,
-        star_catch,
-        kms_new,
-        discount,
-        _5_10_15,
-        _1_plus_1,
-        boom_events,
-    ) = sys.argv[1:11]
-    eq_level = int(eq_level)
-    init_star = int(cur_star)
-    end_star = int(end_star)
-    safe_guard = safe_guard.lower() in ["true", "1", "yes", "y"]
-    star_catch = star_catch.lower() in ["true", "1", "yes", "y"]
-    kms_new = kms_new.lower() in ["true", "1", "yes", "y"]
-    discount = discount.lower() in ["true", "1", "yes", "y"]
-    _5_10_15 = _5_10_15.lower() in ["true", "1", "yes", "y"]
-    _1_plus_1 = _1_plus_1.lower() in ["true", "1", "yes", "y"]
-    boom_events = boom_events.lower() in ["true", "1", "yes", "y"]
-
-    other_events = [_5_10_15, _1_plus_1, star_catch, boom_events]
-
+def cal_sf(
+    eq_level,
+    init_star,
+    end_star,
+    safe_guard,
+    star_catch,
+    kms_new,
+    gms_new,
+    discount,
+    _5_10_15,
+    _1_plus_1,
+    boom_events,
+):
     print(f"{eq_level}: {init_star} -> {end_star}")
     print(
-        f"safe_guard: {safe_guard}, star_catch: {star_catch}, kms_new: {kms_new}, discount: {discount}, 5/10/15: {_5_10_15}, 1+1: {_1_plus_1}, boom_events: {boom_events}"
+        f"safe_guard: {safe_guard}, star_catch: {star_catch}, kms_new: {kms_new}, gms_new: {gms_new}\n" +
+        f"discount: {discount}, 5/10/15: {_5_10_15}, 1+1: {_1_plus_1}, boom_events: {boom_events}"
     )
     print()
 
     if OPTION == "Markov":
-        sta = time.time()
-
         size = end_star * 2 + 1
-        arr = np.zeros((size, size))
+        P_arr = np.zeros((size, size))
         weights = {}
         weights_mat = np.zeros((size, size))
         no_boom_mat = np.zeros((size + 1, size + 1))
+        boom_cost_mat = np.zeros((size, size))
+        tap_cost_mat = np.zeros((size, size))
 
-        arr[end_star * 2, end_star * 2] = 1
-        get_odds_and_inc = partial(
-            get_odds_and_inc, safe_guard=safe_guard, kms_new=kms_new
+        P_arr[end_star * 2, end_star * 2] = 1
+        get_odds_and_inc_p = partial(
+            get_odds_and_inc, 
+            safe_guard=safe_guard,
+            kms_new=kms_new or gms_new, 
+            _5_10_15=_5_10_15, 
+            _1_plus_1=_1_plus_1, 
+            star_catch=star_catch, 
+            boom_events=boom_events
         )
+        get_boom_star_p = partial(get_boom_star, new_system=gms_new)
 
-        fill_transition_cost_boom(
-            kms_new,
+        fill_transition(
+            kms_new or gms_new,
             get_meso_cost,
             end_star,
             eq_level,
             job_zero,
             discount,
             safe_guard,
-            arr,
+            P_arr,
             weights,
             no_boom_mat,
-            get_odds_and_inc,
+            boom_cost_mat,
+            tap_cost_mat,
+            get_odds_and_inc_p,
             _5_10_15,
             kms_new,
+            get_boom_star_p
         )
         for (i, j), cost in weights.items():
             weights_mat[i, j] = cost
-        tap_count_mat = get_tap_cost_mat(end_star)
-        boom_count_mat = get_boom_cost_mat(end_star)
-        P = arr
+        P = P_arr
 
         total_mean = calculate_markov(
             P, weights_mat, 2 * init_star
@@ -510,29 +482,73 @@ if __name__ == "__main__":
             )
             mids.append(str(mid))
             mid_results.append(f"{format_number(mid_mean)}")
-            
-        print(f"({', '.join(mids)}) Midway costs: <{', '.join(mid_results)}>")
-        
+                
         tap_total_mean = calculate_markov(
-            P, tap_count_mat, 2 * init_star
+            P, tap_cost_mat, 2 * init_star
         )
         boom_mean = calculate_markov(
-            P, boom_count_mat, 2 * init_star
+            P, boom_cost_mat, 2 * init_star
         )
         no_boom_chance = calculate_no_boom_chance(no_boom_mat, 2 * init_star)
-        # boom_mean, boom_var = edge_counts_to_node_24(P)
+    return total_mean, boom_mean, no_boom_chance, tap_total_mean, mids, mid_results
 
-        print(
-            f"Cost Mean: <{format_number(total_mean)}>"
-        )
-        print(
-            f"Boom mean: <{format_number(boom_mean)}>>"
-        )
-        print(f"Chance of no boom: <{no_boom_chance*100:4f}%>")
-        print(
-            f"Tap mean: <{format_number(tap_total_mean)}>>"
-        )
-        print(f"Time taken: {time.time() - sta:.2f}s")
 
-    else:
-        raise ValueError("Invalid OPTION")
+if __name__ == "__main__":
+    import time
+
+    # 装备等级、当前星、目标星、保护、 是否抓星星、是否为kms新规、是否为gms新规、
+    # 七折、必成、10星以下升2星、韩服加概率活动
+    (
+        eq_level,
+        cur_star,
+        end_star,
+        safe_guard,
+        star_catch,
+        kms_new,
+        gms_new,
+        discount,
+        _5_10_15,
+        _1_plus_1,
+        boom_events,
+    ) = sys.argv[1:12]
+    eq_level = int(eq_level)
+    init_star = int(cur_star)
+    end_star = int(end_star)
+    safe_guard = safe_guard.lower() in ["true", "1", "yes", "y"]
+    star_catch = star_catch.lower() in ["true", "1", "yes", "y"]
+    kms_new = kms_new.lower() in ["true", "1", "yes", "y"]
+    gms_new = gms_new.lower() in ["true", "1", "yes", "y"]
+    discount = discount.lower() in ["true", "1", "yes", "y"]
+    _5_10_15 = _5_10_15.lower() in ["true", "1", "yes", "y"]
+    _1_plus_1 = _1_plus_1.lower() in ["true", "1", "yes", "y"]
+    boom_events = boom_events.lower() in ["true", "1", "yes", "y"]
+
+    sta = time.time()
+    total_mean, boom_mean, no_boom_chance, tap_total_mean, mids, mid_results = cal_sf(
+        eq_level,
+        init_star,
+        end_star,
+        safe_guard,
+        star_catch,
+        kms_new,
+        gms_new,
+        discount,
+        _5_10_15,
+        _1_plus_1,
+        boom_events,
+    )   
+
+    print(f"({', '.join(mids)}) Midway costs: <{', '.join(mid_results)}>")
+    print()
+
+    print(
+        f"Cost Mean: <{format_number(total_mean)}>"
+    )
+    print(
+        f"Boom mean: <{format_number(boom_mean)}>"
+    )
+    print(f"Chance of no boom: <{no_boom_chance*100:4f}%>")
+    print(
+        f"Tap mean: <{format_number(tap_total_mean)}>"
+    )
+    print(f"Time taken: {time.time() - sta:.2f}s")
