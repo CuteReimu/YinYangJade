@@ -5,15 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	. "github.com/CuteReimu/onebot"
-	"github.com/tidwall/gjson"
-	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"math"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
+	. "github.com/CuteReimu/onebot"
+	"github.com/tidwall/gjson"
+	. "github.com/vicanso/go-charts/v2"
 )
 
 type graphData struct {
@@ -32,6 +34,22 @@ type findRoleReturnData struct {
 		Level             int         `json:"Level"`
 		Name              string      `json:"Name"`
 	} `json:"CharacterData"`
+}
+
+func FindRoleBackground() {
+	slog.Info("开始角色数据预抓取")
+	for _, name := range findRoleData.GetStringMapString("data") {
+		_, err := scripts.RunPythonScript("read_player.py", name)
+		if err != nil {
+			slog.Error("执行脚本失败", "error", err, "name", name)
+		}
+	}
+	_, err := scripts.RunPythonScript("scrape.py")
+	if err != nil {
+		slog.Error("角色数据预抓取失败", "error", err)
+		return
+	}
+	slog.Info("完成角色数据预抓取")
 }
 
 func findRole(name string) MessageChain {

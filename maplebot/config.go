@@ -1,9 +1,12 @@
 package maplebot
 
 import (
-	"github.com/spf13/viper"
+	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -57,6 +60,9 @@ func initConfig() {
 	_ = levelExpData.SafeWriteConfigAs(filepath.Join("data", "net.cutereimu.maplebots", "LevelExpData.yml"))
 	if err := levelExpData.ReadInConfig(); err != nil {
 		panic(err)
+	}
+	if err := scripts.BuildLvlData(levelExpData); err != nil {
+		slog.Error("BuildLvlData失败", "error", err.Error())
 	}
 
 	classImageData.AddConfigPath(filepath.Join("data", "net.cutereimu.maplebots"))

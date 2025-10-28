@@ -2,16 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/CuteReimu/YinYangJade/db"
-	"github.com/CuteReimu/YinYangJade/fengsheng"
-	"github.com/CuteReimu/YinYangJade/hkbot"
-	"github.com/CuteReimu/YinYangJade/imageutil"
-	"github.com/CuteReimu/YinYangJade/maplebot"
-	"github.com/CuteReimu/YinYangJade/tfcc"
-	"github.com/CuteReimu/onebot"
-	"github.com/lestrrat-go/file-rotatelogs"
-	"github.com/spf13/viper"
-	"golang.org/x/time/rate"
 	"log"
 	"log/slog"
 	"os"
@@ -21,6 +11,18 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/db"
+	"github.com/CuteReimu/YinYangJade/fengsheng"
+	"github.com/CuteReimu/YinYangJade/hkbot"
+	"github.com/CuteReimu/YinYangJade/imageutil"
+	"github.com/CuteReimu/YinYangJade/maplebot"
+	"github.com/CuteReimu/YinYangJade/tfcc"
+	"github.com/CuteReimu/onebot"
+	"github.com/lestrrat-go/file-rotatelogs"
+	"github.com/robfig/cron"
+	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 )
 
 var mainConfig = viper.New()
@@ -106,6 +108,7 @@ func main() {
 	B.ListenFriendRequest(handleNewFriendRequest)
 	B.ListenGroupRequest(handleGroupRequest)
 	checkQQGroups()
+	initCron()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
@@ -197,4 +200,12 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 		}
 	}
 	return true
+}
+
+func initCron() {
+	c := cron.New()
+	_ = c.AddFunc("0 0 11 * * *", maplebot.FindRoleBackground)
+	_ = c.AddFunc("0 0 17 * * *", maplebot.FindRoleBackground)
+	_ = c.AddFunc("0 0 23 * * *", maplebot.FindRoleBackground)
+	c.Start()
 }

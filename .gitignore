@@ -1,5 +1,8 @@
 /assets/
-/maplebot/scripts/libs
+libs/
+player_name.txt
+player_data/
+lvl_data.json
 
 *.log
 *.yml
