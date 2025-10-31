@@ -25,7 +25,7 @@ def assert_player_onrank(name):
     return count > 0
 
 
-def try_request(url, name, retries=3, wait=60):
+def try_request(url, name, retries=3, wait=10):
     for retry in range(retries):
         try:
             response = requests.get(url.format(name))
@@ -90,8 +90,8 @@ def request_from_name_list():
         player_dict['img'] = img64
         
         last_dict = player_dict['data'][-1] if len(player_dict['data']) > 0 else None
-        if last_dict is not None and same_dict(last_dict, cur_dict):
-            continue
+        if last_dict is not None and last_dict["datetime"].split(" ")[0] == cur_dict["datetime"].split(" ")[0]:
+            player_dict['data'] = player_dict['data'][:-1]
         player_dict['data'].append(cur_dict)
         player_dict['data'] = sorted(player_dict['data'], key=lambda x: x['datetime'])[-buffer_size:]
         

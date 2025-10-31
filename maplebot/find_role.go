@@ -25,7 +25,7 @@ type graphData struct {
 }
 
 type findRoleReturnData struct {
-	CharacterData struct {
+	CharacterData *struct {
 		CharacterImageURL string      `json:"CharacterImageURL"`
 		Image             string      `json:"Image"`
 		Class             string      `json:"Class"`
@@ -88,6 +88,9 @@ func resolveFindData(body []byte) MessageChain {
 	if err := json.Unmarshal(body, &data); err != nil {
 		slog.Error("json解析失败", "error", err, "body", body)
 		return nil
+	}
+	if data.CharacterData == nil {
+		return MessageChain{&Text{Text: "请求失败"}}
 	}
 	img := data.CharacterData.Image
 	imgUrl := data.CharacterData.CharacterImageURL
