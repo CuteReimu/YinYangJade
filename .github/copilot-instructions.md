@@ -34,8 +34,8 @@
 ├── iface/                      # 通用接口定义
 ├── imageutil/                  # 图像处理工具
 ├── maplebot/                   # 冒险岛机器人模块
-│   └── scripts/               # 脚本工具
-├── slicegame/                  # 切片游戏功能
+│   └── scripts/               # python脚本
+├── slicegame/                  # 滑块游戏，一个小算法，与主功能无关
 ├── tfcc/                       # 东方Project机器人模块
 ├── main.go                     # 程序入口
 ├── go.mod                      # Go模块依赖
@@ -153,7 +153,7 @@ go version  # 应该显示 go1.24.x 或更高版本
 ### 问题1: go.mod exclude导致的依赖问题
 **现象**: 某些依赖版本无法下载  
 **原因**: go.mod中有exclude配置，排除了某些breaking change版本：
-```go
+```go.mod
 exclude (
 	github.com/ysmood/fetchup v0.4.0
 	github.com/ysmood/fetchup v0.5.0
