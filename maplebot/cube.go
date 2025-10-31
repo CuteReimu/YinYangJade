@@ -217,7 +217,7 @@ func calculateCubeAll() MessageChain {
 	header = append(header, "部位")
 	for _, it := range selections {
 		var target string
-		for _, stat := range strings.Split(it, "&") {
+		for stat := range strings.SplitSeq(it, "&") {
 			arr := strings.Split(stat, "+")
 			target += fmt.Sprintf(statMap[arr[0]], arr[1])
 		}
@@ -295,7 +295,7 @@ func calculateCube(s string) MessageChain {
 			cost = black
 		}
 		var target string
-		for _, stat := range strings.Split(it, "&") {
+		for stat := range strings.SplitSeq(it, "&") {
 			arr := strings.Split(stat, "+")
 			target += fmt.Sprintf(statMap[arr[0]], arr[1])
 		}

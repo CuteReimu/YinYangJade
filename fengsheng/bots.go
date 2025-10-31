@@ -191,7 +191,7 @@ func handlePrivateRequest(request *PrivateMessage) bool {
 			}
 			var adminCount int
 			var newAdmin, removeAdmin []string
-			for _, line := range strings.Split(result, "\n") {
+			for line := range strings.SplitSeq(result, "\n") {
 				if adminCount >= 20 {
 					break
 				}

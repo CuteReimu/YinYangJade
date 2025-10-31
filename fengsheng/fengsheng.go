@@ -36,7 +36,7 @@ func dealGetScore(result string) MessageChain {
 	var isWinRate, isHistory bool
 	var resultBuilder strings.Builder
 	var winRateData, historyData [][]string
-	for _, line := range strings.Split(result, "\n") {
+	for line := range strings.SplitSeq(result, "\n") {
 		if len(line) == 0 {
 			continue
 		}
@@ -54,7 +54,7 @@ func dealGetScore(result string) MessageChain {
 		} else if strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") || strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩") {
 		} else if isWinRate {
 			var r []string
-			for _, s := range strings.Split(line, "\t") {
+			for s := range strings.SplitSeq(line, "\t") {
 				r = append(r, strings.TrimSpace(s))
 			}
 			winRateData = append(winRateData, r)

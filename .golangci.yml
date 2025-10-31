@@ -53,5 +53,6 @@ linters:
         - G304
         - G306
         - G404
+        - G602 # There is a false positive in golangci-lint. Waiting for being fixed.
 run:
   timeout: 3m
