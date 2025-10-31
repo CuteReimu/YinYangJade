@@ -28,7 +28,6 @@ type findRoleReturnData struct {
 	CharacterData *struct {
 		CharacterImageURL string      `json:"CharacterImageURL"`
 		Image             string      `json:"Image"`
-		Class             string      `json:"Class"`
 		EXPPercent        float64     `json:"EXPPercent"`
 		GraphData         []graphData `json:"GraphData"`
 		LegionLevel       int         `json:"LegionLevel"`
@@ -111,7 +110,6 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 	img := data.CharacterData.Image
 	imgUrl := data.CharacterData.CharacterImageURL
 	rawName := data.CharacterData.Name
-	class := TranslateClassName(data.CharacterData.Class)
 	level := data.CharacterData.Level
 	exp := data.CharacterData.EXPPercent
 	levelExp := fmt.Sprintf("%d (%g%%)", level, exp)
@@ -129,7 +127,7 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 		}
 	}
 
-	s := fmt.Sprintf("角色名：%s\n职业：%s\n等级：%s\n联盟：%d\n", rawName, class, levelExp, legionLevel)
+	s := fmt.Sprintf("角色名：%s\n等级：%s\n联盟：%d\n", rawName, levelExp, legionLevel)
 
 	expValues := make([]float64, 0, 14)
 	levelValues := make([]float64, 0, 15)
