@@ -54,42 +54,59 @@ func FindRoleBackground() {
 }
 
 func findRole(name string) MessageChain {
-	resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
-	if err != nil {
-		slog.Error("请求失败", "error", err)
-		b, err := scripts.RunPythonScript("read_player.py", name)
+	ch := make(chan *findRoleReturnData, 1)
+	go func() {
+		defer func() {
+			close(ch)
+		}()
+		resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
 		if err != nil {
-			slog.Error("执行脚本失败", "error", err, "name", name)
-			return nil
+			slog.Error("请求失败", "error", err)
+			return
 		}
-		return resolveFindData(b)
-	}
-	switch resp.StatusCode() {
-	case 404:
-		return MessageChain{&Text{Text: name + "已身死道消"}}
-	case 200:
-	default:
-		slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
-		b, err := scripts.RunPythonScript("read_player.py", name)
-		if err != nil {
-			slog.Error("执行脚本失败", "error", err, "name", name)
-			return nil
+		switch resp.StatusCode() {
+		case 404:
+			ch <- nil
+			return
+		case 200:
+		default:
+			slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
+			return
 		}
-		return resolveFindData(b)
-	}
-	body := resp.Body()
-	return resolveFindData(body)
-}
-
-func resolveFindData(body []byte) MessageChain {
+		body := resp.Body()
+		var data *findRoleReturnData
+		if err := json.Unmarshal(body, &data); err != nil {
+			slog.Error("json解析失败", "error", err, "body", body)
+			return
+		}
+		ch <- data
+	}()
 	var data *findRoleReturnData
-	if err := json.Unmarshal(body, &data); err != nil {
-		slog.Error("json解析失败", "error", err, "body", body)
+	b, err := scripts.RunPythonScript("read_player.py", name)
+	if err != nil {
+		slog.Error("执行脚本失败", "error", err, "name", name)
+	} else {
+		if err := json.Unmarshal(b, &data); err != nil {
+			slog.Error("json解析失败", "error", err, "body", string(b))
+		}
+	}
+	httpData, ok := <-ch
+	if httpData != nil && httpData.CharacterData != nil {
+		return resolveFindData(httpData)
+	}
+	if ok {
+		return MessageChain{&Text{Text: name + "已身死道消"}}
+	}
+	if data == nil {
 		return nil
 	}
 	if data.CharacterData == nil {
 		return MessageChain{&Text{Text: "请求失败"}}
 	}
+	return resolveFindData(data)
+}
+
+func resolveFindData(data *findRoleReturnData) MessageChain {
 	img := data.CharacterData.Image
 	imgUrl := data.CharacterData.CharacterImageURL
 	rawName := data.CharacterData.Name
