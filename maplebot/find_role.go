@@ -92,9 +92,10 @@ func findRole(name string) MessageChain {
 	}
 	httpData, ok := <-ch
 	if httpData != nil && httpData.CharacterData != nil {
-		return resolveFindData(httpData)
-	}
-	if ok {
+		if data == nil || data.CharacterData == nil || len(data.CharacterData.GraphData) < len(httpData.CharacterData.GraphData)-7 {
+			return resolveFindData(httpData)
+		}
+	} else if ok {
 		return MessageChain{&Text{Text: name + "已身死道消"}}
 	}
 	if data == nil {
