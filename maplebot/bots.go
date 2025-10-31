@@ -312,8 +312,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 					messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
 					for _, num := range arr {
 						subscribed, _ := db.Get("boss_subscribe_" + string(num))
-						subArr := strings.Split(subscribed, ",")
-						for _, qqNumber := range subArr {
+						subArr := strings.SplitSeq(subscribed, ",")
+						for qqNumber := range subArr {
 							qqNumbers[qqNumber] = true
 						}
 					}

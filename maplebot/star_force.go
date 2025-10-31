@@ -462,7 +462,7 @@ func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOf
 	}
 
 	var midway []float64
-	err = json.Unmarshal([]byte(fmt.Sprintf("[%s]", match5[1])), &midway)
+	err = json.Unmarshal(fmt.Appendf(nil, "[%s]", match5[1]), &midway)
 	if err != nil {
 		slog.Error("parse midway failed", "error", err, "value", string(match3[1]))
 		return 0, 0, 0, 0, nil, errors.New("计算结果解析失败")

@@ -216,12 +216,12 @@ func calculateCubeAll() MessageChain {
 	header := make([]string, 0, len(selections)+1)
 	header = append(header, "部位")
 	for _, it := range selections {
-		var target string
+		var target strings.Builder
 		for stat := range strings.SplitSeq(it, "&") {
 			arr := strings.Split(stat, "+")
-			target += fmt.Sprintf(statMap[arr[0]], arr[1])
+			_, _ = target.WriteString(fmt.Sprintf(statMap[arr[0]], arr[1]))
 		}
-		header = append(header, target)
+		header = append(header, target.String())
 	}
 	p, err := TableOptionRender(TableChartOption{
 		Width:           770,
@@ -294,12 +294,12 @@ func calculateCube(s string) MessageChain {
 			styles = append(styles, &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 			cost = black
 		}
-		var target string
+		var target strings.Builder
 		for stat := range strings.SplitSeq(it, "&") {
 			arr := strings.Split(stat, "+")
-			target += fmt.Sprintf(statMap[arr[0]], arr[1])
+			_, _ = target.WriteString(fmt.Sprintf(statMap[arr[0]], arr[1]))
 		}
-		ss = append(ss, []string{target, formatInt64(cost)})
+		ss = append(ss, []string{target.String(), formatInt64(cost)})
 	}
 	p, err := TableOptionRender(TableChartOption{
 		Width:           400,
@@ -505,8 +505,8 @@ func tierForNumber(n int) Tier {
 func translateInputToObject(input string) map[string]int {
 	output := make(map[string]int)
 	if len(input) > 0 {
-		vals := strings.Split(input, "&")
-		for _, val := range vals {
+		vals := strings.SplitSeq(input, "&")
+		for val := range vals {
 			arr := strings.Split(val, "+")
 			v, _ := strconv.Atoi(arr[1])
 			output[arr[0]] += +v
@@ -665,11 +665,8 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 			)
 
 			// adjust the value if this is an affected category
-			for _, affectedCategory := range affectedCategories {
-				if affectedCategory == cat {
-					adjustedVal = val.(float64) + 1
-					break
-				}
+			if slices.Contains(affectedCategories, cat) {
+				adjustedVal = val.(float64) + 1
 			}
 			ret = append(ret, any([]any{cat, adjustedVal, rate}))
 		}
