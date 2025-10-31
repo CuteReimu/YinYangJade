@@ -2,15 +2,16 @@ package tfcc
 
 import (
 	"fmt"
-	"github.com/CuteReimu/bilibili/v2"
-	. "github.com/CuteReimu/onebot"
-	regexp "github.com/dlclark/regexp2"
-	"github.com/pkg/errors"
 	"log/slog"
 	"reflect"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/CuteReimu/bilibili/v2"
+	. "github.com/CuteReimu/onebot"
+	regexp "github.com/dlclark/regexp2"
+	"github.com/pkg/errors"
 )
 
 var (

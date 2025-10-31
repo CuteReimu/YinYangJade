@@ -4,11 +4,6 @@ import (
 	"bytes"
 	"cmp"
 	"encoding/base64"
-	"github.com/CuteReimu/goutil"
-	"github.com/CuteReimu/neuquant"
-	. "github.com/CuteReimu/onebot"
-	. "github.com/vicanso/go-charts/v2"
-	"github.com/wcharczuk/go-chart/v2/drawing"
 	"image"
 	"image/draw"
 	"image/gif"
@@ -17,6 +12,12 @@ import (
 	"math/rand/v2"
 	"slices"
 	"strconv"
+
+	"github.com/CuteReimu/goutil"
+	"github.com/CuteReimu/neuquant"
+	. "github.com/CuteReimu/onebot"
+	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
 func DoStuff() MessageChain {

@@ -1,11 +1,12 @@
 package maplebot
 
 import (
-	. "github.com/vicanso/go-charts/v2"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
+
+	. "github.com/vicanso/go-charts/v2"
 )
 
 func init() {

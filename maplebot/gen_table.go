@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	. "github.com/CuteReimu/onebot"
-	. "github.com/vicanso/go-charts/v2"
 	"io"
 	"log/slog"
 	"runtime/debug"
 	"strconv"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
+	. "github.com/vicanso/go-charts/v2"
 )
 
 func genTable(s string) (ret MessageChain) {

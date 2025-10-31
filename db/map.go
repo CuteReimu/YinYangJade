@@ -1,10 +1,11 @@
 package db
 
 import (
-	"github.com/dgraph-io/badger/v4"
-	"github.com/pkg/errors"
 	"log/slog"
 	"time"
+
+	"github.com/dgraph-io/badger/v4"
+	"github.com/pkg/errors"
 )
 
 // Set 设置键值对，ttl是超时时间（可选）

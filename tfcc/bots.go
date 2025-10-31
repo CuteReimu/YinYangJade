@@ -2,15 +2,16 @@ package tfcc
 
 import (
 	"encoding/base64"
-	"github.com/CuteReimu/YinYangJade/iface"
-	. "github.com/CuteReimu/onebot"
-	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/iface"
+	. "github.com/CuteReimu/onebot"
+	"github.com/go-resty/resty/v2"
 )
 
 var restyClient = resty.New()

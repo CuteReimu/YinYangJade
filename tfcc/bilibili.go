@@ -2,11 +2,12 @@ package tfcc
 
 import (
 	"fmt"
-	"github.com/CuteReimu/bilibili/v2"
 	"log/slog"
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/CuteReimu/bilibili/v2"
 )
 
 var bili = bilibili.New()

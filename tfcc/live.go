@@ -2,11 +2,12 @@ package tfcc
 
 import (
 	"fmt"
-	"github.com/CuteReimu/bilibili/v2"
-	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"slices"
 	"strings"
+
+	"github.com/CuteReimu/bilibili/v2"
+	. "github.com/CuteReimu/onebot"
 )
 
 func init() {

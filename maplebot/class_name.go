@@ -2,9 +2,6 @@ package maplebot
 
 import (
 	"bytes"
-	. "github.com/CuteReimu/onebot"
-	"github.com/nfnt/resize"
-	"github.com/pkg/errors"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -15,6 +12,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
+	"github.com/nfnt/resize"
+	"github.com/pkg/errors"
 )
 
 var ClassNameMap = map[string]string{

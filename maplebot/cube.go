@@ -6,14 +6,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	. "github.com/CuteReimu/onebot"
-	. "github.com/vicanso/go-charts/v2"
-	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
 	"math"
 	"slices"
 	"strconv"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
+	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
 type nameAndLevel struct {

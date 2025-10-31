@@ -5,9 +5,10 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	regexp "github.com/dlclark/regexp2"
 	"io"
 	"strings"
+
+	regexp "github.com/dlclark/regexp2"
 )
 
 var translateDict = &Trie{}

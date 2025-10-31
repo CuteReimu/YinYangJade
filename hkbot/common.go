@@ -1,11 +1,12 @@
 package hkbot
 
 import (
-	. "github.com/CuteReimu/onebot"
 	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
 )
 
 func init() {

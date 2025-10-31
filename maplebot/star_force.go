@@ -9,10 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
-	. "github.com/CuteReimu/onebot"
-	. "github.com/vicanso/go-charts/v2"
-	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
 	"math"
 	"math/rand/v2"
@@ -20,6 +16,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
+	. "github.com/CuteReimu/onebot"
+	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
 func calStarForceCostPerformance() MessageChain {

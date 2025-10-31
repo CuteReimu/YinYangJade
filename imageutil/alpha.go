@@ -3,8 +3,6 @@ package imageutil
 import (
 	"bytes"
 	"encoding/base64"
-	. "github.com/CuteReimu/onebot"
-	"github.com/pkg/errors"
 	"image"
 	"image/color"
 	_ "image/gif"
@@ -17,6 +15,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
+	"github.com/pkg/errors"
 )
 
 func RemoveBackground(buf []byte, rate int) ([]byte, error) {

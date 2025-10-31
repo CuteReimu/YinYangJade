@@ -4,13 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/CuteReimu/YinYangJade/db"
-	. "github.com/CuteReimu/onebot"
-	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/devices"
-	"github.com/go-rod/rod/lib/launcher"
-	"github.com/go-rod/rod/lib/utils"
-	. "github.com/vicanso/go-charts/v2"
 	"image"
 	"image/png"
 	"log/slog"
@@ -20,6 +13,14 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/db"
+	. "github.com/CuteReimu/onebot"
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/devices"
+	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/rod/lib/utils"
+	. "github.com/vicanso/go-charts/v2"
 )
 
 var tierName = map[string]string{
@@ -777,8 +778,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()

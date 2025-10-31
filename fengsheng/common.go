@@ -1,12 +1,13 @@
 package fengsheng
 
 import (
-	"github.com/CuteReimu/YinYangJade/slicegame"
-	. "github.com/CuteReimu/onebot"
 	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/CuteReimu/YinYangJade/slicegame"
+	. "github.com/CuteReimu/onebot"
 )
 
 func init() {

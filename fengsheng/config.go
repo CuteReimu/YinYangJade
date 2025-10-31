@@ -1,12 +1,13 @@
 package fengsheng
 
 import (
-	"github.com/spf13/viper"
-	"github.com/vicanso/go-charts/v2"
 	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/spf13/viper"
+	"github.com/vicanso/go-charts/v2"
 )
 
 var (

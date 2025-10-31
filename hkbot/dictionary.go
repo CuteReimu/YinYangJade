@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"net/url"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
 )
 
 var addDbQQList = make(map[int64]string)

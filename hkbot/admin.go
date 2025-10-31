@@ -1,10 +1,11 @@
 package hkbot
 
 import (
-	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"strconv"
 	"strings"
+
+	. "github.com/CuteReimu/onebot"
 )
 
 func init() {

@@ -2,15 +2,16 @@ package hkbot
 
 import (
 	"encoding/json"
-	"github.com/CuteReimu/YinYangJade/iface"
-	. "github.com/CuteReimu/onebot"
-	"github.com/go-resty/resty/v2"
 	"log/slog"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/iface"
+	. "github.com/CuteReimu/onebot"
+	"github.com/go-resty/resty/v2"
 )
 
 var restyClient = resty.New()

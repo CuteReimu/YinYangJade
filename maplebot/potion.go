@@ -3,12 +3,13 @@ package maplebot
 import (
 	"encoding/base64"
 	"fmt"
-	. "github.com/CuteReimu/onebot"
-	. "github.com/vicanso/go-charts/v2"
-	"github.com/wcharczuk/go-chart/v2/drawing"
 	"log/slog"
 	"slices"
 	"strconv"
+
+	. "github.com/CuteReimu/onebot"
+	. "github.com/vicanso/go-charts/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
 func calculatePotion() MessageChain {

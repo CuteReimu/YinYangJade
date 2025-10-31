@@ -2,13 +2,14 @@ package fengsheng
 
 import (
 	"fmt"
-	"github.com/CuteReimu/YinYangJade/iface"
-	. "github.com/CuteReimu/onebot"
 	"log/slog"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CuteReimu/YinYangJade/iface"
+	. "github.com/CuteReimu/onebot"
 )
 
 var B *Bot
