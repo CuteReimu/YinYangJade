@@ -11,7 +11,7 @@ def try_encode_gb2312(name):
 def process_player_data(name):
     name = name.strip()
     name = try_encode_gb2312(name)
-    print(f"Processing player: {name}")
+    #print(f"Processing player: {name}")
     if len(name) > 30: 
         return {}
     

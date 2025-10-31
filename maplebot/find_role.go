@@ -27,6 +27,7 @@ type graphData struct {
 type findRoleReturnData struct {
 	CharacterData struct {
 		CharacterImageURL string      `json:"CharacterImageURL"`
+		Image             string      `json:"Image"`
 		Class             string      `json:"Class"`
 		EXPPercent        float64     `json:"EXPPercent"`
 		GraphData         []graphData `json:"GraphData"`
@@ -56,7 +57,12 @@ func findRole(name string) MessageChain {
 	resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
 	if err != nil {
 		slog.Error("请求失败", "error", err)
-		return nil
+		b, err := scripts.RunPythonScript("read_player.py", name)
+		if err != nil {
+			slog.Error("执行脚本失败", "error", err, "name", name)
+			return nil
+		}
+		return resolveFindData(b)
 	}
 	switch resp.StatusCode() {
 	case 404:
@@ -66,14 +72,24 @@ func findRole(name string) MessageChain {
 	case 200:
 	default:
 		slog.Error("请求失败", "status", resp.StatusCode())
-		return nil
+		b, err := scripts.RunPythonScript("read_player.py", name)
+		if err != nil {
+			slog.Error("执行脚本失败", "error", err, "name", name)
+			return nil
+		}
+		return resolveFindData(b)
 	}
 	body := resp.Body()
+	return resolveFindData(body)
+}
+
+func resolveFindData(body []byte) MessageChain {
 	var data *findRoleReturnData
-	if err = json.Unmarshal(body, &data); err != nil {
+	if err := json.Unmarshal(body, &data); err != nil {
 		slog.Error("json解析失败", "error", err, "body", body)
 		return nil
 	}
+	img := data.CharacterData.Image
 	imgUrl := data.CharacterData.CharacterImageURL
 	rawName := data.CharacterData.Name
 	class := TranslateClassName(data.CharacterData.Class)
@@ -83,7 +99,9 @@ func findRole(name string) MessageChain {
 	legionLevel := data.CharacterData.LegionLevel
 
 	var messageChain MessageChain
-	if len(imgUrl) > 0 {
+	if len(img) > 0 {
+		messageChain = append(messageChain, &Image{File: "base64://" + img})
+	} else if len(imgUrl) > 0 {
 		resp, err := restyClient.R().Get(imgUrl)
 		if err != nil {
 			slog.Error("请求失败", "error", err)
