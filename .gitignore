@@ -3,6 +3,8 @@ libs/
 player_name.txt
 player_data/
 lvl_data.json
+.DS_Store
+__pycache__/
 
 *.log
 *.yml
@@ -33,3 +35,9 @@ YinYangJade
 
 # Go workspace file
 go.work
+
+.idea/
+.vscode/
+*.png
+*.ttf
+*.gif
