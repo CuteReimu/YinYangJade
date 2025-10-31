@@ -67,11 +67,9 @@ func findRole(name string) MessageChain {
 	switch resp.StatusCode() {
 	case 404:
 		return MessageChain{&Text{Text: name + "已身死道消"}}
-	case 400:
-		return MessageChain{&Text{Text: gjson.GetBytes(resp.Body(), "message").String()}}
 	case 200:
 	default:
-		slog.Error("请求失败", "status", resp.StatusCode())
+		slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
 		b, err := scripts.RunPythonScript("read_player.py", name)
 		if err != nil {
 			slog.Error("执行脚本失败", "error", err, "name", name)
