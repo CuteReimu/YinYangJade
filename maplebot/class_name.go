@@ -70,6 +70,60 @@ var ClassNameMap = map[string]string{
 	"Kinesis":                "超能力者",
 }
 
+var ClassIDMap = map[int]string{
+	1:   "Warrior",
+	2:   "Magician",
+	3:   "Bowman",
+	4:   "Thief",
+	5:   "Pirate",
+	10:  "Noblesse",
+	11:  "Dawn Warrior",
+	12:  "Blaze Wizard",
+	13:  "Wind Archer",
+	14:  "Night Walker",
+	15:  "Thunder Breaker",
+	20:  "Legend",
+	21:  "Aran",
+	22:  "Evan",
+	23:  "Mercedes",
+	24:  "Phantom",
+	30:  "Citizen",
+	31:  "Demon Slayer",
+	32:  "Battle Mage",
+	33:  "Wild Hunter",
+	35:  "Mechanic",
+	113: "Hero",
+	123: "Paladin",
+	133: "Dark Knight",
+	201: "Jett",
+	202: "Mihile",
+	203: "Luminous",
+	204: "Kaiser",
+	205: "Angelic Buster",
+	206: "Hayato",
+	207: "Kanna",
+	208: "Xenon",
+	209: "Demon Avenger",
+	210: "Zero",
+	211: "Beast Tamer",
+	212: "Shade",
+	213: "Fire/Poison",
+	214: "Kinesis",
+	215: "Blaster",
+	216: "Cadena",
+	217: "Illium",
+	218: "Ark",
+	219: "Pathfinder",
+	223: "Lara",
+	220: "Hoyoung",
+	221: "Adele",
+	222: "Kain",
+	224: "Khali",
+	225: "Lynn",
+	226: "Mo Xuan",
+	227: "Sia Astelle",
+}
+
 func init() {
 	// 全部转为小写
 	classNameMap := make(map[string]string, len(ClassNameMap))
@@ -77,6 +131,16 @@ func init() {
 		classNameMap[strings.ToLower(k)] = v
 	}
 	ClassNameMap = classNameMap
+}
+
+func TranslateClassId(id int) string {
+	if name, ok := ClassIDMap[id]; ok {
+		return TranslateClassName(name)
+	}
+	if name, ok := ClassIDMap[id/100]; ok {
+		return TranslateClassName(name)
+	}
+	return ""
 }
 
 func TranslateClassName(s string) string {
