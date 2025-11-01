@@ -62,7 +62,7 @@ def process_player_data(name):
             "Level": entry['level'],
             "CurrentEXP": entry['exp'],
         })
-    data['GraphData'] = gdata
+    data['CharacterData']['GraphData'] = gdata
     
     return data
 

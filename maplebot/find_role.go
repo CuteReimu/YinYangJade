@@ -55,34 +55,38 @@ func FindRoleBackground() {
 	slog.Info("完成角色数据预抓取")
 }
 
-func findRole(name string) MessageChain {
+func findRole(name string, forcePython ...bool) MessageChain {
 	ch := make(chan *findRoleReturnData, 1)
-	go func() {
-		defer func() {
-			close(ch)
+	if len(forcePython) == 0 || !forcePython[0] {
+		go func() {
+			defer func() {
+				close(ch)
+			}()
+			resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
+			if err != nil {
+				slog.Error("请求失败", "error", err)
+				return
+			}
+			switch resp.StatusCode() {
+			case 404:
+				ch <- nil
+				return
+			case 200:
+			default:
+				slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
+				return
+			}
+			body := resp.Body()
+			var data *findRoleReturnData
+			if err := json.Unmarshal(body, &data); err != nil {
+				slog.Error("json解析失败", "error", err, "body", body)
+				return
+			}
+			ch <- data
 		}()
-		resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
-		if err != nil {
-			slog.Error("请求失败", "error", err)
-			return
-		}
-		switch resp.StatusCode() {
-		case 404:
-			ch <- nil
-			return
-		case 200:
-		default:
-			slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
-			return
-		}
-		body := resp.Body()
-		var data *findRoleReturnData
-		if err := json.Unmarshal(body, &data); err != nil {
-			slog.Error("json解析失败", "error", err, "body", body)
-			return
-		}
-		ch <- data
-	}()
+	} else {
+		close(ch)
+	}
 	var data *findRoleReturnData
 	b, err := scripts.RunPythonScript("read_player.py", name)
 	if err != nil {
@@ -166,7 +170,7 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 					labels = append([]string{t.Format("2006-01-02")}, labels...)
 				}
 				// maplestory.gg只统计220级以上角色的经验数据，没数据我们就只能认为是220级了
-				levelValues = append([]float64{220}, levelValues...)
+				levelValues = append(levelValues[:1:1], levelValues...)
 			}
 		}
 		// 处理一下，有可能有的数据是0级
