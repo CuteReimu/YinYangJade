@@ -55,38 +55,7 @@ func FindRoleBackground() {
 	slog.Info("完成角色数据预抓取")
 }
 
-func findRole(name string, forcePython ...bool) MessageChain {
-	ch := make(chan *findRoleReturnData, 1)
-	if len(forcePython) == 0 || !forcePython[0] {
-		go func() {
-			defer func() {
-				close(ch)
-			}()
-			resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
-			if err != nil {
-				slog.Error("请求失败", "error", err)
-				return
-			}
-			switch resp.StatusCode() {
-			case 404:
-				ch <- nil
-				return
-			case 200:
-			default:
-				slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
-				return
-			}
-			body := resp.Body()
-			var data *findRoleReturnData
-			if err := json.Unmarshal(body, &data); err != nil {
-				slog.Error("json解析失败", "error", err, "body", body)
-				return
-			}
-			ch <- data
-		}()
-	} else {
-		close(ch)
-	}
+func findRole(name string) MessageChain {
 	var data *findRoleReturnData
 	b, err := scripts.RunPythonScript("read_player.py", name)
 	if err != nil {
@@ -96,13 +65,26 @@ func findRole(name string, forcePython ...bool) MessageChain {
 			slog.Error("json解析失败", "error", err, "body", string(b))
 		}
 	}
-	httpData, ok := <-ch
-	if httpData != nil && httpData.CharacterData != nil {
-		if data == nil || data.CharacterData == nil || len(data.CharacterData.GraphData) < len(httpData.CharacterData.GraphData)-7 {
-			return resolveFindData(httpData)
+	if data == nil || data.CharacterData == nil || len(data.CharacterData.GraphData) < 7 {
+		resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
+		if err != nil {
+			slog.Error("请求失败", "error", err)
+		} else {
+			switch resp.StatusCode() {
+			case 404:
+				return MessageChain{&Text{Text: name + "已身死道消"}}
+			case 200:
+				body := resp.Body()
+				var httpData *findRoleReturnData
+				if err := json.Unmarshal(body, &httpData); err != nil {
+					slog.Error("json解析失败", "error", err, "body", body)
+				} else if httpData != nil && httpData.CharacterData != nil {
+					data = httpData
+				}
+			default:
+				slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
+			}
 		}
-	} else if ok {
-		return MessageChain{&Text{Text: name + "已身死道消"}}
 	}
 	if data == nil {
 		return nil

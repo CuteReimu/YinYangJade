@@ -133,7 +133,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 			} else if text.Text == "爆炸次数" || strings.HasPrefix(text.Text, "爆炸次数 ") {
 				sendGroupMessage(message, slices.Concat(calculateBoomCount(text.Text[len("爆炸次数"):], false), calculateBoomCount(text.Text[len("爆炸次数"):], true))...)
 				return true
-			} else if text.Text == "查询我" || text.Text == "查询我新" {
+			} else if text.Text == "查询我" {
 				data := findRoleData.GetStringMapString("data")
 				name := data[strconv.FormatInt(message.Sender.UserId, 10)]
 				if len(name) == 0 {
@@ -145,7 +145,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						sendGroupMessage(message, findRole(name, text.Text == "查询我新")...)
+						sendGroupMessage(message, findRole(name)...)
 					}()
 				}
 				return true
