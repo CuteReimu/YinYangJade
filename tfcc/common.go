@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/CuteReimu/YinYangJade/slicegame"
 	. "github.com/CuteReimu/onebot"
 )
 
@@ -15,6 +16,7 @@ func init() {
 	addCmdListener(&ping{})
 	addCmdListener(&roll{})
 	addCmdListener(&randDraw{})
+	addCmdListener(&sliceGame{})
 }
 
 type showTips struct{}
@@ -128,4 +130,25 @@ func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 		ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", a1, a2))
 	}
 	return MessageChain{&Text{Text: strings.Join(ret, "\n")}}
+}
+
+type sliceGame struct{}
+
+func (r *sliceGame) Name() string {
+	return "滑块"
+}
+
+func (r *sliceGame) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (r *sliceGame) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (r *sliceGame) Execute(message *GroupMessage, content string) MessageChain {
+	if len(content) == 0 {
+		sendGroupMessage(message, slicegame.DoStuff()...)
+	}
+	return nil
 }
