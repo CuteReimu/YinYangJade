@@ -56,7 +56,7 @@ def process_player_data(name):
         "EXP": exp,
         'Class': "",
         'ClassID': player_dict['data'][-1]['jobID'],
-        'ClassDetail': player_dict['data'][-1]['jobDetail'],
+        'ClassDetail': player_dict['data'][-1].get('jobDetail', '00'),
         "EXPPercent": round(exp / single_lvl_exp[str(level)] * 100, 1),
         "LegionLevel": legion_lvl,
         "RaidPower": raid_power,
