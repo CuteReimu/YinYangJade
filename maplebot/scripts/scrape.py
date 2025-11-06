@@ -30,19 +30,22 @@ def try_request(url, name, retries=3, wait=10):
         try:
             response = requests.get(url.format(name))
             data = response.json()
-
+            logging.info(f"Requested for {name} successfully")
             break
         except Exception as e:
             print(f"Error fetching player data for {name}: {e}, retrying ({retry + 1}/3)...")
             if retry == 2:
                 print(f"Waiting for {wait} seconds before retrying...")
+                logging.warning(f"Fetch is too fast, waiting for {wait} seconds")
                 time.sleep(wait)
             continue
     return data
 
 
 def request_from_name_list():
-    names = load_player_names()
+    names_dict = load_player_names()
+    names = list(names_dict.keys())
+    names_to_del = []
 
     for i, name in enumerate(names):
         player_dict = load_dict(player_dict_fn.format(name))
@@ -60,13 +63,23 @@ def request_from_name_list():
             count = data['totalCount']
 
             if count == 0:
-                print(f"Player {name} does not exist.")
+                update_time = names_dict[name]
+                time_in_days = (datetime.datetime.now() - datetime.datetime.strptime(update_time, "%Y-%m-%d %H:%M:%S")).days
+                names_dict[name] = update_time
+                if time_in_days > 3:
+                    names_to_del.append(name)
+                    del names_dict[name]
+                print(f"Player {name} does not exist for {time_in_days} days.")
+                logging.info(f"Player {name} does not exist for {time_in_days} days.")
                 continue
+            
+        logging.info(f'{name} data found')
         
         player_name = data['ranks'][0]['characterName']
         exp = data['ranks'][0]['exp']
         lvl = data['ranks'][0]['level']
         jobID = data['ranks'][0]['jobID']
+        job_detail = data['ranks'][0]['jobDetail']
         img_url = data['ranks'][0]['characterImgURL']
         legion_lvl = data['ranks'][0]['legionLevel']
         legion_raid = data['ranks'][0]['raidPower']
@@ -76,6 +89,7 @@ def request_from_name_list():
             img64 = base64.b64encode(response.content).decode('utf-8')
         except Exception as e:
             img64 = ""
+            logging.warning(f"Error fetching image for {player_name}: {e}")
             
         cur_dict = {
             "name": player_name,
@@ -83,6 +97,7 @@ def request_from_name_list():
             "exp": exp,
             "level": lvl,
             "jobID": jobID,
+            "jobDetail": job_detail,
             "legionLevel": legion_lvl,
             "raidPower": legion_raid,
         }
@@ -90,18 +105,23 @@ def request_from_name_list():
         player_dict['img'] = img64
         
         last_dict = player_dict['data'][-1] if len(player_dict['data']) > 0 else None
-        if last_dict is not None and last_dict["datetime"].split(" ")[0] == cur_dict["datetime"].split(" ")[0]:
-            player_dict['data'] = player_dict['data'][:-1]
+        if last_dict is not None and same_dict(last_dict, cur_dict):
+            continue
         player_dict['data'].append(cur_dict)
         player_dict['data'] = sorted(player_dict['data'], key=lambda x: x['datetime'])[-buffer_size:]
         
         save_dict(player_dict_fn.format(name), player_dict)
-
-        time.sleep(sleep_per_request)  # Avoid hitting rate limits
+        names_dict[name] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        logging.info(f'Updated data for player {name}')
         
+        time.sleep(sleep_per_request)  # Avoid hitting rate limits
+    remove_player_names(names_to_del, names_dict)
+
 if __name__ == "__main__":
     sta = time.time()
+    logging.info("Starting data scrape...")
     request_from_name_list()
     end = time.time()
     print(f"Total time taken: {(end - sta)/60} minutes")
     print("Done")
+    logging.info(f"Data scrape completed in {(end - sta)/60} minutes")

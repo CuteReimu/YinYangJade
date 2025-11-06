@@ -4,32 +4,40 @@ import sys
 def try_encode_gb2312(name):
     try:
         encoded_name = name.encode('gb2312').decode('latin1')
+        logging.info(f"Converted name {name} to latin1 {encoded_name}")
         return encoded_name
     except Exception as e:
         return name
 
 def process_player_data(name):
+    logging.info(f'Start processing data for player {name}')
     name = name.strip()
     name = try_encode_gb2312(name)
-    #print(f"Processing player: {name}")
+
     if len(name) > 30: 
+        logging.error(f"Player name {name} is too long.")
         return {}
     
-    player_names = load_player_names()
+    player_names_di = load_player_names()
+    player_names = list(player_names_di.keys())
     player_names_lower = {n.lower(): i for i, n in enumerate(player_names)}
     if name.lower() not in player_names_lower:
-        player_names.append(name)
-        save_player_names(player_names)
+        logging.info(f"Player name {name} not found. Adding to player list.")
+        player_names_di[name] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        save_player_names(player_names_di)
         return {}
     
     name = player_names[player_names_lower[name.lower()]]
     player_dict = load_dict(player_dict_fn.format(name))
     
     if len(player_dict) == 0:
+        logging.info(f"No data found for player {name}.")
         return {}
     if 'data' not in player_dict:
+        logging.info(f"No data found for player {name}.")
         return {}
     if len(player_dict['data']) == 0:
+        logging.info(f"No data found for player {name}.")
         return {}
     
     data = {}
@@ -48,6 +56,7 @@ def process_player_data(name):
         "EXP": exp,
         'Class': "",
         'ClassID': player_dict['data'][-1]['jobID'],
+        'ClassDetail': player_dict['data'][-1]['jobDetail'],
         "EXPPercent": round(exp / single_lvl_exp[str(level)] * 100, 1),
         "LegionLevel": legion_lvl,
         "RaidPower": raid_power,
@@ -63,6 +72,7 @@ def process_player_data(name):
             "CurrentEXP": entry['exp'],
         })
     data['CharacterData']['GraphData'] = gdata
+    logging.info(f'Processed data for player {name}')
     
     return data
 
