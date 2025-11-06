@@ -65,7 +65,7 @@ def request_from_name_list():
             if count == 0:
                 update_time = names_dict[name]
                 time_in_days = (datetime.datetime.now() - datetime.datetime.strptime(update_time, "%Y-%m-%d %H:%M:%S")).days
-                names_dict[name] = update_time
+                # names_dict[name] = update_time  # Removed: no-op
                 if time_in_days > 3:
                     names_to_del.append(name)
                     del names_dict[name]
