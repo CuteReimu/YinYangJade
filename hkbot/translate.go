@@ -42,6 +42,8 @@ func init() {
 	translateDict.Put("beat the WR", "打破了世界纪录：")
 	translateDict.Put("in Hollow Knight Category Extensions", "")
 	translateDict.Put("in Hollow Knight Category Extensions -", "")
+	translateDict.Put("in Hollow Knight: Silksong Category Extensions", "丝之歌")
+	translateDict.Put("in Hollow Knight: Silksong Category Extensions -", "丝之歌")
 	translateDict.Put("King's Pass: Level", "国王山道")
 	translateDict.Put("in Hollow Knight", "")
 	translateDict.Put("in Hollow Knight -", "")
@@ -91,6 +93,8 @@ func init() {
 	translateDict.Put("Twisted", "畸芽")
 	translateDict.Put("Tools", "工具")
 	translateDict.Put("Awoo", "全跳蚤")
+	translateDict.Put("Individual Level", "")
+	translateDict.Put("Moss Grotto", "苔穴")
 }
 
 func translate(s string) string {
