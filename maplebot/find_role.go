@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -71,9 +72,11 @@ func findRole(name string) MessageChain {
 			slog.Error("请求失败", "error", err)
 		} else {
 			switch resp.StatusCode() {
-			case 404:
-				return MessageChain{&Text{Text: name + "已身死道消"}}
-			case 200:
+			case http.StatusNotFound:
+				if data == nil || data.CharacterData == nil {
+					return MessageChain{&Text{Text: name + "已身死道消"}}
+				}
+			case http.StatusOK:
 				body := resp.Body()
 				var httpData *findRoleReturnData
 				if err := json.Unmarshal(body, &httpData); err != nil {
