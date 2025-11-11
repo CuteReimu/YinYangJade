@@ -95,6 +95,11 @@ func init() {
 	translateDict.Put("Awoo", "全跳蚤")
 	translateDict.Put("Individual Level", "")
 	translateDict.Put("Moss Grotto", "苔穴")
+	translateDict.Put("Dapper Slapper", "衣冠楚楚的掌掴者")
+	translateDict.Put("Wishes", "祈愿")
+	translateDict.Put("Slab%", "监狱钟道%")
+	translateDict.Put("Jailed", "被锁住")
+	translateDict.Put("Bellbeast", "钟道兽")
 }
 
 func translate(s string) string {
