@@ -20,53 +20,7 @@ import (
 	"github.com/CuteReimu/YinYangJade/maplebot/scripts"
 	. "github.com/CuteReimu/onebot"
 	. "github.com/vicanso/go-charts/v2"
-	"github.com/wcharczuk/go-chart/v2/drawing"
 )
-
-func calStarForceCostPerformance() MessageChain {
-	experiment := func(cur, des int, thirtyOff, fiveTenFifteen, boomEvent bool) string {
-		var mesos float64
-		for range 1000 {
-			m, _, _ := performExperiment(false, cur, des, 150, false, thirtyOff, fiveTenFifteen, boomEvent)
-			mesos += m
-		}
-		v := 11 + 4*(cur-6)
-		if cur == 21 {
-			v += 4
-		}
-		return fmt.Sprintf("%.2fB", mesos/1000/float64(v)*(9*3)/1000000000)
-	}
-	values := make([][]string, 0, 7)
-	for i := 15; i <= 21; i++ {
-		v := make([]string, 0, 5)
-		v = append(v, fmt.Sprintf("%d★ → %d★", i, i+1))
-		v = append(v, experiment(i, i+1, false, false, false))
-		v = append(v, experiment(i, i+1, true, false, false))
-		v = append(v, experiment(i, i+1, false, true, false))
-		v = append(v, experiment(i, i+1, true, true, false))
-		v = append(v, experiment(i, i+1, false, false, true))
-		values = append(values, v)
-	}
-	p, err := TableOptionRender(TableChartOption{
-		Header: []string{"150装备升星", "无活动", "七折", "必成", "超必", "超爆"},
-		Data:   values,
-		Width:  700,
-		CellStyle: func(cell TableCell) *Style {
-			if cell.Column == 0 {
-				return &Style{FillColor: drawing.Color{R: 180, G: 180, B: 180, A: 128}}
-			}
-			return nil
-		},
-	})
-	if err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
-	}
-	return nil
-}
 
 func makeMesoFn(divisor int, currentStarExp0 ...float64) func(int, int) float64 {
 	currentStarExp := 2.7
@@ -189,26 +143,6 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 	return _SUCCESS
 }
 
-func perform20To22(itemLevel int, thirtyOff bool) (starForceResult, float64) {
-	var (
-		currentStar = 20
-		totalMesos  float64
-	)
-	for currentStar < 22 {
-		totalMesos += attemptCost(false, currentStar, itemLevel, false, thirtyOff, false, false)
-		switch determineOutcome(false, currentStar, false, false, false) {
-		case _SUCCESS:
-			currentStar++
-		case _DECREASE:
-			currentStar--
-		case _MAINTAIN:
-		case _BOOM:
-			return _BOOM, totalMesos
-		}
-	}
-	return _SUCCESS, totalMesos
-}
-
 // performExperiment return (totalMesos, totalBooms, totalCount)
 func performExperiment(newKms bool, currentStar, desiredStar, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (float64, int, int) {
 	var (
@@ -247,48 +181,6 @@ func formatInt64(i int64) string {
 		return fmt.Sprintf("%.2fB", float64(i)/1000000000.0)
 	}
 	return fmt.Sprintf("%.2fT", float64(i)/1000000000000.0)
-}
-
-func calculate20To22() MessageChain {
-	const testCount = 10000
-	var (
-		totalBooms int
-		ss         = make([][]string, 0, 5)
-	)
-	for _, level := range []int{140, 150, 160, 200, 250} {
-		var mesos, mesosThirtyOff float64
-		for range testCount {
-			b, m := perform20To22(level, false)
-			mesos += m
-			if b == _BOOM {
-				totalBooms++
-			}
-			b, m = perform20To22(level, true)
-			mesosThirtyOff += m
-			if b == _BOOM {
-				totalBooms++
-			}
-		}
-		ss = append(ss, []string{
-			fmt.Sprintf("%d级", level),
-			formatInt64(int64(math.Round(mesos / float64(testCount)))),
-			formatInt64(int64(math.Round(mesosThirtyOff / float64(testCount)))),
-		})
-	}
-	ret := MessageChain{&Text{Text: fmt.Sprintf("20★ → 22★，有%.2f%%的几率中途爆炸，平均消耗%.1f个备件能成功", float64(totalBooms)/testCount*10, testCount*10/float64(totalBooms))}}
-	p, err := TableOptionRender(TableChartOption{
-		Width:  300,
-		Header: []string{"平均花费", "无活动", "七折"},
-		Data:   ss,
-	})
-	if err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
-	}
-	return ret
 }
 
 func calculateBoomCount(content string, newKms bool) MessageChain {
