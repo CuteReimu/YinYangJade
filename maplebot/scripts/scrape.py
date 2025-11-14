@@ -7,7 +7,7 @@ import os
 
 from file_utils import *
 
-player_url = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=weekly&reboot_index=1&page_index=1&character_name={}"
+player_url = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=legendary&reboot_index=1&page_index=1&character_name={}"
 legion_url = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=legion&id=45&page_index=1&character_name={}"
 buffer_size = 15
 sleep_per_request = 0.5  # seconds
@@ -78,11 +78,12 @@ def request_from_name_list():
         player_name = data['ranks'][0]['characterName']
         exp = data['ranks'][0]['exp']
         lvl = data['ranks'][0]['level']
-        jobID = data['ranks'][0]['jobID']
-        job_detail = data['ranks'][0]['jobDetail']
         img_url = data['ranks'][0]['characterImgURL']
-        legion_lvl = data['ranks'][0]['legionLevel']
-        legion_raid = data['ranks'][0]['raidPower']
+        jobID = data['ranks'][0].get('jobID', -1)
+        job_detail = data['ranks'][0].get('jobDetail', -1)
+        job_name = data['ranks'][0].get('jobName', '')
+        legion_lvl = data['ranks'][0].get('legionLevel', 0)
+        legion_raid = data['ranks'][0].get('raidPower', 0)
         
         try:
             response = requests.get(img_url)
@@ -98,6 +99,7 @@ def request_from_name_list():
             "level": lvl,
             "jobID": jobID,
             "jobDetail": job_detail,
+            "jobName": job_name,
             "legionLevel": legion_lvl,
             "raidPower": legion_raid,
         }
