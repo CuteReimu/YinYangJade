@@ -23,7 +23,9 @@ var ClassNameMap = map[string]string{
 	"Dark Knight":            "黑骑士",
 	"Paladin":                "圣骑士",
 	"Ice/Lightning Archmage": "冰雷魔导师",
+	"Arch Mage (I/L)":        "冰雷魔导师",
 	"Fire/Poison Archmage":   "火毒魔导师",
+	"Arch Mage (F/P)":        "火毒魔导师",
 	"Bishop":                 "主教",
 	"Shadower":               "侠盗(刀飞)",
 	"Night Lord":             "隐士(镖飞)",
@@ -68,6 +70,7 @@ var ClassNameMap = map[string]string{
 	"ZERO":                   "神之子",
 	"Lynn":                   "琳恩",
 	"Kinesis":                "超能力者",
+	"Ren":					  "莲",
 }
 
 var ClassIDMap = map[int]string{

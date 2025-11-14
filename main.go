@@ -204,8 +204,8 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 
 func initCron() {
 	c := cron.New()
-	_ = c.AddFunc("0 0 11 * * *", maplebot.FindRoleBackground)
-	_ = c.AddFunc("0 0 17 * * *", maplebot.FindRoleBackground)
-	_ = c.AddFunc("0 0 23 * * *", maplebot.FindRoleBackground)
+	_ = c.AddFunc("0 0 9 * * *", maplebot.FindRoleBackground)
+	_ = c.AddFunc("0 0 15 * * *", maplebot.FindRoleBackground)
+	_ = c.AddFunc("0 0 1 * * *", maplebot.FindRoleBackground)
 	c.Start()
 }
