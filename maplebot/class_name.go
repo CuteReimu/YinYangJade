@@ -35,6 +35,7 @@ var ClassNameMap = map[string]string{
 	"Cannon Master":          "神炮王",
 	"Marksman":               "箭神",
 	"Bowmaster":              "神射手",
+	"Bow Master":             "神射手",
 	"Pathfinder":             "古迹猎人",
 	"Dawn Warrior":           "魂骑士",
 	"Blaze Wizard":           "炎术士",
