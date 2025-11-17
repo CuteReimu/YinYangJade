@@ -51,6 +51,10 @@ func FindRoleBackground() {
 	_, err := scripts.RunPythonScript("scrape.py")
 	if err != nil {
 		slog.Error("角色数据预抓取失败", "error", err)
+		notifyGroups := config.GetIntSlice("notify_groups")
+		for _, group := range notifyGroups {
+			_, _ = B.SendGroupMessage(int64(group), MessageChain{&Text{Text: "角色数据预抓取失败"}})
+		}
 		return
 	}
 	slog.Info("完成角色数据预抓取")
