@@ -104,9 +104,9 @@ def process_player_data_full(name):
             'chart': '',
         }
         
-    times = [datetime.strptime(di['datetime'], '%Y-%m-%d %H:%M:%S') for di in gdata]
-    lvls = [di['level'] for di in gdata]
-    exps = [di['exp'] for di in gdata]
+    times = [datetime.fromisoformat(di['DateLabel']) for di in gdata]
+    lvls = [di['Level'] for di in gdata]
+    exps = [di['CurrentEXP'] for di in gdata]
 
     _exps, _lvls = get_processed_y(
         exps, lvls, lvl_single, lvl_culm
