@@ -105,3 +105,74 @@ def same_dict(dict1, dict2):
     if abs((date1 - date2)) >= datetime.timedelta(hours=20):
         return False
     return True
+
+class_translations = {
+	"Hero":        "英雄",
+	"Dark Knight": "黑骑士",
+	"Paladin":     "圣骑士",
+
+	"Ice/Lightning Archmage": "冰雷魔导师",
+	"Arch Mage (I/L)":        "冰雷魔导师",
+	"Fire/Poison Archmage":   "火毒魔导师",
+	"Arch Mage (F/P)":        "火毒魔导师",
+	"Bishop":                 "主教",
+
+	"Shadower":     "侠盗(刀飞)",
+	"Night Lord":   "隐士(镖飞)",
+	"Blade Master": "暗影双刀",
+
+	"Buccaneer":     "冲锋队长",
+	"Corsair":       "船长",
+	"Cannon Master": "神炮王",
+
+	"Marksman":   "箭神",
+	"Bowmaster":  "神射手",
+	"Bow Master": "神射手",
+	"Pathfinder": "古迹猎人",
+
+	"Dawn Warrior":    "魂骑士",
+	"Blaze Wizard":    "炎术士",
+	"Wind Archer":     "风灵使者",
+	"Night Walker":    "夜行者",
+	"Thunder Breaker": "奇袭者",
+	"Mihile":          "米哈尔",
+
+	"Xenon":         "尖兵",
+	"Battle Mage":   "幻灵斗师",
+	"Wild Hunter":   "豹弩游侠",
+	"Mechanic":      "机械师",
+	"Demon Slayer":  "恶魔猎手",
+	"Demon Avenger": "恶魔复仇者",
+	"Blaster":       "爆破手",
+
+	"Aran":     "战神",
+	"Evan":     "龙神",
+	"Mercedes": "双弩精灵",
+	"Phantom":  "幻影",
+	"Shade":    "隐月",
+	"Luminous": "夜光法师",
+
+	"Kaiser":         "狂龙战士",
+	"Kain":           "该隐",
+	"Cadena":         "卡德娜",
+	"Angelic Buster": "爆莉萌天使",
+
+	"Adele":  "阿黛尔",
+	"Illium": "伊利温",
+	"Ark":    "亚克",
+	"Khali":  "卡莉",
+
+	"Lara":    "菈菈",
+	"Hoyoung": "虎影",
+	"Ren":     "莲",
+
+	"Hayato": "剑豪",
+	"Kanna":  "阴阳师",
+
+	"Zero":    "神之子",
+	"Kinesis": "超能力者",
+
+	"Lynn":        "琳恩",
+	"Mo Xuan":     "墨玄",
+	"Sia Astelle": "施亚",
+}

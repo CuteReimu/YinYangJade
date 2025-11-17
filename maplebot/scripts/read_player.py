@@ -1,5 +1,7 @@
 from file_utils import *
 import sys
+from exp_utils import *
+from draw_exp_graph import *
 
 def try_encode_gb2312(name):
     try:
@@ -76,7 +78,62 @@ def process_player_data(name):
     
     return data
 
+def process_player_data_full(name):
+    data = process_player_data(name)
+    
+    lvl_exp = load_dict(lvl_exp_file)
+    lvl_single = lvl_exp['single']
+    lvl_culm = lvl_exp['cumulative']
+    
+    status = 'Success'
+    try:
+        name = data['CharacterData']['Name']
+        job_name = data['CharacterData']['Class']
+        job_name = class_translations.get(job_name, job_name)
+        _level = data['CharacterData']['Level']
+        _exp = data['CharacterData']['EXP']
+        gdata = data['CharacterData']['GraphData']
+        legion_level = data['CharacterData']['LegionLevel']
+        avatar_img64 = data['CharacterData']['Image']
+    except KeyError:
+        status = 'No Data'
+        
+    times = [datetime.strptime(di['datetime'], '%Y-%m-%d %H:%M:%S') for di in gdata]
+    lvls = [di['level'] for di in gdata]
+    exps = [di['exp'] for di in gdata]
+
+    _exps, _lvls = get_processed_y(
+        exps, lvls, lvl_single, lvl_culm
+    )
+    days, dated_exps, dated_lvls = format_series_data(
+        times, _exps, _lvls
+    )
+    clipped_exps, exp_flags = clip_exps(dated_exps)
+    days_to_lvl, exp_percent = days_to_level(
+        dated_exps, _exp, _level, lvl_single
+    )
+    logging.info(f'Processed EXP and Level data for player {name}')
+
+    imgb64 = draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps)
+    logging.info(f'Drew EXP graph for player {name}')
+    
+    message_txt = (
+        f'角色名：{name}\n'
+        f'职业：{job_name}\n'
+        f'等级：{_level} ({exp_percent}%)\n'
+        f'联盟：{legion_level}\n'
+        f'预计还有{days_to_lvl}天升级\n'
+    )
+    result = {
+        'Status': status,
+        'profile': avatar_img64,
+        'text': message_txt,
+        'chart': imgb64,
+    }
+    return result
+
 if __name__ == "__main__":
     player_name = sys.argv[1]
-    data = process_player_data(player_name)
+    # data = process_player_data(player_name)
+    data = process_player_data_full(player_name)
     print(json.dumps(data))
