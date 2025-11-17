@@ -43,7 +43,7 @@ type findRoleReturnData struct {
 func FindRoleBackground() {
 	slog.Info("开始角色数据预抓取")
 	for _, name := range findRoleData.GetStringMapString("data") {
-		_, err := scripts.RunPythonScript("read_player.py", name)
+		_, err := scripts.RunPythonScript("read_player.py", name, "silence")
 		if err != nil {
 			slog.Error("执行脚本失败", "error", err, "name", name)
 		}
@@ -61,42 +61,51 @@ func FindRoleBackground() {
 }
 
 func findRole(name string) MessageChain {
-	var data *findRoleReturnData
 	b, err := scripts.RunPythonScript("read_player.py", name)
 	if err != nil {
 		slog.Error("执行脚本失败", "error", err, "name", name)
 	} else {
-		if err := json.Unmarshal(b, &data); err != nil {
+		var pythonData struct {
+			Status  string `json:"status"`
+			Profile string `json:"profile"`
+			Text    string `json:"text"`
+			Chart   string `json:"chart"`
+		}
+		if err := json.Unmarshal(b, &pythonData); err != nil {
 			slog.Error("json解析失败", "error", err, "body", string(b))
-		}
-	}
-	if data == nil || data.CharacterData == nil || len(data.CharacterData.GraphData) < 7 {
-		resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
-		if err != nil {
-			slog.Error("请求失败", "error", err)
-		} else {
-			switch resp.StatusCode() {
-			case http.StatusNotFound:
-				if data == nil || data.CharacterData == nil {
-					return MessageChain{&Text{Text: name + "已身死道消"}}
-				}
-			case http.StatusOK:
-				body := resp.Body()
-				var httpData *findRoleReturnData
-				if err := json.Unmarshal(body, &httpData); err != nil {
-					slog.Error("json解析失败", "error", err, "body", body)
-				} else if httpData != nil && httpData.CharacterData != nil {
-					data = httpData
-				}
-			default:
-				slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
+		} else if pythonData.Status == "success" {
+			var messageChain MessageChain
+			if pythonData.Profile != "" {
+				messageChain = append(messageChain, &Image{File: "base64://" + pythonData.Profile})
 			}
+			if pythonData.Text != "" {
+				messageChain = append(messageChain, &Text{Text: pythonData.Text})
+			}
+			if pythonData.Chart != "" {
+				messageChain = append(messageChain, &Image{File: "base64://" + pythonData.Chart})
+			}
+			return messageChain
 		}
 	}
-	if data == nil {
-		return nil
+	var data *findRoleReturnData
+	resp, err := restyClient.R().Get("https://api.maplestory.gg/v2/public/character/gms/" + name)
+	if err != nil {
+		slog.Error("请求失败", "error", err)
+	} else {
+		switch resp.StatusCode() {
+		case http.StatusNotFound:
+			return MessageChain{&Text{Text: name + "已身死道消"}}
+		case http.StatusOK:
+			body := resp.Body()
+			if err := json.Unmarshal(body, &data); err != nil {
+				slog.Error("json解析失败", "error", err, "body", body)
+				return MessageChain{&Text{Text: "解析失败"}}
+			}
+		default:
+			slog.Error("请求失败", "status", resp.StatusCode(), "message", gjson.GetBytes(resp.Body(), "message").String())
+		}
 	}
-	if data.CharacterData == nil {
+	if data == nil || data.CharacterData == nil {
 		return MessageChain{&Text{Text: "请求失败"}}
 	}
 	return resolveFindData(data)
