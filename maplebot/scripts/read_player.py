@@ -85,7 +85,7 @@ def process_player_data_full(name):
     lvl_single = lvl_exp['single']
     lvl_culm = lvl_exp['cumulative']
     
-    status = 'Success'
+    status = 'success'
     try:
         name = data['CharacterData']['Name']
         job_name = data['CharacterData']['Class']
@@ -97,6 +97,12 @@ def process_player_data_full(name):
         avatar_img64 = data['CharacterData']['Image']
     except KeyError:
         status = 'No Data'
+        return {
+            'status': status,
+            'profile': '',
+            'text': '尚未收录角色数据',
+            'chart': '',
+        }
         
     times = [datetime.strptime(di['datetime'], '%Y-%m-%d %H:%M:%S') for di in gdata]
     lvls = [di['level'] for di in gdata]
@@ -108,24 +114,32 @@ def process_player_data_full(name):
     days, dated_exps, dated_lvls = format_series_data(
         times, _exps, _lvls
     )
-    clipped_exps, exp_flags = clip_exps(dated_exps)
-    days_to_lvl, exp_percent = days_to_level(
-        dated_exps, _exp, _level, lvl_single
-    )
-    logging.info(f'Processed EXP and Level data for player {name}')
-
-    imgb64 = draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps)
-    logging.info(f'Drew EXP graph for player {name}')
     
+    hasChange = check_exp_has_change(dated_exps)
+    if not hasChange:
+        logging.info(f'No EXP change detected for player {name}')
+        exp_text = '近期经验无变化\n'
+        imgb64 = ''
+    else:
+        days_to_lvl, exp_percent = days_to_level(
+            dated_exps, _exp, _level, lvl_single
+        )
+        clipped_exps, exp_flags = clip_exps(dated_exps)
+        logging.info(f'Processed EXP and Level data for player {name}')
+
+        imgb64 = draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps)
+        logging.info(f'Drew EXP graph for player {name}')
+        exp_text =  f'预计还有{days_to_lvl}天升级\n'
+
     message_txt = (
-        f'角色名：{name}\n'
-        f'职业：{job_name}\n'
-        f'等级：{_level} ({exp_percent}%)\n'
-        f'联盟：{legion_level}\n'
-        f'预计还有{days_to_lvl}天升级\n'
+        f'角色名：{name}\n' +
+        f'职业：{job_name}\n' +
+        f'等级：{_level} ({exp_percent}%)\n' +
+        f'联盟：{legion_level}\n' +
+        exp_text
     )
     result = {
-        'Status': status,
+        'status': status,
         'profile': avatar_img64,
         'text': message_txt,
         'chart': imgb64,

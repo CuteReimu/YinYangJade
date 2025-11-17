@@ -34,6 +34,10 @@ def format_series_data(times, exps, lvls):
     days = [day.strftime('%m-%d') for day in days]
     return days, dated_exps, dated_lvls
 
+def check_exp_has_change(dated_exps):
+    filtered_exps = [val for val in dated_exps if val is not None and val != 0]
+    return len(filtered_exps) > 0
+
 def clip_exps(exps, min_value=0.2, max_value=10):
     T = 1e12
     clipped_exps = []
