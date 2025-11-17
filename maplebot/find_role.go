@@ -204,7 +204,7 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 			labels[i] = labels[i][5:]
 		}
 		levelValues = levelValues[1:]
-		maxValue := slices.Max(expValues)
+		maxValue := max(slices.Max(expValues), 1e11)
 		digits := int(math.Floor(math.Log10(maxValue))) + 1
 		factor := math.Pow(10, float64(digits-1))
 		highest := math.Floor(maxValue / factor)
