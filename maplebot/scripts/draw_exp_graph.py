@@ -18,14 +18,14 @@ def draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps):
     colors = [_colors[flag] for flag in exp_flags] # -1: under, 0: base, 1: over, this is a bad practice
 
     num_ticks = 6
-    exp_ticks = [0, 2, 4, 6, 8, 10]
+    exp_ticks = np.linspace(0, 10, num_ticks)
     line_min = min(v for v in line_values if v is not None)
     line_max = max(v for v in line_values if v is not None)
     line_range = line_max - line_min
     if line_range == 0:
         line_range = 1  # Avoid ymin == ymax issue
     line_min_padded = line_min - 0.1 * line_range
-    line_max_padded = line_max + 0.15 * line_range
+    line_max_padded = line_min + 2.1 * line_range
     line_ticks = np.linspace(line_min_padded, line_max_padded, num_ticks)
 
     fig, ax1 = plt.subplots(figsize=(8, 5))
@@ -39,15 +39,17 @@ def draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps):
     ax1.bar(x, bar_values, color=colors, zorder=3)
     ax1.set_yticks(exp_ticks)
     ax1.yaxis.set_major_formatter(lambda x, _: f"{x:.0f}T")
+    ax1.set_ylim(0, 10)
 
     # Line
     ax2 = ax1.twinx()
     line = ax2.plot(x, line_values, marker="o", linewidth=2, markersize=5, color="#9bff7a", zorder=4)[0]
-    line.axes.update_datalim(np.array([[0, line_min_padded]]))
-    line.axes.update_datalim(np.array([[len(x) - 1, line_max_padded]]))
-    line.axes.autoscale_view()
+    # line.axes.update_datalim(np.array([[0, line_min_padded]]))
+    # line.axes.update_datalim(np.array([[len(x) - 1, line_max_padded]]))
+    # line.axes.autoscale_view()
     ax2.yaxis.set_major_formatter(lambda x, _: f"{x:.2f}")
     ax2.set_yticks(line_ticks)
+    ax2.set_ylim(line_min_padded, line_max_padded)
 
 
     # Disable all default grids except horizontal lines
