@@ -118,7 +118,7 @@ def process_player_data_full(name):
     hasChange = check_exp_has_change(dated_exps)
     if not hasChange:
         logging.info(f'No EXP change detected for player {name}')
-        exp_text = '近期经验无变化\n'
+        exp_text = '近期经验无变化\r\n'
         imgb64 = ''
     else:
         days_to_lvl, exp_percent = days_to_level(
@@ -129,13 +129,13 @@ def process_player_data_full(name):
 
         imgb64 = draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps)
         logging.info(f'Drew EXP graph for player {name}')
-        exp_text =  f'预计还有{days_to_lvl}天升级\n'
+        exp_text =  f'预计还有{days_to_lvl}天升级\r\n'
 
     message_txt = (
-        f'角色名：{name}\n' +
-        f'职业：{job_name}\n' +
-        f'等级：{_level} ({exp_percent}%)\n' +
-        f'联盟：{legion_level}\n' +
+        f'角色名：{name}\r\n' +
+        f'职业：{job_name}\r\n' +
+        f'等级：{_level} ({exp_percent}%)\r\n' +
+        f'联盟：{legion_level}\r\n' +
         exp_text
     )
     result = {
@@ -148,6 +148,8 @@ def process_player_data_full(name):
 
 if __name__ == "__main__":
     player_name = sys.argv[1]
-    # data = process_player_data(player_name)
-    data = process_player_data_full(player_name)
-    print(json.dumps(data))
+    if len(sys.argv) > 2 and sys.argv[2] == 'silence':
+        process_player_data(player_name)
+    else:
+        data = process_player_data_full(player_name)
+        print(json.dumps(data))
