@@ -22,6 +22,8 @@ def draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps):
     line_min = min(v for v in line_values if v is not None)
     line_max = max(v for v in line_values if v is not None)
     line_range = line_max - line_min
+    if line_range == 0:
+        line_range = 1  # Avoid ymin == ymax issue
     line_min_padded = line_min - 0.1 * line_range
     line_max_padded = line_max + 0.15 * line_range
     line_ticks = np.linspace(line_min_padded, line_max_padded, num_ticks)

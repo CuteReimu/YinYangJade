@@ -60,8 +60,14 @@ def clip_exps(exps, min_value=0.2, max_value=10):
     return clipped_exps, flags
 
 def days_to_level(dated_exps, current_exp, current_lvl, lvl_single):
-    avg_exp = sum(val for val in dated_exps if val is not None) / sum(1 for val in dated_exps if val is not None)
-    exp_needed = lvl_single[str(current_lvl)] - current_exp
-    days_needed = round(exp_needed / avg_exp)
+    filtered_exps = [val for val in dated_exps if val is not None]
     cur_exp_percent = round(current_exp / lvl_single[str(current_lvl)] * 100, 1)
+    if not filtered_exps:
+        return 10000, cur_exp_percent  # Arbitrary large number indicating no progress
+    avg_exp = sum(filtered_exps) / len(filtered_exps)
+    exp_needed = lvl_single[str(current_lvl)] - current_exp
+    if avg_exp > 100:
+        days_needed = round(exp_needed / avg_exp)
+    else:
+        days_needed = 10000  # Arbitrary large number indicating no progress
     return days_needed, cur_exp_percent

@@ -115,15 +115,15 @@ def process_player_data_full(name):
         times, _exps, _lvls
     )
     
+    days_to_lvl, exp_percent = days_to_level(
+        dated_exps, _exp, _level, lvl_single
+    )
     hasChange = check_exp_has_change(dated_exps)
     if not hasChange:
         logging.info(f'No EXP change detected for player {name}')
         exp_text = '近期经验无变化\r\n'
         imgb64 = ''
     else:
-        days_to_lvl, exp_percent = days_to_level(
-            dated_exps, _exp, _level, lvl_single
-        )
         clipped_exps, exp_flags = clip_exps(dated_exps)
         logging.info(f'Processed EXP and Level data for player {name}')
 
