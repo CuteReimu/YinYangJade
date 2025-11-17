@@ -6,6 +6,7 @@ import base64
 def draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps):
 
     # Data
+    T = 1e12
     x = np.array(days)
     bar_values = np.array(clipped_exps)
     line_values = np.array(dated_lvls)

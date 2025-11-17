@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import datetime
 
 def get_processed_y(exps, lvls, lvl_single, lvl_culm):
     exp_diffs = [0]
@@ -13,10 +13,10 @@ def get_processed_y(exps, lvls, lvl_single, lvl_culm):
 
 def format_series_data(times, exps, lvls):
     if isinstance(times[0], str):
-        times = [datetime.fromisoformat(t) for t in times]
+        times = [datetime.datetime.fromisoformat(t) for t in times]
     series_max_length = 14
     last_day = times[-1]
-    days = [last_day - timedelta(days=i) for i in range(series_max_length)][::-1]
+    days = [last_day - datetime.timedelta(days=i) for i in range(series_max_length)][::-1]
     dated_exps = []
     dated_lvls = []
     prev_lvl = None     # Break the line if no data for starting days
