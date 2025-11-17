@@ -28,7 +28,7 @@
 > [!IMPORTANT]
 > 本项目是基于onebot的正向ws接口，因此你需要开启对应机器人项目的ws监听。
 >
-> 本项目处理消息的格式是消息段数组，因此你需要将onobot中的`event.message_format`配置为`array`。
+> 本项目处理消息的格式是消息段数组，因此你需要将onebot中的`event.message_format`配置为`array`。
 
 ## 编译
 
