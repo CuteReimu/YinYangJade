@@ -113,5 +113,5 @@ def get_nearest_spread(min_lvl, max_lvl):
     start_lvl = mid_lvl - step_using * 3
     ticks = [start_lvl + i * step_using for i in range(6)]
     
-    print(f'Min level: {min_lvl}, Max level: {max_lvl}, Using step: {step_using}, Start: {start_lvl}, End: {end_lvl}, Ticks: {ticks}')
+    # print(f'Min level: {min_lvl}, Max level: {max_lvl}, Using step: {step_using}, Start: {start_lvl}, End: {end_lvl}, Ticks: {ticks}')
     return start_lvl, end_lvl, ticks
