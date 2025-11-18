@@ -1,6 +1,7 @@
 # 阴阳神玉
 
-![](https://img.shields.io/github/languages/top/CuteReimu/YinYangJade "语言")
+![](https://img.shields.io/github/go-mod/go-version/CuteReimu/YinYangJade "Go版本")
+![](https://img.shields.io/badge/Python-3.12.11-blue "Python版本")
 [![](https://img.shields.io/github/actions/workflow/status/CuteReimu/YinYangJade/golangci-lint.yml?branch=master)](https://github.com/CuteReimu/YinYangJade/actions/workflows/golangci-lint.yml "代码分析")
 [![](https://img.shields.io/github/contributors/CuteReimu/YinYangJade)](https://github.com/CuteReimu/YinYangJade/graphs/contributors "贡献者")
 [![](https://img.shields.io/github/license/CuteReimu/YinYangJade)](https://github.com/CuteReimu/YinYangJade/blob/master/LICENSE "许可协议")
