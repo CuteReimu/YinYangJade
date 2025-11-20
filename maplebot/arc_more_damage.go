@@ -11,7 +11,6 @@ import (
 
 type BossArcData struct {
 	Name    string
-	Names   []string
 	NeedArc int
 }
 
