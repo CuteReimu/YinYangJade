@@ -212,6 +212,9 @@ func handleGroupMessage(message *GroupMessage) bool {
 					sendGroupMessage(message, &Text{Text: "你还未绑定"})
 				}
 				return true
+			} else if text.Text == "神秘压制" {
+				sendGroupMessage(message, GetMoreDamageArc()...)
+				return true
 			} else if strings.HasPrefix(text.Text, "模拟升星旧 ") || strings.HasPrefix(text.Text, "模拟上星旧 ") ||
 				strings.HasPrefix(text.Text, "升星期望旧 ") || strings.HasPrefix(text.Text, "上星期望旧 ") {
 				content := strings.TrimSpace(text.Text[len("模拟升星旧"):])
