@@ -43,9 +43,9 @@ type findRoleReturnData struct {
 func FindRoleBackground() {
 	slog.Info("开始角色数据预抓取")
 	for _, name := range findRoleData.GetStringMapString("data") {
-		_, err := scripts.RunPythonScript("read_player.py", name, "silence")
+		output, err := scripts.RunPythonScript("read_player.py", name, "silence")
 		if err != nil {
-			slog.Error("执行脚本失败", "error", err, "name", name)
+			slog.Error("执行脚本失败", "error", err, "name", name, "output", string(output))
 		}
 	}
 	_, err := scripts.RunPythonScript("scrape.py")

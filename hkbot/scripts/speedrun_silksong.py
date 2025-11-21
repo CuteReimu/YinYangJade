@@ -32,7 +32,7 @@ def get_player_name(player):
         pid = player["id"]
         if pid in player_cache:
             return player_cache[pid]
-        u = requests.get(f"https://www.speedrun.com/api/v1/users/{pid}").json()
+        u = requests.get(f"https://www.speedrun.com/api/v1/users/{pid}", timeout=60).json()
         name = u["data"]["names"]["international"]
         player_cache[pid] = name
         return name
@@ -40,7 +40,8 @@ def get_player_name(player):
         return player.get("name", "Unknown")
 
 def format_time(t):
-    m = int(t // 60)
+    t = int(t)
+    m = t // 60
     s = t - m * 60
     h = m // 60
     if h > 0:
@@ -85,7 +86,7 @@ def format_relative_date(date_str):
         return date_str
 
 def main(user_input):
-    resp = requests.get(URL[user_input] + "&top=3")
+    resp = requests.get(URL[user_input] + "&top=3", timeout=60)
     resp.raise_for_status()
 
     data = resp.json()["data"]

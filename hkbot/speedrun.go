@@ -48,7 +48,12 @@ func (t *speedrunLeaderboards) Execute(_ *GroupMessage, content string) MessageC
 		return scripts.RunPythonScript("speedrun_silksong.py", content)
 	})
 	if err != nil {
-		slog.Error("查询失败", "error", err)
+		output, ok := result.([]byte)
+		if ok {
+			slog.Error("查询失败", "output", string(output), "error", err)
+		} else {
+			slog.Error("查询失败", "output", result, "error", err)
+		}
 		return nil
 	}
 	output, ok := result.([]byte)
