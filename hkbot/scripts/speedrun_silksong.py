@@ -1,7 +1,7 @@
 import requests
 import sys
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 URL = {"anylp":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=qj70747q",
        "anyrp": "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=10vzvmol",
