@@ -20,7 +20,7 @@ var requirements []byte
 var e error
 
 func RunPythonScript(scriptName string, args ...string) ([]byte, error) {
-	const scriptDir = "scripts"
+	const scriptDir = "scripts_hkbot"
 	depOnce.Do(func() {
 		files, err := scriptFS.ReadDir(".")
 		if err != nil {
@@ -64,13 +64,13 @@ func RunPythonScript(scriptName string, args ...string) ([]byte, error) {
 var depOnce sync.Once
 
 func extractDependencies(destDir string) error {
-	err := os.WriteFile("requirements.txt", requirements, 0600)
+	err := os.WriteFile("requirements_hkbot.txt", requirements, 0600)
 	if err != nil {
-		slog.Error("Unable to write requirements.txt", "err", err)
+		slog.Error("Unable to write requirements_hkbot.txt", "err", err)
 		return errors.WithStack(err)
 	}
 	// 执行Python脚本
-	cmd := exec.Command("pip3", "install", "-t", destDir, "-r", "requirements.txt")
+	cmd := exec.Command("pip3", "install", "-t", destDir, "-r", "requirements_hkbot.txt")
 	slog.Debug("Executing Python script", "cmd", cmd)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
