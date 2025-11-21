@@ -14,13 +14,13 @@ import (
 func init() {
 	addCmdListener(&speedrunLeaderboards{
 		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%"},
-		mutedInputs:     []string{"all bosses", "all boss", "allbosses", "allboss"},
+		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss"},
 	})
 }
 
 type speedrunLeaderboards struct {
 	availableInputs []string
-	mutedInputs     []string
+	aliasInputs     []string
 	sf              singleflight.Group
 }
 
@@ -41,7 +41,7 @@ func (t *speedrunLeaderboards) Execute(_ *GroupMessage, content string) MessageC
 	eq := func(s string) bool {
 		return strings.EqualFold(content, strings.ReplaceAll(s, "%", ""))
 	}
-	if !slices.ContainsFunc(t.availableInputs, eq) && !slices.ContainsFunc(t.mutedInputs, eq) {
+	if !slices.ContainsFunc(t.availableInputs, eq) && !slices.ContainsFunc(t.aliasInputs, eq) {
 		return MessageChain{&Text{Text: "支持的榜单类型有：" + strings.Join(t.availableInputs, "，")}}
 	}
 	result, err, _ := t.sf.Do(content, func() (any, error) {

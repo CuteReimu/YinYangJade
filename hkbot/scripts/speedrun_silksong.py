@@ -25,19 +25,11 @@ CATEGORY_NAMES = {
     "twisted": "Twisted%",
 }
 
-player_cache = {}
-
-def get_player_name(player):
-    if player["rel"] == "user":
-        pid = player["id"]
-        if pid in player_cache:
-            return player_cache[pid]
-        u = requests.get(f"https://www.speedrun.com/api/v1/users/{pid}", timeout=60).json()
-        name = u["data"]["names"]["international"]
-        player_cache[pid] = name
-        return name
-    else:
-        return player.get("name", "Unknown")
+def get_player_name(player, players):
+    for p in players:
+        if p["id"] == player["id"]:
+            return p["names"]["international"]
+    return player.get("name", "Unknown")
 
 def format_time(t):
     t = int(t)
@@ -86,7 +78,7 @@ def format_relative_date(date_str):
         return date_str
 
 def main(user_input):
-    resp = requests.get(URL[user_input] + "&top=3", timeout=60)
+    resp = requests.get(URL[user_input] + "&embed=players&top=3", timeout=60)
     resp.raise_for_status()
 
     data = resp.json()["data"]
@@ -94,13 +86,15 @@ def main(user_input):
     if len(runs) > 3:
         runs = runs[:3]
 
+    players = data.get("players", {}).get("data", [])
+
     print(f"=== 丝之歌 — {CATEGORY_NAMES[user_input]} - NMG ===")
     for entry in runs:
         place = entry["place"]
         run = entry["run"]
         time_sec = run["times"]["primary_t"]
 
-        player = get_player_name(run["players"][0])
+        player = get_player_name(run["players"][0], players)
         time_str = format_time(time_sec)
         relative_date = " - " + format_relative_date(run["date"]) if "date" in run else ""
 
