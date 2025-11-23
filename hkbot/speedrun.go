@@ -61,5 +61,10 @@ func (t *speedrunLeaderboards) Execute(_ *GroupMessage, content string) MessageC
 		slog.Error("查询结果类型错误", "type", fmt.Sprintf("%T", result))
 		return nil
 	}
-	return MessageChain{&Text{Text: string(output)}}
+	// 去掉多余的空行，确保都是Windows风格的换行
+	text := strings.TrimSpace(string(output))
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	text = strings.ReplaceAll(text, "\n", "\r\n")
+	return MessageChain{&Text{Text: text}}
 }

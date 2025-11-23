@@ -88,7 +88,7 @@ def main(user_input):
 
     players = data.get("players", {}).get("data", [])
 
-    print(f"=== 丝之歌 — {CATEGORY_NAMES[user_input]} - NMG ===")
+    print(f"=== 丝之歌 — {CATEGORY_NAMES[user_input]} — NMG ===")
     for entry in runs:
         place = entry["place"]
         run = entry["run"]
@@ -96,7 +96,7 @@ def main(user_input):
 
         player = get_player_name(run["players"][0], players)
         time_str = format_time(time_sec)
-        relative_date = " - " + format_relative_date(run["date"]) if "date" in run else ""
+        relative_date = " — " + format_relative_date(run["date"]) if "date" in run else ""
 
         print(f"{place}. {player} — {time_str}{relative_date}")
 
