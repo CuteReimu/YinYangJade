@@ -9,7 +9,7 @@ require (
 	github.com/CuteReimu/onebot v0.0.0-20250306104536-d3b05c33fc7b
 	github.com/dgraph-io/badger/v4 v4.8.0
 	github.com/dlclark/regexp2 v1.11.5
-	github.com/go-resty/resty/v2 v2.16.5
+	github.com/go-resty/resty/v2 v2.17.0
 	github.com/go-rod/rod v0.116.2
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -19,6 +19,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/vicanso/go-charts/v2 v2.6.10
 	github.com/wcharczuk/go-chart/v2 v2.1.2
+	golang.org/x/sync v0.18.0
 	golang.org/x/time v0.14.0
 )
 
@@ -60,7 +61,6 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/image v0.32.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
