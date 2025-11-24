@@ -19,7 +19,6 @@ import (
 	"github.com/CuteReimu/YinYangJade/maplebot"
 	"github.com/CuteReimu/YinYangJade/tfcc"
 	"github.com/CuteReimu/onebot"
-	"github.com/lestrrat-go/file-rotatelogs"
 	"github.com/robfig/cron"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
