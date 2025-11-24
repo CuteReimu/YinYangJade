@@ -131,8 +131,11 @@ def get_meso_cost(
     new_system=False,
 ):
     multiplier = 1
-    if eq_level <= 130:
-        raise ValueError("D")
+    # if eq_level <= 130:
+    #     raise ValueError("D")
+    star_cap = get_star_cap(eq_level)
+    if cur_star >= star_cap:
+        raise ValueError(f"Current star {cur_star} exceeds star cap {star_cap} for level {eq_level}")
     if discount:
         multiplier -= 0.3
     if safe_guard and not new_system:
@@ -148,21 +151,21 @@ def get_meso_cost(
 
     if job_zero:
         eq_level = min(150, eq_level)
-    if eq_level in [
-        108,
-        109,
-    ]:
-        cur_star = min(7, cur_star)
-    if eq_level in [
-        118,
-        119,
-    ]:
-        cur_star = min(9, cur_star)
-    if eq_level in [
-        128,
-        129,
-    ]:
-        cur_star = min(14, cur_star)
+    # if eq_level in [
+    #     108,
+    #     109,
+    # ]:
+    #     cur_star = min(7, cur_star)
+    # if eq_level in [
+    #     118,
+    #     119,
+    # ]:
+    #     cur_star = min(9, cur_star)
+    # if eq_level in [
+    #     128,
+    #     129,
+    # ]:
+    #     cur_star = min(14, cur_star)
 
     eq_level //= 10
     eq_level *= 10
