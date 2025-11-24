@@ -8,6 +8,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -29,5 +31,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "goimports && gofmt"
-          branch: master
           file_pattern: 'go.mod go.sum *.go **/*.go'
