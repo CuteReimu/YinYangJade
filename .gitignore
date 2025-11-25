@@ -5,7 +5,7 @@ player_data/
 lvl_data.json
 .DS_Store
 __pycache__/
-maplebot/scripts/player_name.json
+player_name.json
 
 *.log
 *.yml
