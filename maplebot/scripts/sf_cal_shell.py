@@ -97,8 +97,8 @@ def format_number(value, decimal=2):
     return f"{value:.{decimal}f}"
 
 
-def get_star_cap(eq_level, new_star_cap=None):
-    cap = 25 if new_star_cap is None else new_star_cap
+def get_star_cap(eq_level, new_system=False):
+    cap = 30 if new_system else 25
     for max_lvl, star in star_cap.items():
         if eq_level <= max_lvl:
             cap = star
@@ -133,7 +133,7 @@ def get_meso_cost(
     multiplier = 1
     # if eq_level <= 130:
     #     raise ValueError("D")
-    star_cap = get_star_cap(eq_level)
+    star_cap = get_star_cap(eq_level, new_system)
     if cur_star >= star_cap:
         raise ValueError(f"Current star {cur_star} exceeds star cap {star_cap} for level {eq_level}")
     if discount:
