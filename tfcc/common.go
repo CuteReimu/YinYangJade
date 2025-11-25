@@ -98,8 +98,8 @@ func (r *randDraw) ShowTips(int64, int64) string {
 	return "抽签 选手数量"
 }
 
-func (r *randDraw) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (r *randDraw) CheckAuth(int64, int64) bool {
+	return true
 }
 
 func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
@@ -107,27 +107,39 @@ func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 	if err != nil {
 		return MessageChain{&Text{Text: "指令格式如下：\n抽签 选手数量"}}
 	}
-	if count%2 != 0 {
-		return MessageChain{&Text{Text: "选手数量必须为偶数"}}
-	}
 	if count > 32 {
 		return MessageChain{&Text{Text: "选手数量太多"}}
 	}
-	if count <= 0 {
+	if count <= 2 {
 		return MessageChain{&Text{Text: "选手数量太少"}}
 	}
+	isOdd := count%2 == 1
+	if isOdd {
+		count++
+	}
 	a := make([]int, 0, count)
-	for i := count; i > 0; i-- {
+	for i := 1; i <= count; i++ {
 		a = append(a, i)
 	}
+	rand.Shuffle(len(a), func(i, j int) {
+		a[i], a[j] = a[j], a[i]
+	})
+	result := slices.Collect(slices.Chunk(a, 2))
+	for _, pair := range result {
+		if pair[0] > pair[1] {
+			pair[0], pair[1] = pair[1], pair[0]
+		}
+	}
+	slices.SortFunc(result, func(pair1 []int, pair2 []int) int {
+		return pair1[0] - pair2[0]
+	})
 	ret := make([]string, 0, count/2)
-	for range count / 2 {
-		a1 := a[len(a)-1]
-		a = a[:len(a)-1]
-		index := rand.IntN(len(a))
-		a2 := a[index]
-		a = append(a[:index], a[index+1:]...)
-		ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", a1, a2))
+	for _, pair := range result {
+		if isOdd && pair[1] == count {
+			ret = append(ret, fmt.Sprintf("%d号 轮空", pair[0]))
+		} else {
+			ret = append(ret, fmt.Sprintf("%d号 对阵 %d号", pair[0], pair[1]))
+		}
 	}
 	return MessageChain{&Text{Text: strings.Join(ret, "\n")}}
 }
