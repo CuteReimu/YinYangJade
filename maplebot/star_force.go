@@ -435,7 +435,7 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	}
 	s += fmt.Sprintf("\n%d-%d星", cur, des)
 	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data...)
-	if des > cur+1 {
+	if des > cur+1 && des > 12 {
 		image := drawStarForce(cur, des, append(midway, mesos))
 		if image != nil {
 			return MessageChain{&Text{Text: s}, image}
