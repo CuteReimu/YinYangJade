@@ -104,7 +104,7 @@ def process_player_data_full(name):
             'chart': '',
         }
         
-    times = [datetime.datetime.fromisoformat(di['DateLabel']) for di in gdata]
+    times = [datetime.datetime.fromisoformat(di['DateLabel']) - datetime.timedelta(days=1) for di in gdata]
     lvls = [di['Level'] for di in gdata]
     exps = [di['CurrentEXP'] for di in gdata]
 
