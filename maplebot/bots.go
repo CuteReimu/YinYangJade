@@ -383,9 +383,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 					if _, ok = m[key]; !ok {
 						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						// 假如key为“太阳”， 不予修改
 						if key == "太阳" {
-							sendGroupMessage(message, &Text{Text: "太阳不允许修改"})
+							sendGroupMessage(message, &Text{Text: "网络异常"})
 						} else {
 							sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
 							addDbQQList[message.Sender.UserId] = key
@@ -401,7 +400,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
 						if key == "太阳" {
-							sendGroupMessage(message, &Text{Text: "太阳不允许删除"})
+							sendGroupMessage(message, &Text{Text: "未知错误"})
 						} else {
 							delete(m, key)
 							qunDb.Set("data", m)
