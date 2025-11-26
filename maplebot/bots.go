@@ -383,8 +383,13 @@ func handleGroupMessage(message *GroupMessage) bool {
 					if _, ok = m[key]; !ok {
 						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-						addDbQQList[message.Sender.UserId] = key
+						// 假如key为“太阳”， 不予修改
+						if key == "太阳" {
+							sendGroupMessage(message, &Text{Text: "太阳不允许修改"})
+						} else {
+							sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+							addDbQQList[message.Sender.UserId] = key
+						}
 					}
 				}
 				return true
@@ -395,12 +400,16 @@ func handleGroupMessage(message *GroupMessage) bool {
 					if _, ok = m[key]; !ok {
 						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						delete(m, key)
-						qunDb.Set("data", m)
-						if err := qunDb.WriteConfig(); err != nil {
-							slog.Error("write data failed", "error", err)
+						if key == "太阳" {
+							sendGroupMessage(message, &Text{Text: "太阳不允许删除"})
+						} else {
+							delete(m, key)
+							qunDb.Set("data", m)
+							if err := qunDb.WriteConfig(); err != nil {
+								slog.Error("write data failed", "error", err)
+							}
+							sendGroupMessage(message, &Text{Text: "删除词条成功"})
 						}
-						sendGroupMessage(message, &Text{Text: "删除词条成功"})
 					}
 				}
 				return true
