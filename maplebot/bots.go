@@ -384,7 +384,7 @@ func handleGroupMessage(message *GroupMessage) bool {
 						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
 						if key == "太阳" {
-							sendGroupMessage(message, &Text{Text: "网络异常"})
+							sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
 						} else {
 							sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
 							addDbQQList[message.Sender.UserId] = key
