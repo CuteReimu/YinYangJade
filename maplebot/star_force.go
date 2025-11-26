@@ -459,7 +459,7 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 	)
 	var data17 []any
 	if maxStar > 17 {
-		mesos, booms, count, noBoom, _, err := pythonStarForce(newKms, itemLevel, cur, 17, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+		mesos, booms, count, noBoom, _, err := pythonStarForce(newKms, itemLevel, 0, 17, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 		if err != nil {
 			return MessageChain{&Text{Text: err.Error()}}
 		}
@@ -504,10 +504,10 @@ func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, 
 		s += "（GMS旧规）"
 	}
 	if maxStar > 17 {
-		s += fmt.Sprintf("\n0-17星，平均花费了%s金币，平均炸了%s次，平均点了%s次", data17...)
+		s += fmt.Sprintf("\n0-17星，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data17...)
 	}
 	s += fmt.Sprintf("\n%d-%d星", cur, des)
-	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次", data...)
+	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data...)
 	image := drawStarForce(cur, des, append(midway, mesos))
 	if image != nil {
 		return MessageChain{&Text{Text: s}, image}
