@@ -383,12 +383,8 @@ func handleGroupMessage(message *GroupMessage) bool {
 					if _, ok = m[key]; !ok {
 						sendGroupMessage(message, &Text{Text: "词条不存在"})
 					} else {
-						if key == "太阳" {
-							sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-						} else {
-							sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-							addDbQQList[message.Sender.UserId] = key
-						}
+						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+						addDbQQList[message.Sender.UserId] = key
 					}
 				}
 				return true
@@ -443,6 +439,10 @@ func handleGroupMessage(message *GroupMessage) bool {
 	}
 	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
+		if key == "太阳" {
+			sendGroupMessage(message, &Text{Text: "未知错误"})
+			return true
+		}
 		if msg, err := saveImage(message.Message); err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
