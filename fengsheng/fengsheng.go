@@ -31,12 +31,14 @@ var tierName = map[string]string{
 	"💠":  "钻石",
 	"👑":  "大师",
 	"☀️": "至尊",
+	"🔥":  "神仙",
 }
 
 func dealGetScore(result string) MessageChain {
 	var isWinRate, isHistory bool
 	var resultBuilder strings.Builder
 	var winRateData, historyData [][]string
+loop:
 	for line := range strings.SplitSeq(result, "\n") {
 		if len(line) == 0 {
 			continue
@@ -68,8 +70,10 @@ func dealGetScore(result string) MessageChain {
 				alive = "死亡"
 			}
 			tier := arr[3]
-			for t, t1 := range tierName {
-				tier = strings.Replace(tier, t, t1, 1)
+			for t := range tierName {
+				if strings.Contains(tier, t) {
+					continue loop
+				}
 			}
 			historyData = append(historyData, []string{role, alive, identity, arr[2], tier, arr[4]})
 		} else {
@@ -778,8 +782,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()
