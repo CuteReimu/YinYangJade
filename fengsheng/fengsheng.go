@@ -782,8 +782,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true). // 强制无头模式
-				NoSandbox(true). // 禁用沙箱
+				Headless(true).         // 强制无头模式
+				NoSandbox(true).        // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()
