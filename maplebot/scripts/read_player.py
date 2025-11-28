@@ -121,7 +121,7 @@ def process_player_data_full(name):
     hasChange = check_exp_has_change(dated_exps)
     if not hasChange:
         logging.info(f'No EXP change detected for player {name}')
-        exp_text = '近期经验无变化\r\n'
+        exp_text = '近期经验无变化'
         imgb64 = ''
     else:
         clipped_exps, exp_flags = clip_exps(dated_exps)
