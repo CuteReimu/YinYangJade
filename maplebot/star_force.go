@@ -187,7 +187,7 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 	boomProtect := strings.Contains(content, "保护") && !strings.Contains(content, "不保护")
 	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
-	boomEvent := strings.Contains(content, "超爆")
+	boomEvent := strings.Contains(content, "超爆") || strings.Contains(content, "防爆") || strings.Contains(content, "减爆")
 	title := "旧0-22星爆炸次数"
 	if newKms {
 		title = "新0-22星爆炸次数"
@@ -202,7 +202,7 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 		title += "(超必)"
 	}
 	if boomEvent {
-		title += "(超爆)"
+		title += "(减爆)"
 	}
 	if boomProtect {
 		title += "(保护)"
@@ -397,7 +397,7 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	boomProtect := strings.Contains(content, "保护") && !strings.Contains(content, "不保护")
 	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
-	boomEvent := strings.Contains(content, "超爆")
+	boomEvent := strings.Contains(content, "超爆") || strings.Contains(content, "防爆") || strings.Contains(content, "减爆")
 
 	mesos, booms, count, noBoom, midway, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	if err != nil {
