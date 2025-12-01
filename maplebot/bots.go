@@ -4,9 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"net/url"
 	"os"
 	"os/exec"
@@ -18,7 +16,7 @@ import (
 	"time"
 
 	"github.com/CuteReimu/YinYangJade/db"
-	"github.com/CuteReimu/YinYangJade/slicegame"
+	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
 )
@@ -36,7 +34,6 @@ func init() {
 }
 
 var B *Bot
-var bossList = []rune{'3', '6', '7', '8', '9', '4', 'M', '绿', '黑', '赛', '狗'}
 
 func Init(b *Bot) {
 	initConfig()
@@ -49,387 +46,487 @@ func Init(b *Bot) {
 			B.Run(clearExpiredImages2)
 		}
 	}()
-	B.ListenGroupMessage(handleGroupMessage)
+	B.ListenGroupMessage(cmdHandleFunc)
+	B.ListenGroupMessage(handleDictionary)
+	B.ListenGroupMessage(searchAt)
 }
 
-var (
-	addDbQQList = make(map[int64]string)
-)
+var cmdMap = make(map[string]iface.CmdHandler)
 
-func handleGroupMessage(message *GroupMessage) bool {
-	if len(message.Message) <= 0 {
+func cmdHandleFunc(message *GroupMessage) bool {
+	if !slices.Contains(config.GetIntSlice("qq_groups"), int(message.GroupId)) {
+		return true
+	}
+	chain := message.Message
+	if len(chain) == 0 {
+		return true
+	}
+	if at, ok := chain[0].(*At); ok && at.QQ == strconv.FormatInt(B.QQ, 10) {
+		chain = chain[1:]
+		if len(chain) > 0 {
+			if text, ok := chain[0].(*Text); ok && len(strings.TrimSpace(text.Text)) == 0 {
+				chain = chain[1:]
+			}
+		}
+		if len(chain) == 0 {
+			chain = append(chain, &Text{Text: "查看帮助"})
+		}
+	}
+	var cmd, content string
+	if len(chain) == 1 {
+		if text, ok := chain[0].(*Text); ok {
+			arr := strings.SplitN(strings.TrimSpace(text.Text), " ", 2)
+			cmd = strings.TrimSpace(arr[0])
+			if len(arr) > 1 {
+				content = strings.TrimSpace(arr[1])
+			}
+		}
+	}
+	if len(cmd) == 0 {
+		return true
+	}
+	if h, ok := cmdMap[cmd]; ok {
+		if h.CheckAuth(message.GroupId, message.Sender.UserId) {
+			groupMsg := h.Execute(message, content)
+			if len(groupMsg) > 0 {
+				sendGroupMessage(message, groupMsg...)
+			}
+			return true
+		}
+	}
+	return true
+}
+
+func addCmdListener(handler iface.CmdHandler) {
+	name := handler.Name()
+	if _, ok := cmdMap[name]; ok {
+		panic("repeat command: " + name)
+	}
+	cmdMap[name] = handler
+}
+
+func addSimpleCmdListenerNoContent(name string, f func() MessageChain) {
+	addSimpleCmdListener(name, func(content string) MessageChain {
+		if len(content) == 0 {
+			return nil
+		}
+		return f()
+	})
+}
+
+func addSimpleCmdListener(name string, f func(string) MessageChain) {
+	if _, ok := cmdMap[name]; ok {
+		panic("repeat command: " + name)
+	}
+	cmdMap[name] = &iface.SimpleCmdHandler{HandlerName: name, Handler: f}
+}
+
+func searchAt(message *GroupMessage) bool {
+	if len(message.Message) == 0 {
 		return true
 	}
 	if !slices.Contains(config.GetIntSlice("qq_groups"), int(message.GroupId)) {
 		return true
 	}
 	if len(message.Message) >= 2 {
-		if text, ok := message.Message[0].(*Text); ok && strings.TrimSpace(text.Text) == "查询" {
-			if at, ok := message.Message[1].(*At); ok {
-				data := findRoleData.GetStringMapString("data")
-				name := data[at.QQ]
-				if len(name) == 0 {
-					sendGroupMessage(message, &Text{Text: "该玩家还未绑定"})
-				} else {
-					go func() {
-						defer func() {
-							if err := recover(); err != nil {
-								slog.Error("panic recovered", "error", err)
-							}
-						}()
-						sendGroupMessage(message, findRole(name)...)
-					}()
-				}
-			}
-			return true
-		}
-	}
-	if len(message.Message) == 1 {
-		if text, ok := message.Message[0].(*Text); ok {
-			perm := message.Sender.Role == RoleAdmin || message.Sender.Role == RoleOwner ||
-				config.GetInt64("admin") == message.Sender.UserId
-			if perm {
-				perm = slices.Contains(config.GetIntSlice("admin_groups"), int(message.GroupId))
-			}
-			if text.Text == "ping" {
-				sendGroupMessage(message, &Text{Text: "pong"})
-				return true
-			} else if text.Text == "roll" {
-				replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
-				return true
-			} else if strings.HasPrefix(text.Text, "roll ") {
-				upperLimit, _ := strconv.Atoi(strings.TrimSpace(text.Text[len("roll"):]))
-				if upperLimit > 0 {
-					replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(upperLimit)+1)})
-				}
-				return true
-			} else if text.Text == "滑块" {
-				sendGroupMessage(message, slicegame.DoStuff()...)
-				return true
-			} else if text.Text == "8421" {
-				sendGroupMessage(message, calculatePotion()...)
-				return true
-			} else if text.Text == "升级经验" {
-				sendGroupMessage(message, calculateLevelExp()...)
-				return true
-			} else if strings.HasPrefix(text.Text, "等级压制 ") {
-				content := strings.TrimSpace(text.Text[len("等级压制"):])
-				sendGroupMessage(message, calculateExpDamage(content)...)
-				return true
-			} else if strings.HasPrefix(text.Text, "生成表格 ") {
-				content := strings.TrimSpace(text.Text[len("升级经验"):])
-				sendGroupMessage(message, genTable(content)...)
-				return true
-			} else if strings.HasPrefix(text.Text, "升级经验 ") {
-				content := strings.TrimSpace(text.Text[len("升级经验"):])
-				parts := strings.SplitN(content, " ", 2)
-				if len(parts) == 2 {
-					start, _ := strconv.Atoi(parts[0])
-					end, _ := strconv.Atoi(parts[1])
-					sendGroupMessage(message, calculateExpBetweenLevel(int64(start), int64(end))...)
-				}
-				return true
-			} else if text.Text == "爆炸次数" || strings.HasPrefix(text.Text, "爆炸次数 ") {
-				sendGroupMessage(message, slices.Concat(calculateBoomCount(text.Text[len("爆炸次数"):], false), calculateBoomCount(text.Text[len("爆炸次数"):], true))...)
-				return true
-			} else if text.Text == "查询我" {
-				data := findRoleData.GetStringMapString("data")
-				name := data[strconv.FormatInt(message.Sender.UserId, 10)]
-				if len(name) == 0 {
-					sendGroupMessage(message, &Text{Text: "你还未绑定"})
-				} else {
-					go func() {
-						defer func() {
-							if err := recover(); err != nil {
-								slog.Error("panic recovered", "error", err)
-							}
-						}()
-						sendGroupMessage(message, findRole(name)...)
-					}()
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "查询 ") {
-				name := strings.TrimSpace(text.Text[len("查询"):])
-				parts := strings.Split(name, " ")
-				if len(parts) <= 1 {
-					if len(name) > 0 {
+		if len(message.Message) >= 2 {
+			if text, ok := message.Message[0].(*Text); ok && strings.TrimSpace(text.Text) == "查询" {
+				if at, ok := message.Message[1].(*At); ok {
+					data := findRoleData.GetStringMapString("data")
+					name := data[at.QQ]
+					if len(name) == 0 {
+						sendGroupMessage(message, &Text{Text: "该玩家还未绑定"})
+					} else {
 						go func() {
 							defer func() {
 								if err := recover(); err != nil {
-									slog.Error("panic recovered", "error", err, "stack", string(debug.Stack()))
+									slog.Error("panic recovered", "error", err)
 								}
 							}()
 							sendGroupMessage(message, findRole(name)...)
 						}()
 					}
-				} else {
-					name1, name2 := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-					if len(name1) > 0 && len(name2) > 0 {
-						sendGroupMessage(message, &Text{Text: "查询两个角色功能暂不可用"})
-					}
 				}
 				return true
-			} else if strings.HasPrefix(text.Text, "查询绑定 ") {
-				qqNumber := strings.TrimSpace(text.Text[len("查询绑定"):])
-				qq, err := strconv.ParseInt(qqNumber, 10, 64)
-				if err != nil {
-					sendGroupMessage(message, &Text{Text: "命令格式：“查询绑定 QQ号”"})
-					return true
-				}
-				data := findRoleData.GetStringMapString("data")
-				if name := data[strconv.FormatInt(qq, 10)]; name != "" {
-					sendGroupMessage(message, &Text{Text: "该玩家绑定了：" + name})
-				} else {
-					sendGroupMessage(message, &Text{Text: "该玩家还未绑定"})
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "绑定 ") {
-				data := findRoleData.GetStringMapString("data")
-				if data[strconv.FormatInt(message.Sender.UserId, 10)] != "" {
-					sendGroupMessage(message, &Text{Text: "你已经绑定过了，如需更换请先解绑"})
-				} else {
-					name := strings.TrimSpace(text.Text[len("绑定"):])
-					if len(name) > 0 {
-						data[strconv.FormatInt(message.Sender.UserId, 10)] = name
-						findRoleData.Set("data", data)
-						if err := findRoleData.WriteConfig(); err != nil {
-							slog.Error("write config failed", "error", err)
-						}
-						sendGroupMessage(message, &Text{Text: "绑定成功"})
-					}
-				}
-				return true
-			} else if text.Text == "解绑" {
-				data := findRoleData.GetStringMapString("data")
-				if data[strconv.FormatInt(message.Sender.UserId, 10)] != "" {
-					delete(data, strconv.FormatInt(message.Sender.UserId, 10))
-					findRoleData.Set("data", data)
-					if err := findRoleData.WriteConfig(); err != nil {
-						slog.Error("write config failed", "error", err)
-					}
-					sendGroupMessage(message, &Text{Text: "解绑成功"})
-				} else {
-					sendGroupMessage(message, &Text{Text: "你还未绑定"})
-				}
-				return true
-			} else if text.Text == "神秘压制" {
-				sendGroupMessage(message, GetMoreDamageArc()...)
-				return true
-			} else if strings.HasPrefix(text.Text, "模拟升星旧 ") || strings.HasPrefix(text.Text, "模拟上星旧 ") ||
-				strings.HasPrefix(text.Text, "升星期望旧 ") || strings.HasPrefix(text.Text, "上星期望旧 ") {
-				content := strings.TrimSpace(text.Text[len("模拟升星旧"):])
-				result1 := calculateStarForce1(false, content)
-				if len(result1) > 0 {
-					sendGroupMessage(message, result1...)
-				} else {
-					sendGroupMessage(message, &Text{Text: "命令格式：\r\n" + text.Text[len("模拟升星旧"):] + " 200 0 22\r\n后面可以加：七折、必成、超必、保护"})
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "模拟升星 ") || strings.HasPrefix(text.Text, "模拟上星 ") ||
-				strings.HasPrefix(text.Text, "升星期望 ") || strings.HasPrefix(text.Text, "上星期望 ") {
-				content := strings.TrimSpace(text.Text[len("模拟升星"):])
-				result1 := calculateStarForce1(true, content)
-				if len(result1) > 0 {
-					sendGroupMessage(message, result1...)
-				} else {
-					sendGroupMessage(message, &Text{Text: "命令格式：\r\n" + text.Text[len("模拟升星"):] + " 200 0 22\r\n后面可以加：七折、减爆、保护"})
-				}
-				return true
-			} else if text.Text == "模拟升星" || text.Text == "模拟上星" || text.Text == "升星期望" || text.Text == "上星期望" {
-				sendGroupMessage(message, &Text{Text: "命令格式：\r\n" + text.Text + " 200 0 22\r\n后面可以加：七折、减爆、保护"})
-			} else if text.Text == "洗魔方" {
-				sendGroupMessage(message, calculateCubeAll()...)
-				return true
-			} else if strings.HasPrefix(text.Text, "洗魔方 ") {
-				sendGroupMessage(message, calculateCube(strings.TrimSpace(text.Text[len("洗魔方"):]))...)
-				return true
-			} else if strings.HasPrefix(text.Text, "我要开车") || strings.HasPrefix(text.Text, "我要发车") {
-				data := strings.TrimSpace(text.Text[len("我要开车"):])
-				arr := getBossNumber(data)
-				if len(arr) == 0 {
-					sendGroupMessage(message, &Text{Text: "不准开车!"})
-				} else {
-					var messageArr []SingleMessage
-					qqNumbers := make(map[string]bool) // 用map，随机顺序取人，公平一些
-					messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
-					for _, num := range arr {
-						subscribed, _ := db.Get("boss_subscribe_" + string(num))
-						subArr := strings.SplitSeq(subscribed, ",")
-						for qqNumber := range subArr {
-							qqNumbers[qqNumber] = true
-						}
-					}
-					delete(qqNumbers, strconv.Itoa(int(message.Sender.UserId))) // 自己发车不要艾特自己
-					members, err := B.GetGroupMemberList(message.GroupId)
-					if err != nil {
-						slog.Error("获取群成员列表失败", "error", err, "group_id", message.GroupId)
-					}
-					groupMembers := make(map[int64]bool) // 把list转成map，方便查找
-					for _, member := range members {
-						groupMembers[member.UserId] = true
-					}
-					for qqNumber := range qqNumbers {
-						if err == nil { // 获取群成员列表失败，就不检查了
-							qq, err2 := strconv.ParseInt(qqNumber, 10, 64)
-							if err2 != nil {
-								slog.Error("QQ号解析错误", "error", err2, "qq", qqNumber)
-								continue
-							}
-							if !groupMembers[qq] { // 群里无此人
-								continue
-							}
-						}
-						messageArr = append(messageArr, &At{QQ: qqNumber})
-						if len(messageArr) > 20 { // 最多艾特20个人
-							break
-						}
-					}
-					sendGroupMessage(message, messageArr...)
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "订阅开车") || strings.HasPrefix(text.Text, "订阅发车") {
-				data := strings.TrimSpace(text.Text[len("订阅开车"):])
-				arr := getBossNumber(data)
-				if len(arr) == 0 {
-					sendGroupMessage(message, &Text{Text: "这是去幼儿园的车"})
-				} else {
-					userId := strconv.Itoa(int(message.Sender.UserId))
-					subscribe(arr, userId)
-					sendGroupMessage(message, &Text{Text: "订阅成功 " + string(arr)})
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "取消订阅") {
-				data := strings.TrimSpace(text.Text[len("取消订阅"):])
-				userId := strconv.Itoa(int(message.Sender.UserId))
-				if len(data) == 0 {
-					unSubscribe(bossList, userId)
-					sendGroupMessage(message, &Text{Text: "取消全部订阅成功"})
-				} else {
-					arr := getBossNumber(data)
-					unSubscribe(arr, userId)
-					sendGroupMessage(message, &Text{Text: "取消订阅成功 " + string(arr)})
-				}
-				return true
-			} else if perm && strings.HasPrefix(text.Text, "添加词条 ") {
-				key := dealKey(text.Text[len("添加词条"):])
-				if strings.Contains(key, ".") {
-					sendGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
-					return true
-				}
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; ok {
-						sendGroupMessage(message, &Text{Text: "词条已存在"})
-					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要添加的内容"})
-						addDbQQList[message.Sender.UserId] = key
-					}
-				}
-				return true
-			} else if perm && strings.HasPrefix(text.Text, "修改词条 ") {
-				key := dealKey(text.Text[len("修改词条"):])
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; !ok {
-						sendGroupMessage(message, &Text{Text: "词条不存在"})
-					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-						addDbQQList[message.Sender.UserId] = key
-					}
-				}
-				return true
-			} else if perm && strings.HasPrefix(text.Text, "删除词条 ") {
-				key := dealKey(text.Text[len("删除词条"):])
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; !ok {
-						sendGroupMessage(message, &Text{Text: "词条不存在"})
-					} else {
-						if key == "太阳" {
-							sendGroupMessage(message, &Text{Text: "未知错误"})
-						} else {
-							delete(m, key)
-							qunDb.Set("data", m)
-							if err := qunDb.WriteConfig(); err != nil {
-								slog.Error("write data failed", "error", err)
-							}
-							sendGroupMessage(message, &Text{Text: "删除词条成功"})
-						}
-					}
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
-				key := dealKey(text.Text[len("搜索词条"):])
-				if len(key) > 0 {
-					var res []string
-					m := qunDb.GetStringMapString("data")
-					for k := range m {
-						if strings.Contains(k, key) {
-							res = append(res, k)
-						}
-					}
-					if len(res) > 0 {
-						slices.Sort(res)
-						num := len(res)
-						if num > 10 {
-							res = res[:10]
-							res[9] += fmt.Sprintf("\n等%d个词条", num)
-						}
-						for i := range res {
-							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
-						}
-						sendGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
-					} else {
-						sendGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
-					}
-				}
-				return true
-			}
-		}
-	}
-	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
-		delete(addDbQQList, message.Sender.UserId)
-		if key == "太阳" {
-			sendGroupMessage(message, &Text{Text: "未知错误"})
-			return true
-		}
-		if msg, err := saveImage(message.Message); err != nil {
-			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
-			return true
-		} else {
-			message.Message = msg
-		}
-		buf, err := json.Marshal(&message.Message)
-		if err != nil {
-			slog.Error("json marshal failed", "error", err)
-			sendGroupMessage(message, &Text{Text: "编辑词条失败"})
-			return true
-		}
-		m := qunDb.GetStringMapString("data")
-		m[key] = string(buf)
-		qunDb.Set("data", m)
-		if err = qunDb.WriteConfig(); err != nil {
-			slog.Error("write data failed", "error", err)
-		}
-		sendGroupMessage(message, &Text{Text: "编辑词条成功"})
-	} else { // 调用词条
-		if len(message.Message) == 1 {
-			if text, ok := message.Message[0].(*Text); ok {
-				m := qunDb.GetStringMapString("data")
-				s := m[dealKey(text.Text)]
-				if len(s) > 0 {
-					var ms MessageChain
-					if err := json.Unmarshal([]byte(s), &ms); err != nil {
-						slog.Error("json unmarshal failed", "error", err, "s", s)
-						sendGroupMessage(message, &Text{Text: "调用词条失败"})
-						return true
-					}
-					sendGroupMessage(message, ms...)
-				}
 			}
 		}
 	}
 	return true
+}
+
+func init() {
+	addSimpleCmdListenerNoContent("8421", calculatePotion)
+	addSimpleCmdListenerNoContent("升级经验", calculateLevelExp)
+	addSimpleCmdListener("等级压制", calculateExpDamage)
+	addSimpleCmdListener("生成表格", genTable)
+	addCmdListener(&levelUpExp{})
+	addCmdListener(&boomCount{})
+	addCmdListener(&searchMe{})
+	addCmdListener(&searchSomeone{})
+	addCmdListener(&searchBind{})
+	addCmdListener(&bind{})
+	addCmdListener(&unbind{})
+	addSimpleCmdListenerNoContent("神秘压制", GetMoreDamageArc)
+	tryStarForce := func(content string) MessageChain {
+		if len(content) == 0 {
+			return MessageChain{&Text{Text: "命令格式：\r\n模拟升星 200 0 22\r\n后面可以加：七折、减爆、保护"}}
+		}
+		return calculateStarForce1(true, content)
+	}
+	tryStarForceOld := func(content string) MessageChain {
+		if len(content) == 0 {
+			return MessageChain{&Text{Text: "命令格式：\r\n模拟升星旧 200 0 22\r\n后面可以加：七折、减爆、保护"}}
+		}
+		return calculateStarForce1(false, content)
+	}
+	for _, s := range []string{"模拟升星", "模拟上星", "升星期望", "上星期望"} {
+		addSimpleCmdListener(s, tryStarForce)
+		addSimpleCmdListener(s+"旧", tryStarForceOld)
+	}
+	addCmdListener(&tryCube{})
+	bossList := []rune{'3', '6', '7', '8', '9', '4', 'M', '绿', '黑', '赛', '狗'}
+	var sb strings.Builder
+	_, _ = sb.WriteString("订阅开车")
+	for _, boss := range bossList {
+		_, _ = sb.WriteString(" ")
+		_, _ = sb.WriteRune(boss)
+	}
+	addCmdListener(&iWannaFormParty{bossList: bossList})
+	addCmdListener(&registerFormParty{bossList: bossList, tips: sb.String()})
+	addCmdListener(&cancelRegisterFormParty{bossList: bossList})
+}
+
+type levelUpExp struct{}
+
+func (l *levelUpExp) Name() string {
+	return "升级经验"
+}
+
+func (l *levelUpExp) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (l *levelUpExp) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (l *levelUpExp) Execute(_ *GroupMessage, content string) MessageChain {
+	if len(content) == 0 {
+		return calculateLevelExp()
+	}
+	parts := strings.SplitN(content, " ", 2)
+	if len(parts) == 2 {
+		start, _ := strconv.Atoi(parts[0])
+		end, _ := strconv.Atoi(parts[1])
+		return calculateExpBetweenLevel(int64(start), int64(end))
+	}
+	return nil
+}
+
+type boomCount struct{}
+
+func (b *boomCount) Name() string {
+	return "爆炸次数"
+}
+
+func (b *boomCount) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (b *boomCount) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (b *boomCount) Execute(_ *GroupMessage, content string) MessageChain {
+	return slices.Concat(calculateBoomCount(content, true), calculateBoomCount(content, false))
+}
+
+type searchMe struct{}
+
+func (s *searchMe) Name() string {
+	return "查询我"
+}
+
+func (s *searchMe) ShowTips(int64, int64) string {
+	return "查询我"
+}
+
+func (s *searchMe) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (s *searchMe) Execute(msg *GroupMessage, content string) MessageChain {
+	if len(content) > 0 {
+		return nil
+	}
+	data := findRoleData.GetStringMapString("data")
+	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
+	if len(name) == 0 {
+		return MessageChain{&Text{Text: "你还未绑定"}}
+	} else {
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					slog.Error("panic recovered", "error", err)
+				}
+			}()
+			sendGroupMessage(msg, findRole(name)...)
+		}()
+	}
+	return nil
+}
+
+type searchSomeone struct{}
+
+func (s *searchSomeone) Name() string {
+	return "查询"
+}
+
+func (s *searchSomeone) ShowTips(int64, int64) string {
+	return "查询 游戏名"
+}
+
+func (s *searchSomeone) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (s *searchSomeone) Execute(msg *GroupMessage, content string) MessageChain {
+	if len(content) == 0 || strings.Contains(content, " ") {
+		return nil
+	}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err, "stack", string(debug.Stack()))
+			}
+		}()
+		sendGroupMessage(msg, findRole(content)...)
+	}()
+	return nil
+}
+
+type searchBind struct{}
+
+func (s *searchBind) Name() string {
+	return "查询绑定"
+}
+
+func (s *searchBind) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (s *searchBind) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (s *searchBind) Execute(_ *GroupMessage, content string) MessageChain {
+	qq, err := strconv.ParseInt(content, 10, 64)
+	if err != nil {
+		return MessageChain{&Text{Text: "命令格式：“查询绑定 QQ号”"}}
+	}
+	data := findRoleData.GetStringMapString("data")
+	if name := data[strconv.FormatInt(qq, 10)]; name != "" {
+		return MessageChain{&Text{Text: "该玩家绑定了：" + name}}
+	} else {
+		return MessageChain{&Text{Text: "该玩家还未绑定"}}
+	}
+}
+
+type bind struct{}
+
+func (b *bind) Name() string {
+	return "绑定"
+}
+
+func (b *bind) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (b *bind) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (b *bind) Execute(msg *GroupMessage, content string) MessageChain {
+	data := findRoleData.GetStringMapString("data")
+	if data[strconv.FormatInt(msg.Sender.UserId, 10)] != "" {
+		return MessageChain{&Text{Text: "你已经绑定过了，如需更换请先解绑"}}
+	} else if len(content) > 0 && !strings.Contains(content, " ") {
+		data[strconv.FormatInt(msg.Sender.UserId, 10)] = content
+		findRoleData.Set("data", data)
+		if err := findRoleData.WriteConfig(); err != nil {
+			slog.Error("write config failed", "error", err)
+		}
+		return MessageChain{&Text{Text: "绑定成功"}}
+	}
+	return nil
+}
+
+type unbind struct{}
+
+func (u *unbind) Name() string {
+	return "解绑"
+}
+
+func (u *unbind) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (u *unbind) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (u *unbind) Execute(msg *GroupMessage, content string) MessageChain {
+	if len(content) > 0 {
+		return nil
+	}
+	data := findRoleData.GetStringMapString("data")
+	if data[strconv.FormatInt(msg.Sender.UserId, 10)] != "" {
+		delete(data, strconv.FormatInt(msg.Sender.UserId, 10))
+		findRoleData.Set("data", data)
+		if err := findRoleData.WriteConfig(); err != nil {
+			slog.Error("write config failed", "error", err)
+		}
+		return MessageChain{&Text{Text: "解绑成功"}}
+	} else {
+		return MessageChain{&Text{Text: "你还未绑定"}}
+	}
+}
+
+type tryCube struct{}
+
+func (t *tryCube) Name() string {
+	return "洗魔方"
+}
+
+func (t *tryCube) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (t *tryCube) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (t *tryCube) Execute(_ *GroupMessage, content string) MessageChain {
+	if len(content) == 0 {
+		return calculateCubeAll()
+	}
+	return calculateCube(content)
+}
+
+type iWannaFormParty struct {
+	bossList []rune
+}
+
+func (i *iWannaFormParty) Name() string {
+	return "我要开车"
+}
+
+func (i *iWannaFormParty) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (i *iWannaFormParty) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (i *iWannaFormParty) Execute(msg *GroupMessage, data string) MessageChain {
+	arr := getBossNumber(i.bossList, data)
+	if len(arr) == 0 {
+		return MessageChain{&Text{Text: "不准开车!"}}
+	} else {
+		var messageArr []SingleMessage
+		qqNumbers := make(map[string]bool) // 用map，随机顺序取人，公平一些
+		messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
+		for _, num := range arr {
+			subscribed, _ := db.Get("boss_subscribe_" + string(num))
+			subArr := strings.SplitSeq(subscribed, ",")
+			for qqNumber := range subArr {
+				qqNumbers[qqNumber] = true
+			}
+		}
+		delete(qqNumbers, strconv.Itoa(int(msg.Sender.UserId))) // 自己发车不要艾特自己
+		members, err := B.GetGroupMemberList(msg.GroupId)
+		if err != nil {
+			slog.Error("获取群成员列表失败", "error", err, "group_id", msg.GroupId)
+		}
+		groupMembers := make(map[int64]bool) // 把list转成map，方便查找
+		for _, member := range members {
+			groupMembers[member.UserId] = true
+		}
+		for qqNumber := range qqNumbers {
+			if err == nil { // 获取群成员列表失败，就不检查了
+				qq, err2 := strconv.ParseInt(qqNumber, 10, 64)
+				if err2 != nil {
+					slog.Error("QQ号解析错误", "error", err2, "qq", qqNumber)
+					continue
+				}
+				if !groupMembers[qq] { // 群里无此人
+					continue
+				}
+			}
+			messageArr = append(messageArr, &At{QQ: qqNumber})
+			if len(messageArr) > 20 { // 最多艾特20个人
+				break
+			}
+		}
+		return messageArr
+	}
+}
+
+type registerFormParty struct {
+	bossList []rune
+	tips     string
+}
+
+func (r *registerFormParty) Name() string {
+	return "订阅开车"
+}
+
+func (r *registerFormParty) ShowTips(int64, int64) string {
+	return r.tips
+}
+
+func (r *registerFormParty) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (r *registerFormParty) Execute(msg *GroupMessage, content string) MessageChain {
+	arr := getBossNumber(r.bossList, content)
+	if len(arr) == 0 {
+		return MessageChain{&Text{Text: "这是去幼儿园的车"}}
+	} else {
+		userId := strconv.Itoa(int(msg.Sender.UserId))
+		subscribe(arr, userId)
+		return MessageChain{&Text{Text: "订阅成功 " + string(arr)}}
+	}
+}
+
+type cancelRegisterFormParty struct {
+	bossList []rune
+}
+
+func (c *cancelRegisterFormParty) Name() string {
+	return "取消订阅"
+}
+
+func (c *cancelRegisterFormParty) ShowTips(int64, int64) string {
+	return "取消订阅"
+}
+
+func (c *cancelRegisterFormParty) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (c *cancelRegisterFormParty) Execute(msg *GroupMessage, content string) MessageChain {
+	userId := strconv.Itoa(int(msg.Sender.UserId))
+	if len(content) == 0 {
+		unSubscribe(c.bossList, userId)
+		return MessageChain{&Text{Text: "取消全部订阅成功"}}
+	} else {
+		arr := getBossNumber(c.bossList, content)
+		unSubscribe(arr, userId)
+		return MessageChain{&Text{Text: "取消订阅成功 " + string(arr)}}
+	}
 }
 
 func subscribe(arr []rune, userId string) {
@@ -461,7 +558,7 @@ func unSubscribe(arr []rune, userId string) {
 	}
 }
 
-func getBossNumber(numberString string) []rune {
+func getBossNumber(bossList []rune, numberString string) []rune {
 	numberString = strings.ToUpper(numberString)
 	var result []rune
 	for _, char := range numberString {

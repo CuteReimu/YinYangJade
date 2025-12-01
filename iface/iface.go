@@ -15,3 +15,25 @@ type CmdHandler interface {
 	// Execute content参数是除开指令名（第一个空格前的部分）以外剩下的所有内容。返回值是要发送的群聊消息为空就是不发送消息。
 	Execute(msg *GroupMessage, content string) MessageChain
 }
+
+type SimpleCmdHandler struct {
+	HandlerName string
+	HandlerTips string
+	Handler     func(string) MessageChain
+}
+
+func (s *SimpleCmdHandler) Name() string {
+	return s.HandlerName
+}
+
+func (s *SimpleCmdHandler) ShowTips(int64, int64) string {
+	return s.HandlerTips
+}
+
+func (s *SimpleCmdHandler) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (s *SimpleCmdHandler) Execute(_ *GroupMessage, content string) MessageChain {
+	return s.Handler(content)
+}
