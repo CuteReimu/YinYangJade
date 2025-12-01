@@ -418,7 +418,7 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 		activity = append(activity, "5/10/15必成活动")
 	}
 	if boomEvent {
-		activity = append(activity, "超爆活动")
+		activity = append(activity, "减爆活动")
 	}
 	var activityStr string
 	if len(activity) > 0 {
@@ -440,77 +440,6 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 		if image != nil {
 			return MessageChain{&Text{Text: s}, image}
 		}
-	}
-	return MessageChain{&Text{Text: s}}
-}
-
-func calculateStarForce2(newKms bool, itemLevel int, thirtyOff, fiveTenFifteen, boomEvent bool) MessageChain {
-	if itemLevel < 5 || itemLevel > 300 {
-		return MessageChain{&Text{Text: "装备等级不合理"}}
-	}
-	maxStar := getMaxStar(newKms, itemLevel)
-	var cur int
-	if maxStar > 17 {
-		cur = 17
-	}
-	var (
-		des         = min(maxStar, 22)
-		boomProtect = itemLevel >= 160
-	)
-	var data17 []any
-	if maxStar > 17 {
-		mesos, booms, count, noBoom, _, err := pythonStarForce(newKms, itemLevel, 0, 17, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-		if err != nil {
-			return MessageChain{&Text{Text: err.Error()}}
-		}
-		data17 = []any{
-			formatInt64(int64(mesos)),
-			strconv.FormatFloat(booms, 'f', 2, 64),
-			strconv.FormatInt(int64(math.Round(count)), 10),
-			strconv.FormatFloat(noBoom, 'f', 2, 64),
-		}
-	}
-	mesos, booms, count, noBoom, midway, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
-	if err != nil {
-		return MessageChain{&Text{Text: err.Error()}}
-	}
-	data := []any{
-		formatInt64(int64(mesos)),
-		strconv.FormatFloat(booms, 'f', 2, 64),
-		strconv.FormatInt(int64(math.Round(count)), 10),
-		strconv.FormatFloat(noBoom, 'f', 2, 64),
-	}
-	var activity []string
-	if thirtyOff {
-		activity = append(activity, "七折活动")
-	}
-	if fiveTenFifteen {
-		activity = append(activity, "5/10/15必成活动")
-	}
-	if boomEvent {
-		activity = append(activity, "超爆活动")
-	}
-	var activityStr string
-	if len(activity) > 0 {
-		activityStr = "在" + strings.Join(activity, "和") + "中"
-	}
-	s := fmt.Sprintf("%s模拟升星%d级装备", activityStr, itemLevel)
-	if boomProtect {
-		s += "（点保护）"
-	}
-	if newKms {
-		s += "（GMS新规）"
-	} else {
-		s += "（GMS旧规）"
-	}
-	if maxStar > 17 {
-		s += fmt.Sprintf("\n0-17星，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data17...)
-	}
-	s += fmt.Sprintf("\n%d-%d星", cur, des)
-	s += fmt.Sprintf("，平均花费了%s金币，平均炸了%s次，平均点了%s次，有%s%%的概率一次都不炸", data...)
-	image := drawStarForce(cur, des, append(midway, mesos))
-	if image != nil {
-		return MessageChain{&Text{Text: s}, image}
 	}
 	return MessageChain{&Text{Text: s}}
 }
