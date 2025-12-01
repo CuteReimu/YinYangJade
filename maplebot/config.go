@@ -33,6 +33,7 @@ func initConfig() {
 	config.SetDefault("admin_groups", []int64{12345678})
 	config.SetDefault("qq_groups", []int64{12345678})
 	config.SetDefault("notify_groups", []int64{12345678})
+	config.SetDefault("notify_qq", []int64{12345678})
 	config.SetDefault("image_expire_hours", int64(24))
 	_ = config.SafeWriteConfigAs(filepath.Join("config", "net.cutereimu.maplebots", "Config.yml"))
 	if err := config.ReadInConfig(); err != nil {
