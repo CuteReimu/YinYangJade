@@ -29,7 +29,7 @@ def draw_chart(days, clipped_exps, dated_lvls, exp_flags, dated_exps):
     # line_ticks = np.linspace(line_min_padded, line_max_padded, num_ticks)
     line_min_padded, line_max_padded, line_ticks = get_nearest_spread(line_min, line_max)
 
-    fig, ax1 = plt.subplots(figsize=(8, 5))
+    fig, ax1 = plt.subplots(figsize=(10, 5))
 
     # Background
     bg = "#050816"
