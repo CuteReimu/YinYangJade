@@ -245,7 +245,10 @@ func (s *searchMe) Name() string {
 	return "查询我"
 }
 
-func (s *searchMe) ShowTips(int64, int64) string {
+func (s *searchMe) ShowTips(_ int64, qq int64) string {
+	if findRoleData.GetStringMapString("data")[strconv.FormatInt(qq, 10)] == "" {
+		return ""
+	}
 	return "查询我"
 }
 
