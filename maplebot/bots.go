@@ -185,14 +185,13 @@ func init() {
 	addCmdListener(&tryCube{})
 	bossList := []rune{'3', '6', '7', '8', '9', '4', 'M', '绿', '黑', '赛', '狗'}
 	var sb strings.Builder
-	_, _ = sb.WriteString("订阅开车")
 	for _, boss := range bossList {
 		_, _ = sb.WriteString(" ")
 		_, _ = sb.WriteRune(boss)
 	}
-	addCmdListener(&iWannaFormParty{bossList: bossList})
-	addCmdListener(&registerFormParty{bossList: bossList, tips: sb.String()})
-	addCmdListener(&cancelRegisterFormParty{bossList: bossList})
+	addCmdListener(&iWannaFormParty{bossList: bossList, tips: "我要开车" + sb.String()})
+	addCmdListener(&registerFormParty{bossList: bossList, tips: "订阅开车" + sb.String()})
+	addCmdListener(&cancelRegisterFormParty{bossList: bossList, tips: "取消订阅" + sb.String()})
 }
 
 type levelUpExp struct{}
@@ -337,8 +336,11 @@ func (b *bind) Name() string {
 	return "绑定"
 }
 
-func (b *bind) ShowTips(int64, int64) string {
-	return ""
+func (b *bind) ShowTips(_, qq int64) string {
+	if findRoleData.GetStringMapString("data")[strconv.FormatInt(qq, 10)] != "" {
+		return ""
+	}
+	return "绑定 游戏名"
 }
 
 func (b *bind) CheckAuth(int64, int64) bool {
@@ -366,8 +368,11 @@ func (u *unbind) Name() string {
 	return "解绑"
 }
 
-func (u *unbind) ShowTips(int64, int64) string {
-	return ""
+func (u *unbind) ShowTips(_ int64, qq int64) string {
+	if findRoleData.GetStringMapString("data")[strconv.FormatInt(qq, 10)] == "" {
+		return ""
+	}
+	return "解绑"
 }
 
 func (u *unbind) CheckAuth(int64, int64) bool {
@@ -414,6 +419,7 @@ func (t *tryCube) Execute(_ *GroupMessage, content string) MessageChain {
 
 type iWannaFormParty struct {
 	bossList []rune
+	tips     string
 }
 
 func (i *iWannaFormParty) Name() string {
@@ -421,7 +427,7 @@ func (i *iWannaFormParty) Name() string {
 }
 
 func (i *iWannaFormParty) ShowTips(int64, int64) string {
-	return ""
+	return i.tips
 }
 
 func (i *iWannaFormParty) CheckAuth(int64, int64) bool {
@@ -502,6 +508,7 @@ func (r *registerFormParty) Execute(msg *GroupMessage, content string) MessageCh
 
 type cancelRegisterFormParty struct {
 	bossList []rune
+	tips     string
 }
 
 func (c *cancelRegisterFormParty) Name() string {
@@ -509,7 +516,7 @@ func (c *cancelRegisterFormParty) Name() string {
 }
 
 func (c *cancelRegisterFormParty) ShowTips(int64, int64) string {
-	return "取消订阅"
+	return c.tips
 }
 
 func (c *cancelRegisterFormParty) CheckAuth(int64, int64) bool {
