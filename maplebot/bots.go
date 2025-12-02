@@ -156,7 +156,6 @@ func searchAt(message *GroupMessage) bool {
 
 func init() {
 	addSimpleCmdListenerNoContent("8421", calculatePotion)
-	addSimpleCmdListenerNoContent("升级经验", calculateLevelExp)
 	addSimpleCmdListener("等级压制", calculateExpDamage)
 	addSimpleCmdListener("生成表格", genTable)
 	addCmdListener(&levelUpExp{})
