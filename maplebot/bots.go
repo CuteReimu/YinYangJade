@@ -107,7 +107,7 @@ func addCmdListener(handler iface.CmdHandler) {
 
 func addSimpleCmdListenerNoContent(name string, f func() MessageChain) {
 	addSimpleCmdListener(name, func(content string) MessageChain {
-		if len(content) == 0 {
+		if len(content) > 0 {
 			return nil
 		}
 		return f()
