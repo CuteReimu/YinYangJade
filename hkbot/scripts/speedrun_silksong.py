@@ -85,8 +85,8 @@ def main(user_input):
 
     data = resp.json()["data"]
     runs = data["runs"]
-    if len(runs) > 3:
-        runs = runs[:3]
+    if len(runs) > 5:
+        runs = runs[:5]
 
     players = data.get("players", {}).get("data", [])
 
