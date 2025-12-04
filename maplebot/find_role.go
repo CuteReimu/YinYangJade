@@ -255,8 +255,8 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 			}
 		}
 		if slices.ContainsFunc(expValues, func(f float64) bool { return f != 0 }) {
-			if levelEnd := strings.Index(levelExp, "("); levelEnd >= 0 {
-				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelExp[:levelEnd]))); totalExp > 0 {
+			if levelStr, _, ok := strings.Cut(levelExp, "("); ok {
+				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelStr))); totalExp > 0 {
 					if expPercentStart := strings.Index(levelExp, "("); expPercentStart >= 0 {
 						if expPercentEnd := strings.Index(levelExp, "%"); expPercentEnd >= 0 {
 							if expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64); err == nil {
