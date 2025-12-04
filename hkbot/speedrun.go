@@ -13,7 +13,7 @@ import (
 
 func init() {
 	addCmdListener(&speedrunLeaderboards{
-		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%"},
+		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%", "苔穴"},
 		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss"},
 	})
 }
