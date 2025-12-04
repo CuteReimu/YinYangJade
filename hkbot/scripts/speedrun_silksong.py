@@ -34,14 +34,15 @@ def get_player_name(player, players):
     return player.get("name", "Unknown")
 
 def format_time(t):
-    t = int(t)
-    m = t // 60
+    m = int(t // 60)
     s = t - m * 60
-    h = m // 60
+    h = int(m // 60)
     if h > 0:
         m = m - h * 60
-        return f"{h:d}:{m:02d}:{s:02d}"
-    return f"{m:02d}:{s:02d}"
+        return f"{h:d}:{m:02d}:{int(s):02d}"
+    if m < 10:
+        return f"{m:d}:{s:06.3f}"
+    return f"{m:02d}:{int(s):02d}"
 
 def format_relative_date(date_str):
     """
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         arg = sys.argv[1]
     else:
-        arg = input("输入您想查询的榜单(any,te,100,judgement,low,ab,twisted): ")
+        arg = input("输入您想查询的榜单(any,te,100,judgement,low,ab,twisted,苔穴): ")
     arg = arg.replace("%", "").lower()
     if arg == "any":
         main("anyrp")
