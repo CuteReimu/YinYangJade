@@ -11,11 +11,12 @@ URL = {"anylp":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/z
        "judgement":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wk6544o2?var-jlz631q8=1w4ozxvq",
        "low":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
        "ab":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
-       "twisted":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl"}
+       "twisted":"https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
+       "苔穴":"https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq"}
 
 CATEGORY_NAMES = {
-    "anylp": "Any% Later Patches",
-    "anyrp": "Any% Release Patch",
+    "anylp": "Any% 新",
+    "anyrp": "Any% 旧",
     "te": "True Ending",
     "100noab": "100% No AB",
     "100ab": "100% All Bosses",
@@ -23,6 +24,7 @@ CATEGORY_NAMES = {
     "low": "Low%",
     "ab": "All Bosses",
     "twisted": "Twisted%",
+    "苔穴": "苔穴",
 }
 
 def get_player_name(player, players):
@@ -78,7 +80,7 @@ def format_relative_date(date_str):
         return date_str
 
 def main(user_input):
-    resp = requests.get(URL[user_input] + "&embed=players&top=3", timeout=60)
+    resp = requests.get(URL[user_input] + "&embed=players&top=5", timeout=60)
     resp.raise_for_status()
 
     data = resp.json()["data"]
