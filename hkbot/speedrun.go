@@ -37,7 +37,7 @@ func (t *speedrunLeaderboards) CheckAuth(int64, int64) bool {
 }
 
 func (t *speedrunLeaderboards) Execute(_ *GroupMessage, content string) MessageChain {
-	content = strings.ToLower(strings.ReplaceAll(content, "%", ""))
+	content = strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(content, "%", ""), "％", ""))
 	eq := func(s string) bool {
 		return strings.EqualFold(content, strings.ReplaceAll(s, "%", ""))
 	}
