@@ -36,7 +36,7 @@ func (t *speedrunLeaderboards) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (t *speedrunLeaderboards) Execute(_ *GroupMessage, content string) MessageChain {
+func (t *speedrunLeaderboards) Execute(msg *GroupMessage, content string) MessageChain {
 	content = strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(content, "%", ""), "％", ""))
 	eq := func(s string) bool {
 		return strings.EqualFold(content, strings.ReplaceAll(s, "%", ""))
@@ -44,27 +44,35 @@ func (t *speedrunLeaderboards) Execute(_ *GroupMessage, content string) MessageC
 	if !slices.ContainsFunc(t.availableInputs, eq) && !slices.ContainsFunc(t.aliasInputs, eq) {
 		return MessageChain{&Text{Text: "支持的榜单类型有：" + strings.Join(t.availableInputs, "，")}}
 	}
-	result, err, _ := t.sf.Do(content, func() (any, error) {
-		return scripts.RunPythonScript("speedrun_silksong.py", content)
-	})
-	if err != nil {
-		output, ok := result.([]byte)
-		if ok {
-			slog.Error("查询失败", "output", string(output), "error", err)
-		} else {
-			slog.Error("查询失败", "output", result, "error", err)
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err)
+			}
+		}()
+		result, err, _ := t.sf.Do(content, func() (any, error) {
+			return scripts.RunPythonScript("speedrun_silksong.py", content)
+		})
+		if err != nil {
+			output, ok := result.([]byte)
+			if ok {
+				slog.Error("查询失败", "output", string(output), "error", err)
+			} else {
+				slog.Error("查询失败", "output", result, "error", err)
+			}
+			return
 		}
-		return nil
-	}
-	output, ok := result.([]byte)
-	if !ok {
-		slog.Error("查询结果类型错误", "type", fmt.Sprintf("%T", result))
-		return nil
-	}
-	// 去掉多余的空行，确保都是Windows风格的换行
-	text := strings.TrimSpace(string(output))
-	text = strings.ReplaceAll(text, "\r\n", "\n")
-	text = strings.ReplaceAll(text, "\r", "\n")
-	text = strings.ReplaceAll(text, "\n", "\r\n")
-	return MessageChain{&Text{Text: text}}
+		output, ok := result.([]byte)
+		if !ok {
+			slog.Error("查询结果类型错误", "type", fmt.Sprintf("%T", result))
+			return
+		}
+		// 去掉多余的空行，确保都是Windows风格的换行
+		text := strings.TrimSpace(string(output))
+		text = strings.ReplaceAll(text, "\r\n", "\n")
+		text = strings.ReplaceAll(text, "\r", "\n")
+		text = strings.ReplaceAll(text, "\n", "\r\n")
+		sendGroupMessage(msg, &Text{Text: text})
+	}()
+	return nil
 }
