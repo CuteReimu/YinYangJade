@@ -200,12 +200,17 @@ func (g *getScore) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
+func (g *getScore) Execute(message *GroupMessage, content string) MessageChain {
+	data := permData.GetStringMapString("playerMap")
+	operatorName := data[strconv.FormatInt(message.Sender.UserId, 10)]
+	if len(operatorName) == 0 {
+		return MessageChain{&Text{Text: getScoreFailResponse[rand.IntN(len(getScoreFailResponse))]}}
+	}
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
 		return nil
 	}
-	result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+	result, returnError := httpGetString("/getscore", map[string]string{"name": name, "operator": operatorName})
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
@@ -801,8 +806,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()
