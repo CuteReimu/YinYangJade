@@ -95,6 +95,11 @@ func searchAt(message *GroupMessage) bool {
 		if text, ok := message.Message[0].(*Text); ok && strings.TrimSpace(text.Text) == "查询" {
 			if at, ok := message.Message[1].(*At); ok {
 				data := permData.GetStringMapString("playerMap")
+				operatorName := data[strconv.FormatInt(message.Sender.UserId, 10)]
+				if len(operatorName) == 0 {
+					sendGroupMessage(message, &Text{Text: getScoreFailResponse[rand.IntN(len(getScoreFailResponse))]})
+					return true
+				}
 				name := data[at.QQ]
 				if len(name) == 0 {
 					sendGroupMessage(message, &Text{Text: "该玩家还未绑定"})
@@ -105,7 +110,7 @@ func searchAt(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+						result, returnError := httpGetString("/getscore", map[string]string{"name": name, "operator": operatorName})
 						if returnError != nil {
 							slog.Error("请求失败", "error", returnError.error)
 							sendGroupMessage(message, returnError.message...)
@@ -113,6 +118,7 @@ func searchAt(message *GroupMessage) bool {
 						}
 						if result == "差距太大，无法查询" {
 							sendGroupMessage(message, &Text{Text: getScoreFailResponse[rand.IntN(len(getScoreFailResponse))]})
+							return
 						}
 						sendGroupMessage(message, dealGetScore(result)...)
 					}()
