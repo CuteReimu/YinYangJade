@@ -3,6 +3,7 @@ package fengsheng
 import (
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
@@ -109,6 +110,9 @@ func searchAt(message *GroupMessage) bool {
 							slog.Error("请求失败", "error", returnError.error)
 							sendGroupMessage(message, returnError.message...)
 							return
+						}
+						if result == "差距太大，无法查询" {
+							sendGroupMessage(message, &Text{Text: getScoreFailResponse[rand.IntN(len(getScoreFailResponse))]})
 						}
 						sendGroupMessage(message, dealGetScore(result)...)
 					}()

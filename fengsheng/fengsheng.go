@@ -170,6 +170,22 @@ func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 	return dealGetScore(result)
 }
 
+var getScoreFailResponse = []string{
+	"蝼蚁之目，也敢窥天？收了你那点微末神念！",
+	"萤火之光，岂配窥探皓月之辉？",
+	"区区凡识，妄测天机，尔不怕道心崩毁么？",
+	"蜉蝣窥天，自寻道灭。",
+	"命如微尘，也配问鼎苍穹之名？",
+	"此等因果，你看一眼，命承不起。",
+	"妄窥尊者？尔等灵台，当惧崩摧！",
+	"神念止步！此乃汝不可知、不可念之界。",
+	"尔之眼界，便是天堑。",
+	"仙踪缥缈，凡念勿染。",
+	"你的道行，不配问他的名号。",
+	"此乃天堑，蝼蚁止步。",
+	"镜未磨，水未平，也敢映照大日真容？",
+}
+
 type getScore struct{}
 
 func (g *getScore) Name() string {
@@ -193,6 +209,9 @@ func (g *getScore) Execute(_ *GroupMessage, content string) MessageChain {
 	if returnError != nil {
 		slog.Error("请求失败", "error", returnError.error)
 		return returnError.message
+	}
+	if result == "差距太大，无法查询" {
+		return MessageChain{&Text{Text: getScoreFailResponse[rand.IntN(len(getScoreFailResponse))]}}
 	}
 	return dealGetScore(result)
 }
@@ -782,8 +801,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()
