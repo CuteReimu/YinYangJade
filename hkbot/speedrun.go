@@ -157,8 +157,7 @@ func (t *speedrunLeaderboards) formatRelativeDate(dateStr string) string {
 		return dateStr
 	}
 	today := time.Now().Truncate(24 * time.Hour)
-	inputDate := tm
-	days := int(today.Sub(inputDate).Hours() / 24)
+	days := int(today.Sub(tm).Hours() / 24)
 	switch {
 	case days == 0:
 		return "今天"
