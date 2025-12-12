@@ -103,7 +103,7 @@ func (t *speedrunLeaderboards) Execute(msg *GroupMessage, content string) Messag
 			slog.Error("查询结果类型错误", "type", fmt.Sprintf("%T", result))
 			return
 		}
-		sendGroupMessage(msg, &Text{Text: output})
+		sendGroupMessage(msg, &Text{Text: strings.TrimSpace(output)})
 	}()
 	return nil
 }
