@@ -1,27 +1,68 @@
 package hkbot
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
+	"time"
 
-	"github.com/CuteReimu/YinYangJade/hkbot/scripts"
 	. "github.com/CuteReimu/onebot"
+	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/singleflight"
 )
 
 func init() {
-	addCmdListener(&speedrunLeaderboards{
+	cmd := &speedrunLeaderboards{
 		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%", "苔穴"},
 		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss"},
-	})
+		url: map[string]string{
+			"anylp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=qj70747q",
+			"anyrp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=10vzvmol",
+			"te":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/n2y0m18d?var-dloed1dn=qyzod221",
+			"100noab":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=1w4p4dmq",
+			"100ab":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=qoxpx35q",
+			"judgement": "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wk6544o2?var-jlz631q8=1w4ozxvq",
+			"low":       "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
+			"ab":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
+			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
+			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+		},
+		categoryNames: map[string]string{
+			"anylp":     "Any% 新",
+			"anyrp":     "Any% 旧",
+			"te":        "True Ending",
+			"100noab":   "100% No AB",
+			"100ab":     "100% All Bosses",
+			"judgement": "Judgement",
+			"low":       "Low%",
+			"ab":        "All Bosses",
+			"twisted":   "Twisted%",
+			"苔穴":      "苔穴",
+		},
+		mapKeys: map[string][]string{
+			"any":        {"anyrp", "anylp"},
+			"100":        {"100noab", "100ab"},
+			"all bosses": {"ab"},
+			"all boss":   {"ab"},
+			"allbosses":  {"ab"},
+			"allboss":    {"ab"},
+		},
+		resty: resty.New(),
+	}
+	cmd.resty.SetTimeout(time.Minute)
+	addCmdListener(cmd)
 }
 
 type speedrunLeaderboards struct {
 	availableInputs []string
 	aliasInputs     []string
 	sf              singleflight.Group
+	url             map[string]string
+	categoryNames   map[string]string
+	mapKeys         map[string][]string
+	resty           *resty.Client
 }
 
 func (t *speedrunLeaderboards) Name() string {
@@ -51,28 +92,162 @@ func (t *speedrunLeaderboards) Execute(msg *GroupMessage, content string) Messag
 			}
 		}()
 		result, err, _ := t.sf.Do(content, func() (any, error) {
-			return scripts.RunPythonScript("speedrun_silksong.py", content)
+			return t.requestSpeedrun(content)
 		})
 		if err != nil {
-			output, ok := result.([]byte)
-			if ok {
-				slog.Error("查询失败", "output", string(output), "error", err)
-			} else {
-				slog.Error("查询失败", "output", result, "error", err)
-			}
+			slog.Error("查询失败", "output", result, "error", err)
 			return
 		}
-		output, ok := result.([]byte)
+		output, ok := result.(string)
 		if !ok {
 			slog.Error("查询结果类型错误", "type", fmt.Sprintf("%T", result))
 			return
 		}
-		// 去掉多余的空行，确保都是Windows风格的换行
-		text := strings.TrimSpace(string(output))
-		text = strings.ReplaceAll(text, "\r\n", "\n")
-		text = strings.ReplaceAll(text, "\r", "\n")
-		text = strings.ReplaceAll(text, "\n", "\r\n")
-		sendGroupMessage(msg, &Text{Text: text})
+		sendGroupMessage(msg, &Text{Text: strings.TrimSpace(output)})
 	}()
 	return nil
+}
+
+type speedrunPlayerData struct {
+	ID    string `json:"id"`
+	Names struct {
+		International string `json:"international"`
+	} `json:"names"`
+}
+
+type speedrunApiResp struct {
+	Data struct {
+		Runs []struct {
+			Place int `json:"place"`
+			Run   struct {
+				Times struct {
+					PrimaryT float64 `json:"primary_t"`
+				} `json:"times"`
+				Players []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"players"`
+				Date string `json:"date"`
+			} `json:"run"`
+		} `json:"runs"`
+		Players struct {
+			Data []speedrunPlayerData `json:"data"`
+		} `json:"players"`
+	} `json:"data"`
+}
+
+func (t *speedrunLeaderboards) formatTime(tm float64) string {
+	m := int(tm) / 60
+	sFloat := tm - float64(m*60)
+	h := m / 60
+	if h > 0 {
+		m = m - h*60
+		return fmt.Sprintf("%d:%02d:%02d", h, m, int(sFloat))
+	}
+	if m < 10 {
+		return fmt.Sprintf("%d:%06.3f", m, sFloat)
+	}
+	return fmt.Sprintf("%02d:%02d", m, int(sFloat))
+}
+
+func (t *speedrunLeaderboards) formatRelativeDate(dateStr string) string {
+	if dateStr == "" {
+		return dateStr
+	}
+	tm, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return dateStr
+	}
+	y, m, d := time.Now().Date()
+	today := time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+	days := int(today.Sub(tm).Hours() / 24)
+	switch {
+	case days == 0:
+		return "今天"
+	case days == 1:
+		return "昨天"
+	case days == 2:
+		return "前天"
+	case days >= 3 && days < 30:
+		return fmt.Sprintf("%d天前", days)
+	case days >= 30 && days < 60:
+		return "上个月"
+	case days >= 60:
+		months := days / 30
+		return fmt.Sprintf("%d个月前", months)
+	default:
+		// 未来日期或其他情况，返回原字符串
+		return dateStr
+	}
+}
+
+func (t *speedrunLeaderboards) getPlayerName(refID string, players []speedrunPlayerData, refName string) string {
+	for _, p := range players {
+		if p.ID == refID {
+			return p.Names.International
+		}
+	}
+	if refName != "" {
+		return refName
+	}
+	return "Unknown"
+}
+
+func (t *speedrunLeaderboards) fetch(key string) (string, error) {
+	u, ok := t.url[key]
+	if !ok {
+		return "", fmt.Errorf("未知的分类: %s", key)
+	}
+	resp, err := t.resty.R().Get(u + "&embed=players&top=5")
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode() >= 400 {
+		return "", fmt.Errorf("http 错误: %d", resp.StatusCode())
+	}
+	var ar speedrunApiResp
+	if err := json.Unmarshal(resp.Body(), &ar); err != nil {
+		return "", err
+	}
+	runs := ar.Data.Runs
+	if len(runs) > 5 {
+		runs = runs[:5]
+	}
+	players := ar.Data.Players.Data
+
+	var buf strings.Builder
+	_, _ = fmt.Fprintf(&buf, "=== 丝之歌 — %s — NMG ===\r\n", t.categoryNames[key])
+	for _, entry := range runs {
+		place := entry.Place
+		run := entry.Run
+		timeStr := t.formatTime(run.Times.PrimaryT)
+		playerRef := run.Players
+		playerName := "Unknown"
+		if len(playerRef) > 0 {
+			playerName = t.getPlayerName(playerRef[0].ID, players, playerRef[0].Name)
+		}
+		rel := ""
+		if run.Date != "" {
+			rel = " — " + t.formatRelativeDate(run.Date)
+		}
+		_, _ = fmt.Fprintf(&buf, "%d. %s — %s%s\r\n", place, playerName, timeStr, rel)
+	}
+	return buf.String(), nil
+}
+
+func (t *speedrunLeaderboards) requestSpeedrun(arg string) (string, error) {
+	keys, ok := t.mapKeys[arg]
+	if !ok {
+		keys = []string{arg}
+	}
+
+	ss := make([]string, 0, len(keys))
+	for _, k := range keys {
+		s, err := t.fetch(k)
+		if err != nil {
+			return "", err
+		}
+		ss = append(ss, s)
+	}
+	return strings.Join(ss, ""), nil
 }
