@@ -27,7 +27,7 @@ func init() {
 			"low":       "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
 			"ab":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
 			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
-			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
 		},
 		categoryNames: map[string]string{
 			"anylp":     "Any% 新",
@@ -39,7 +39,7 @@ func init() {
 			"low":       "Low%",
 			"ab":        "All Bosses",
 			"twisted":   "Twisted%",
-			"苔穴":      "苔穴",
+			"苔穴":        "苔穴",
 		},
 		mapKeys: map[string][]string{
 			"any":        {"anyrp", "anylp"},
