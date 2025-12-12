@@ -108,6 +108,13 @@ func (t *speedrunLeaderboards) Execute(msg *GroupMessage, content string) Messag
 	return nil
 }
 
+type speedrunPlayerData struct {
+	ID    string `json:"id"`
+	Names struct {
+		International string `json:"international"`
+	} `json:"names"`
+}
+
 type speedrunApiResp struct {
 	Data struct {
 		Runs []struct {
@@ -124,12 +131,7 @@ type speedrunApiResp struct {
 			} `json:"run"`
 		} `json:"runs"`
 		Players struct {
-			Data []struct {
-				ID    string `json:"id"`
-				Names struct {
-					International string `json:"international"`
-				} `json:"names"`
-			} `json:"data"`
+			Data []speedrunPlayerData `json:"data"`
 		} `json:"players"`
 	} `json:"data"`
 }
@@ -179,12 +181,7 @@ func (t *speedrunLeaderboards) formatRelativeDate(dateStr string) string {
 	}
 }
 
-func (t *speedrunLeaderboards) getPlayerName(refID string, players []struct {
-	ID    string `json:"id"`
-	Names struct {
-		International string `json:"international"`
-	} `json:"names"`
-}, refName string) string {
+func (t *speedrunLeaderboards) getPlayerName(refID string, players []speedrunPlayerData, refName string) string {
 	for _, p := range players {
 		if p.ID == refID {
 			return p.Names.International
