@@ -7,7 +7,7 @@ import os
 
 from file_utils import *
 
-player_url = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=legendary&reboot_index=1&page_index=1&character_name={}"
+player_url = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=overall&id=legendary&page_index=1&character_name={}"
 legion_url = "https://www.nexon.com/api/maplestory/no-auth/ranking/v2/na?type=legion&id=45&page_index=1&character_name={}"
 buffer_size = 15
 sleep_per_request = 0.5  # seconds
@@ -21,11 +21,12 @@ def assert_player_onrank(name):
         print(f"Error fetching data for {name}: {e}")
         return True  # Assume online if error occurs
     
-    count = data['totalCount']
+    count = data['totalCount'] if data is not None else 1 # Make no conclusion if error occurs
     return count > 0
 
 
 def try_request(url, name, retries=3, wait=10):
+    data = None
     for retry in range(retries):
         try:
             response = requests.get(url.format(name))
@@ -33,7 +34,7 @@ def try_request(url, name, retries=3, wait=10):
             logging.info(f"Requested for {name} successfully")
             break
         except Exception as e:
-            print(f"Error fetching player data for {name}: {e}, retrying ({retry + 1}/3)...")
+            print(f"Error fetching player data for {name}: {e}, retrying ({retry + 1}/3)..., request status: {response.status_code if 'response' in locals() else 'N/A'}")
             if retry == 2:
                 print(f"Waiting for {wait} seconds before retrying...")
                 logging.warning(f"Fetch is too fast, waiting for {wait} seconds")
@@ -57,10 +58,10 @@ def request_from_name_list():
             print(f"Processing player {i}...")
 
         data = try_request(legion_url, name)
-        count = data['totalCount']
+        count = data['totalCount'] if data is not None else 0
         if count == 0:
             data = try_request(player_url, name)
-            count = data['totalCount']
+            count = data['totalCount'] if data is not None else 0
 
             if count == 0:
                 update_time = names_dict[name]
@@ -71,6 +72,7 @@ def request_from_name_list():
                     del names_dict[name]
                 print(f"Player {name} does not exist for {time_in_days} days.")
                 logging.info(f"Player {name} does not exist for {time_in_days} days.")
+                time.sleep(sleep_per_request * 2)  # Avoid hitting rate limits
                 continue
             
         logging.info(f'{name} data found')
