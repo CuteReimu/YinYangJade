@@ -7,7 +7,7 @@ require (
 	github.com/CuteReimu/goutil v0.0.0-20250319114149-4d3965d6581c
 	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
 	github.com/CuteReimu/onebot v0.0.0-20251201151712-c38ab9a341e1
-	github.com/dgraph-io/badger/v4 v4.8.0
+	github.com/dgraph-io/badger/v4 v4.9.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/go-resty/resty/v2 v2.17.1
 	github.com/go-rod/rod v0.116.2
