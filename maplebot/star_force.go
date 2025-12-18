@@ -185,7 +185,7 @@ func formatInt64(i int64) string {
 
 func calculateBoomCount(content string, newKms bool) MessageChain {
 	boomProtect := strings.Contains(content, "保护") && !strings.Contains(content, "不保护")
-	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
+	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必") || strings.Contains(content, "超爆")
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
 	boomEvent := strings.Contains(content, "超爆") || strings.Contains(content, "防爆") || strings.Contains(content, "减爆")
 	title := "旧0-22星爆炸次数"
@@ -395,7 +395,7 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 		return MessageChain{&Text{Text: fmt.Sprintf("%d级装备最多升到%d星", itemLevel, maxStar)}}
 	}
 	boomProtect := strings.Contains(content, "保护") && !strings.Contains(content, "不保护")
-	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必")
+	thirtyOff := strings.Contains(content, "七折") || strings.Contains(content, "超必") || strings.Contains(content, "超爆")
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
 	boomEvent := strings.Contains(content, "超爆") || strings.Contains(content, "防爆") || strings.Contains(content, "减爆")
 
