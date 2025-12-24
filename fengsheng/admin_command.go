@@ -39,7 +39,7 @@ func (*bind) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (a *bind) Execute(msg *GroupMessage, content string) MessageChain {
+func (*bind) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	arr := strings.SplitN(name, " ", 2)
 	if len(arr) != 2 {
@@ -97,11 +97,11 @@ func (*unbind) Name() string {
 	return "解绑"
 }
 
-func (a *unbind) ShowTips(int64, int64) string {
+func (*unbind) ShowTips(int64, int64) string {
 	return "解绑 QQ号"
 }
 
-func (a *unbind) CheckAuth(_ int64, senderID int64) bool {
+func (*unbind) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
@@ -370,15 +370,15 @@ func (*setWaitSecond) Name() string {
 	return "修改出牌时间"
 }
 
-func (s *setWaitSecond) ShowTips(int64, int64) string {
+func (*setWaitSecond) ShowTips(int64, int64) string {
 	return "修改出牌时间 秒数"
 }
 
-func (s *setWaitSecond) CheckAuth(_ int64, senderID int64) bool {
+func (*setWaitSecond) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (s *setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
+func (*setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
 	if second, err := strconv.Atoi(strings.TrimSpace(content)); err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n修改出牌时间 秒数"}}
 	} else if second <= 0 {
