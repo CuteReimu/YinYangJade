@@ -113,7 +113,11 @@ func searchAt(message *GroupMessage) bool {
 								slog.Error("panic recovered", "error", err)
 							}
 						}()
-						result, returnError := httpGetString("/getscore", map[string]string{"name": name, "operator": operatorName})
+						params := map[string]string{
+						"name":     name,
+						"operator": operatorName,
+					}
+					result, returnError := httpGetString("/getscore", params)
 						if returnError != nil {
 							slog.Error("请求失败", "error", returnError.error)
 							sendGroupMessage(message, returnError.message...)
@@ -242,7 +246,9 @@ func handlePrivateRequest(request *PrivateMessage) bool {
 				removeAdmin = append(removeAdmin, fmt.Sprintf("%d(%s)", qq, memberName[qq]))
 			}
 			if len(oldAdmins) > 0 || len(removeAdmin) > 0 {
-				sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "需要增加的管理员：\r\n" + strings.Join(newAdmin, "，") + "\r\n需要移除的管理员：\r\n" + strings.Join(removeAdmin, "，")}})
+			text := "需要增加的管理员：\r\n" + strings.Join(newAdmin, "，") +
+				"\r\n需要移除的管理员：\r\n" + strings.Join(removeAdmin, "，")
+			sendPrivateMessage(request.UserId, MessageChain{&Text{Text: text}})
 			} else {
 				sendPrivateMessage(request.UserId, MessageChain{&Text{Text: "无需调整"}})
 			}

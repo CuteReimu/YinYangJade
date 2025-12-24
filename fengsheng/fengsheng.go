@@ -54,7 +54,8 @@ loop:
 		}
 		if strings.HasPrefix(line, "剩余精力") {
 			_, _ = resultBuilder.WriteString("，" + line)
-		} else if strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") || strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩") {
+		} else if strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") ||
+		(strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩")) {
 		} else if isWinRate {
 			var r []string
 			for s := range strings.SplitSeq(line, "\t") {
@@ -271,7 +272,8 @@ func (seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) > 0 {
 		return nil
 	}
-	resp, err := restyClient.R().SetQueryParam("season_rank", "true").Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
+	url := fengshengConfig.GetString("fengshengUrl") + "/ranklist"
+	resp, err := restyClient.R().SetQueryParam("season_rank", "true").Get(url)
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
