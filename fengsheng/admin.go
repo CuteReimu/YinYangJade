@@ -16,15 +16,15 @@ func init() {
 
 type delAdmin struct{}
 
-func (d *delAdmin) Name() string {
+func (_ *delAdmin) Name() string {
 	return "删除管理员"
 }
 
-func (d *delAdmin) ShowTips(int64, int64) string {
+func (_ *delAdmin) ShowTips(int64, int64) string {
 	return "删除管理员 对方QQ号"
 }
 
-func (d *delAdmin) CheckAuth(_ int64, senderID int64) bool {
+func (_ *delAdmin) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
@@ -64,15 +64,15 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 
 type addAdmin struct{}
 
-func (a *addAdmin) Name() string {
+func (_ *addAdmin) Name() string {
 	return "增加管理员"
 }
 
-func (a *addAdmin) ShowTips(int64, int64) string {
+func (_ *addAdmin) ShowTips(int64, int64) string {
 	return "增加管理员 对方QQ号"
 }
 
-func (a *addAdmin) CheckAuth(_ int64, senderID int64) bool {
+func (_ *addAdmin) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
@@ -109,15 +109,15 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 
 type listAllAdmin struct{}
 
-func (l *listAllAdmin) Name() string {
+func (_ *listAllAdmin) Name() string {
 	return "查看管理员"
 }
 
-func (l *listAllAdmin) ShowTips(int64, int64) string {
+func (_ *listAllAdmin) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (l *listAllAdmin) CheckAuth(int64, int64) bool {
+func (_ *listAllAdmin) CheckAuth(int64, int64) bool {
 	return true
 }
 

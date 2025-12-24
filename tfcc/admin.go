@@ -1,3 +1,4 @@
+// Package tfcc 实现东方Project沙包聚集地机器人功能
 package tfcc
 
 import (

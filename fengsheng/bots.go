@@ -14,8 +14,10 @@ import (
 	. "github.com/CuteReimu/onebot"
 )
 
+// B 是风声机器人使用的 OneBot 实例
 var B *Bot
 
+// Init 初始化风声机器人模块
 func Init(b *Bot) {
 	initConfig()
 	B = b
@@ -249,8 +251,8 @@ func handlePrivateRequest(request *PrivateMessage) bool {
 	return true
 }
 
-func sendPrivateMessage(userId int64, messages MessageChain) {
-	_, err := B.SendPrivateMessage(userId, messages)
+func sendPrivateMessage(userID int64, messages MessageChain) {
+	_, err := B.SendPrivateMessage(userID, messages)
 	if err != nil {
 		slog.Error("发送私聊消息失败", "error", err)
 	}

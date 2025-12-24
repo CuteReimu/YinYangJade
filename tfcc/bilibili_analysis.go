@@ -102,11 +102,17 @@ func getVideoInfo(content string) (any, bool, error) {
 			return nil, true, err
 		}
 		if typ == "bvid" {
-			bvid := result.(string)
+			bvid, ok := result.(string)
+			if !ok {
+				return nil, true, errors.New("invalid bvid type")
+			}
 			result, err := bili.GetVideoInfo(bilibili.VideoParam{Bvid: bvid})
 			return result, true, err
 		} else if typ == "live" {
-			rid := result.(int)
+			rid, ok := result.(int)
+			if !ok {
+				return nil, true, errors.New("invalid room id type")
+			}
 			result, err := bili.GetLiveRoomInfo(bilibili.GetLiveRoomInfoParam{RoomId: rid})
 			return result, true, err
 		}

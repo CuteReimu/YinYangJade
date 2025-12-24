@@ -1,3 +1,4 @@
+// Package main 是 YinYangJade QQ 机器人的主入口程序
 package main
 
 import (
@@ -41,7 +42,7 @@ func init() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(writerError, &slog.HandlerOptions{
 		AddSource: true,
 		Level:     slog.LevelDebug,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
 			switch a.Key {
 			case slog.TimeKey:
 				if t, ok := a.Value.Any().(time.Time); ok {
@@ -176,13 +177,8 @@ func handleNewFriendRequest(request *onebot.FriendRequest) bool {
 
 func handleGroupRequest(request *onebot.GroupRequest) bool {
 	if request.SubType == onebot.GroupRequestInvite {
-		var approve bool
 		groups := mainConfig.GetIntSlice("check_qq_groups")
-		if slices.Contains(groups, int(request.GroupId)) {
-			approve = true
-		} else {
-			approve = false
-		}
+		approve := slices.Contains(groups, int(request.GroupId))
 		err := B.SetGroupAddRequest(request.Flag, request.SubType, approve, "")
 		if err != nil {
 			slog.Error("处理邀请请求失败", "approve", approve, "error", err)

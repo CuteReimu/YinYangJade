@@ -287,15 +287,15 @@ func (a *releaseRole) Execute(_ *GroupMessage, content string) MessageChain {
 
 type setVersion struct{}
 
-func (s *setVersion) Name() string {
+func (_ *setVersion) Name() string {
 	return "修改版本号"
 }
 
-func (s *setVersion) ShowTips(int64, int64) string {
+func (_ *setVersion) ShowTips(int64, int64) string {
 	return "修改版本号 版本号"
 }
 
-func (s *setVersion) CheckAuth(_ int64, senderID int64) bool {
+func (_ *setVersion) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
@@ -313,15 +313,15 @@ func (s *setVersion) Execute(_ *GroupMessage, content string) MessageChain {
 
 type forceEnd struct{}
 
-func (f *forceEnd) Name() string {
+func (_ *forceEnd) Name() string {
 	return "强制结束所有游戏"
 }
 
-func (f *forceEnd) ShowTips(int64, int64) string {
+func (_ *forceEnd) ShowTips(int64, int64) string {
 	return "强制结束所有游戏"
 }
 
-func (f *forceEnd) CheckAuth(_ int64, senderID int64) bool {
+func (_ *forceEnd) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
@@ -394,15 +394,15 @@ func (s *setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
 
 type createAccount struct{}
 
-func (c *createAccount) Name() string {
+func (_ *createAccount) Name() string {
 	return "创号"
 }
 
-func (c *createAccount) ShowTips(int64, int64) string {
+func (_ *createAccount) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (c *createAccount) CheckAuth(_ int64, senderID int64) bool {
+func (_ *createAccount) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
