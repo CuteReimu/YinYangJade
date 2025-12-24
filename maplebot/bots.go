@@ -425,7 +425,7 @@ type iWannaFormParty struct {
 	tips     string
 }
 
-func (i *iWannaFormParty) Name() string {
+func (*iWannaFormParty) Name() string {
 	return "我要开车"
 }
 
@@ -486,7 +486,7 @@ type registerFormParty struct {
 	tips     string
 }
 
-func (r *registerFormParty) Name() string {
+func (*registerFormParty) Name() string {
 	return "订阅开车"
 }
 
@@ -514,7 +514,7 @@ type cancelRegisterFormParty struct {
 	tips     string
 }
 
-func (c *cancelRegisterFormParty) Name() string {
+func (*cancelRegisterFormParty) Name() string {
 	return "取消订阅"
 }
 

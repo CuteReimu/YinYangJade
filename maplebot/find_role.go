@@ -119,7 +119,7 @@ func findRole(name string) MessageChain {
 
 func resolveFindData(data *findRoleReturnData) MessageChain {
 	img := data.CharacterData.Image
-	imgUrl := data.CharacterData.CharacterImageURL
+	imgURL := data.CharacterData.CharacterImageURL
 	rawName := data.CharacterData.Name
 	class := TranslateClassName(data.CharacterData.Class)
 	level := data.CharacterData.Level
@@ -128,10 +128,10 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 	legionLevel := data.CharacterData.LegionLevel
 
 	if len(class) == 0 {
-		class = TranslateClassId(data.CharacterData.ClassID)
+		class = TranslateClassID(data.CharacterData.ClassID)
 		if len(class) == 0 {
 			for _, d := range slices.Backward(data.CharacterData.GraphData) {
-				class = TranslateClassId(d.ClassID)
+				class = TranslateClassID(d.ClassID)
 			}
 		}
 	}
@@ -139,8 +139,8 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 	var messageChain MessageChain
 	if len(img) > 0 {
 		messageChain = append(messageChain, &Image{File: "base64://" + img})
-	} else if len(imgUrl) > 0 {
-		resp, err := restyClient.R().Get(imgUrl)
+	} else if len(imgURL) > 0 {
+		resp, err := restyClient.R().Get(imgURL)
 		if err != nil {
 			slog.Error("请求失败", "error", err)
 		} else {

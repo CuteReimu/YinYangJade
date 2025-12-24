@@ -35,7 +35,7 @@ func (*bind) ShowTips(int64, int64) string {
 	return "绑定 QQ号 名字"
 }
 
-func (a *bind) CheckAuth(_ int64, senderID int64) bool {
+func (*bind) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
@@ -93,7 +93,7 @@ func (a *bind) Execute(msg *GroupMessage, content string) MessageChain {
 
 type unbind struct{}
 
-func (a *unbind) Name() string {
+func (*unbind) Name() string {
 	return "解绑"
 }
 
@@ -347,11 +347,11 @@ func (*setNotice) ShowTips(int64, int64) string {
 	return "修改公告 公告内容"
 }
 
-func (s *setNotice) CheckAuth(_ int64, senderID int64) bool {
+func (*setNotice) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (s *setNotice) Execute(_ *GroupMessage, content string) MessageChain {
+func (*setNotice) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n修改公告 公告内容"}}
@@ -366,7 +366,7 @@ func (s *setNotice) Execute(_ *GroupMessage, content string) MessageChain {
 
 type setWaitSecond struct{}
 
-func (s *setWaitSecond) Name() string {
+func (*setWaitSecond) Name() string {
 	return "修改出牌时间"
 }
 
