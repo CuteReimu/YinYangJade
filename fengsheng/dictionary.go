@@ -1,90 +1,31 @@
 package fengsheng
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log/slog"
-	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	. "github.com/CuteReimu/onebot"
 )
 
 var addDbQQList = make(map[int64]string)
 
 func dealAddDict(message *GroupMessage, key string) {
-	if strings.Contains(key, ".") {
-		sendGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
-		return
-	}
-	if _, ok := cmdMap[key]; ok {
-		sendGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
-		return
-	}
-	if len(key) > 0 {
-		m := qunDb.GetStringMapString("data")
-		if _, ok := m[key]; ok {
-			sendGroupMessage(message, &Text{Text: "词条已存在"})
-		} else {
-			sendGroupMessage(message, &Text{Text: "请输入要添加的内容"})
-			addDbQQList[message.Sender.UserId] = key
-		}
-	}
+	botutil.DealAddDict(message, key, qunDb, cmdMap, addDbQQList, sendGroupMessage)
 }
 
 func dealModifyDict(message *GroupMessage, key string) {
-	m := qunDb.GetStringMapString("data")
-	if _, ok := m[key]; !ok {
-		sendGroupMessage(message, &Text{Text: "词条不存在"})
-	} else {
-		sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-		addDbQQList[message.Sender.UserId] = key
-	}
+	botutil.DealModifyDict(message, key, qunDb, addDbQQList, sendGroupMessage)
 }
 
 func dealRemoveDict(message *GroupMessage, key string) {
-	m := qunDb.GetStringMapString("data")
-	if _, ok := m[key]; !ok {
-		sendGroupMessage(message, &Text{Text: "词条不存在"})
-	} else {
-		delete(m, key)
-		qunDb.Set("data", m)
-		if err := qunDb.WriteConfig(); err != nil {
-			slog.Error("write data failed", "error", err)
-		}
-		sendGroupMessage(message, &Text{Text: "删除词条成功"})
-	}
+	botutil.DealRemoveDict(message, key, qunDb, sendGroupMessage)
 }
 
 func dealSearchDict(message *GroupMessage, key string) {
-	var res []string
-	m := qunDb.GetStringMapString("data")
-	for k := range m {
-		if strings.Contains(k, key) {
-			res = append(res, k)
-		}
-	}
-	if len(res) > 0 {
-		slices.Sort(res)
-		num := len(res)
-		if num > 10 {
-			res = res[:10]
-			res[9] += fmt.Sprintf("\n等%d个词条", num)
-		}
-		for i := range res {
-			res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
-		}
-		sendGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
-	} else {
-		sendGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
-	}
+	botutil.DealSearchDict(message, key, qunDb, sendGroupMessage)
 }
 
 func handleDictionary(message *GroupMessage) bool {
@@ -99,7 +40,7 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if text, ok := message.Message[0].(*Text); ok {
 		if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
-			key := dealKey(text.Text[len("搜索词条"):])
+			key := botutil.DealKey(text.Text[len("搜索词条"):])
 			if len(key) > 0 {
 				dealSearchDict(message, key)
 			}
@@ -108,17 +49,17 @@ func handleDictionary(message *GroupMessage) bool {
 		if isWhitelist(message.Sender.UserId) {
 			switch {
 			case strings.HasPrefix(text.Text, "添加词条 "):
-				key := dealKey(text.Text[len("添加词条"):])
+				key := botutil.DealKey(text.Text[len("添加词条"):])
 				dealAddDict(message, key)
 				return true
 			case strings.HasPrefix(text.Text, "修改词条 "):
-				key := dealKey(text.Text[len("修改词条"):])
+				key := botutil.DealKey(text.Text[len("修改词条"):])
 				if len(key) > 0 {
 					dealModifyDict(message, key)
 				}
 				return true
 			case strings.HasPrefix(text.Text, "删除词条 "):
-				key := dealKey(text.Text[len("删除词条"):])
+				key := botutil.DealKey(text.Text[len("删除词条"):])
 				if len(key) > 0 {
 					dealRemoveDict(message, key)
 				}
@@ -151,7 +92,7 @@ func handleDictionary(message *GroupMessage) bool {
 		if len(message.Message) == 1 {
 			if text, ok := message.Message[0].(*Text); ok {
 				m := qunDb.GetStringMapString("data")
-				s := m[dealKey(text.Text)]
+				s := m[botutil.DealKey(text.Text)]
 				if len(s) > 0 {
 					var ms MessageChain
 					if err := json.Unmarshal([]byte(s), &ms); err != nil {
@@ -168,185 +109,19 @@ func handleDictionary(message *GroupMessage) bool {
 }
 
 func saveImage(message MessageChain) (MessageChain, error) {
-	for _, m := range message {
-		if img, ok := m.(*Image); ok && len(img.Url) > 0 {
-			u := img.Url
-			_, err := url.Parse(u)
-			if err != nil {
-				slog.Error("userInput is not a valid URL, reject it", "error", err)
-				return message, err
-			}
-			if err := os.MkdirAll("dictionary-images", 0755); err != nil {
-				slog.Error("mkdir failed", "error", err)
-				return message, errors.New("保存图片失败")
-			}
-			nameLen := len(filepath.Ext(img.File)) + 32
-			if len(img.File) > nameLen {
-				img.File = img.File[len(img.File)-nameLen:]
-			}
-			p := filepath.Join("dictionary-images", img.File)
-			abs, err := filepath.Abs(p)
-			if err != nil {
-				slog.Error("filepath.Abs() failed", "error", err)
-				return message, errors.New("保存图片失败")
-			}
-			cmd := exec.Command("curl", "-o", p, u)
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				slog.Error("cmd.Run() failed", "error", err, "p", p, "u", u)
-				return message, errors.New("保存图片失败")
-			}
-			slog.Debug(string(out))
-			img.File = "file://" + abs
-			img.Url = ""
-		} else if forward, ok := m.(*Forward); ok {
-			msgs, err := B.GetForwardMessage(forward.Id)
-			if err != nil {
-				slog.Error("获取转发消息失败", "forwardId", forward.Id)
-				return message, errors.New("获取转发消息失败")
-			}
-			var ret MessageChain
-			for _, msg := range msgs {
-				if m, ok := msg.(*GroupMessage); ok {
-					newMsg, err := saveImage(m.Message)
-					if err != nil {
-						slog.Error("嵌套saveImage失败", "error", err)
-					}
-					ret = append(ret, &Node{
-						UserId:   strconv.FormatInt(m.UserId, 10),
-						Nickname: m.Sender.Nickname,
-						Content:  newMsg,
-					})
-				}
-			}
-			return ret, nil
-		}
-	}
-	return message, nil
-}
-
-func fillSpecificMessage(messages []SingleMessage) {
-	for _, m := range messages {
-		if img, ok := m.(*Image); ok && len(img.File) > 0 {
-			if strings.HasPrefix(img.File, "file://") {
-				fileName := img.File[len("file://"):]
-				buf, err := os.ReadFile(fileName)
-				if err != nil {
-					slog.Error("read file failed", "error", err)
-					continue
-				}
-				img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
-			}
-		} else if node, ok := m.(*Node); ok {
-			fillSpecificMessage(node.Content)
-		}
-	}
-}
-
-func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
-	if len(messages) == 0 {
-		return
-	}
-	f := func(messages []SingleMessage) error {
-		fillSpecificMessage(messages)
-		_, err := B.SendGroupMessage(context.GroupId, messages)
-		return err
-	}
-	if err := f(messages); err != nil {
-		slog.Error("send group message failed", "error", err)
-		newMessages := make([]SingleMessage, 0, len(messages))
-		for _, m := range messages {
-			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
-				newMessages = append(newMessages, m)
-			}
-		}
-		if len(newMessages) != len(messages) && len(newMessages) > 0 {
-			if err = f(newMessages); err != nil {
-				slog.Error("send group message failed", "error", err)
-			}
-		}
-	}
-}
-
-func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
-	if len(messages) == 0 {
-		return
-	}
-	f := func(messages []SingleMessage) error {
-		fillSpecificMessage(messages)
-		_, err := B.SendGroupMessage(context.GroupId, append(MessageChain{
-			&Reply{Id: strconv.FormatInt(int64(context.MessageId), 10)},
-		}, messages...))
-		return err
-	}
-	if err := f(messages); err != nil {
-		slog.Error("send group message failed", "error", err)
-		newMessages := make([]SingleMessage, 0, len(messages))
-		for _, m := range messages {
-			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
-				newMessages = append(newMessages, m)
-			}
-		}
-		if len(newMessages) != len(messages) && len(newMessages) > 0 {
-			if err = f(newMessages); err != nil {
-				slog.Error("send group message failed", "error", err)
-			}
-		}
-	}
-}
-
-func dealKey(s string) string {
-	s = strings.TrimSpace(s)
-	s = strings.ReplaceAll(s, "零", "0")
-	s = strings.ReplaceAll(s, "一", "1")
-	s = strings.ReplaceAll(s, "二", "2")
-	s = strings.ReplaceAll(s, "三", "3")
-	s = strings.ReplaceAll(s, "四", "4")
-	s = strings.ReplaceAll(s, "五", "5")
-	s = strings.ReplaceAll(s, "六", "6")
-	s = strings.ReplaceAll(s, "七", "7")
-	s = strings.ReplaceAll(s, "八", "8")
-	s = strings.ReplaceAll(s, "九", "9")
-	return strings.ToLower(s)
+	return botutil.SaveImage(message, "dictionary-images", B)
 }
 
 func clearExpiredImages() {
-	defer func() {
-		if err := recover(); err != nil {
-			slog.Error("panic recovered", "error", err)
-		}
-	}()
-	data := qunDb.GetStringMapString("data")
-	data2 := make(map[string]bool)
-	var f func(ms MessageChain)
-	f = func(ms MessageChain) {
-		for _, m := range ms {
-			if img, ok := m.(*Image); ok && len(img.File) > 0 && strings.HasPrefix(img.File, "file://") {
-				data2[filepath.Base(img.File[len("file://"):])] = true
-			} else if node, ok := m.(*Node); ok {
-				f(node.Content)
-			}
-		}
-	}
-	for _, v := range data {
-		var ms MessageChain
-		if err := json.Unmarshal([]byte(v), &ms); err != nil {
-			slog.Error("json unmarshal failed", "error", err)
-			continue
-		}
-		f(ms)
-	}
-	files, err := os.ReadDir("dictionary-images")
-	if err != nil {
-		slog.Error("read dir failed", "error", err)
-	}
-	for _, file := range files {
-		if !data2[file.Name()] {
-			if err = os.Remove(filepath.Join("dictionary-images", file.Name())); err != nil {
-				slog.Error("remove file failed", "error", err)
-			}
-		}
-	}
+	botutil.ClearExpiredImages(qunDb, "dictionary-images")
+}
+
+func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+	botutil.SendGroupMessageWithRetry(B, context, botutil.FillSpecificMessage, messages...)
+}
+
+func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+	botutil.ReplyGroupMessageWithRetry(B, context, botutil.FillSpecificMessage, messages...)
 }
 
 type dictionaryCommand struct {
@@ -380,3 +155,4 @@ func init() {
 	addCmdListener(&dictionaryCommand{name: "修改词条", tips: "修改词条 词条名称", checkPerm: true})
 	addCmdListener(&dictionaryCommand{name: "搜索词条", tips: "搜索词条 关键词"})
 }
+

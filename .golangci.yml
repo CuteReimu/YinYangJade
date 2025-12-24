@@ -75,8 +75,8 @@ linters:
           arguments: [4]
         - name: unhandled-error
           arguments:
-            - "^strings\\.Builder\\.Write(Byte|Rune|String)?$"
-            - "^fmt\\.Print(f|ln)?$"
+            - "^strings\\.Builder\\.Write(?:Byte|Rune|String)?$"
+            - "^fmt\\.Print(?:f|ln)?$"
         - name: flag-parameter
           disabled: true
         - name: unchecked-type-assertion

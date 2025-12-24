@@ -1,14 +1,12 @@
 package tfcc
 
 import (
-	"encoding/base64"
-	"log/slog"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
@@ -91,72 +89,10 @@ func addCmdListener(handler iface.CmdHandler) {
 	cmdMap[name] = handler
 }
 
-func fillSpecificMessage(messages []SingleMessage) {
-	for _, m := range messages {
-		if img, ok := m.(*Image); ok && len(img.File) > 0 {
-			if strings.HasPrefix(img.File, "file://") {
-				fileName := img.File[len("file://"):]
-				buf, err := os.ReadFile(fileName)
-				if err != nil {
-					slog.Error("read file failed", "error", err)
-					continue
-				}
-				img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
-			}
-		} else if node, ok := m.(*Node); ok {
-			fillSpecificMessage(node.Content)
-		}
-	}
-}
-
 func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
-	if len(messages) == 0 {
-		return
-	}
-	f := func(messages []SingleMessage) error {
-		fillSpecificMessage(messages)
-		_, err := bot.SendGroupMessage(context.GroupId, messages)
-		return err
-	}
-	if err := f(messages); err != nil {
-		slog.Error("send group message failed", "error", err)
-		newMessages := make([]SingleMessage, 0, len(messages))
-		for _, m := range messages {
-			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
-				newMessages = append(newMessages, m)
-			}
-		}
-		if len(newMessages) != len(messages) && len(newMessages) > 0 {
-			if err = f(newMessages); err != nil {
-				slog.Error("send group message failed", "error", err)
-			}
-		}
-	}
+	botutil.SendGroupMessageWithRetry(bot, context, botutil.FillSpecificMessage, messages...)
 }
 
 func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
-	if len(messages) == 0 {
-		return
-	}
-	f := func(messages []SingleMessage) error {
-		fillSpecificMessage(messages)
-		_, err := bot.SendGroupMessage(context.GroupId, append(MessageChain{
-			&Reply{Id: strconv.FormatInt(int64(context.MessageId), 10)},
-		}, messages...))
-		return err
-	}
-	if err := f(messages); err != nil {
-		slog.Error("send group message failed", "error", err)
-		newMessages := make([]SingleMessage, 0, len(messages))
-		for _, m := range messages {
-			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
-				newMessages = append(newMessages, m)
-			}
-		}
-		if len(newMessages) != len(messages) && len(newMessages) > 0 {
-			if err = f(newMessages); err != nil {
-				slog.Error("send group message failed", "error", err)
-			}
-		}
-	}
+	botutil.ReplyGroupMessageWithRetry(bot, context, botutil.FillSpecificMessage, messages...)
 }
