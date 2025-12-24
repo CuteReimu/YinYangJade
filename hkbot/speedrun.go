@@ -15,8 +15,8 @@ import (
 
 func init() {
 	cmd := &speedrunLeaderboards{
-		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%", "苔穴"},
-		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss"},
+		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%", "苔穴", "PoP", "白宫"},
+		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白色宫殿"},
 		url: map[string]string{
 			"anylp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=qj70747q",
 			"anyrp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=10vzvmol",
@@ -27,19 +27,23 @@ func init() {
 			"low":       "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
 			"ab":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
 			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
-			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"pop":       "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/r9g1qop9/wkpq608d",
+			"白色宫殿":  "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
 		},
 		categoryNames: map[string]string{
-			"anylp":     "Any% 新",
-			"anyrp":     "Any% 旧",
-			"te":        "True Ending",
-			"100noab":   "100% No AB",
-			"100ab":     "100% All Bosses",
-			"judgement": "Judgement",
-			"low":       "Low%",
-			"ab":        "All Bosses",
-			"twisted":   "Twisted%",
-			"苔穴":        "苔穴",
+			"anylp":     "丝之歌 — Any% 新",
+			"anyrp":     "丝之歌 — Any% 旧",
+			"te":        "丝之歌 — True Ending",
+			"100noab":   "丝之歌 — 100% No AB",
+			"100ab":     "丝之歌 — 100% All Bosses",
+			"judgement": "丝之歌 — Judgement",
+			"low":       "丝之歌 — Low%",
+			"ab":        "丝之歌 — All Bosses",
+			"twisted":   "丝之歌 — Twisted%",
+			"苔穴":      "丝之歌 — 苔穴",
+			"pop":       "空洞骑士 — 苦痛之路",
+			"白色宫殿":  "空洞骑士 — 白色宫殿 1.3.1.5+",
 		},
 		mapKeys: map[string][]string{
 			"any":        {"anyrp", "anylp"},
@@ -48,6 +52,9 @@ func init() {
 			"all boss":   {"ab"},
 			"allbosses":  {"ab"},
 			"allboss":    {"ab"},
+			"苦痛之路":   {"pop"},
+			"苦痛":       {"pop"},
+			"白宫":       {"白色宫殿"},
 		},
 		resty: resty.New(),
 	}
@@ -198,7 +205,12 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("未知的分类: %s", key)
 	}
-	resp, err := t.resty.R().Get(u + "&embed=players&top=5")
+	if strings.Contains(u, "?") {
+		u += "&embed=players&top=5"
+	} else {
+		u += "?embed=players&top=5"
+	}
+	resp, err := t.resty.R().Get(u)
 	if err != nil {
 		return "", err
 	}
@@ -216,7 +228,7 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 	players := ar.Data.Players.Data
 
 	var buf strings.Builder
-	_, _ = fmt.Fprintf(&buf, "=== 丝之歌 — %s — NMG ===\r\n", t.categoryNames[key])
+	_, _ = fmt.Fprintf(&buf, "=== %s — NMG ===\r\n", t.categoryNames[key])
 	for _, entry := range runs {
 		place := entry.Place
 		run := entry.Run
