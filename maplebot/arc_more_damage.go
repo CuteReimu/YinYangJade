@@ -42,10 +42,13 @@ func GetMoreDamageArc() (ret MessageChain) {
 	})
 	if err != nil {
 		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+		return nil
 	}
-	return
+	buf, err := p.Bytes()
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+		return nil
+	}
+	ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	return ret
 }

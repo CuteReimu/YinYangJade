@@ -33,22 +33,22 @@ func init() {
 	})
 }
 
-var B *Bot
+var bot *Bot
 
 func Init(b *Bot) {
 	initConfig()
-	B = b
+	bot = b
 	go func() {
-		B.Run(clearExpiredImages)
-		B.Run(clearExpiredImages2)
+		bot.Run(clearExpiredImages)
+		bot.Run(clearExpiredImages2)
 		for range time.Tick(24 * time.Hour) {
-			B.Run(clearExpiredImages)
-			B.Run(clearExpiredImages2)
+			bot.Run(clearExpiredImages)
+			bot.Run(clearExpiredImages2)
 		}
 	}()
-	B.ListenGroupMessage(cmdHandleFunc)
-	B.ListenGroupMessage(handleDictionary)
-	B.ListenGroupMessage(searchAt)
+	bot.ListenGroupMessage(cmdHandleFunc)
+	bot.ListenGroupMessage(handleDictionary)
+	bot.ListenGroupMessage(searchAt)
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
@@ -61,7 +61,7 @@ func cmdHandleFunc(message *GroupMessage) bool {
 	if len(chain) == 0 {
 		return true
 	}
-	if at, ok := chain[0].(*At); ok && at.QQ == strconv.FormatInt(B.QQ, 10) {
+	if at, ok := chain[0].(*At); ok && at.QQ == strconv.FormatInt(bot.QQ, 10) {
 		chain = chain[1:]
 		if len(chain) > 0 {
 			if text, ok := chain[0].(*Text); ok && len(strings.TrimSpace(text.Text)) == 0 {
@@ -158,13 +158,13 @@ func init() {
 	addSimpleCmdListenerNoContent("8421", calculatePotion)
 	addSimpleCmdListener("等级压制", calculateExpDamage)
 	addSimpleCmdListener("生成表格", genTable)
-	addCmdListener(&levelUpExp{})
-	addCmdListener(&boomCount{})
-	addCmdListener(&searchMe{})
-	addCmdListener(&searchSomeone{})
-	addCmdListener(&searchBind{})
-	addCmdListener(&bind{})
-	addCmdListener(&unbind{})
+	addCmdListener(levelUpExp{})
+	addCmdListener(boomCount{})
+	addCmdListener(searchMe{})
+	addCmdListener(searchSomeone{})
+	addCmdListener(searchBind{})
+	addCmdListener(bind{})
+	addCmdListener(unbind{})
 	addSimpleCmdListenerNoContent("神秘压制", GetMoreDamageArc)
 	tryStarForce := func(content string) MessageChain {
 		if len(content) == 0 {
@@ -196,19 +196,19 @@ func init() {
 
 type levelUpExp struct{}
 
-func (l *levelUpExp) Name() string {
+func (levelUpExp) Name() string {
 	return "升级经验"
 }
 
-func (l *levelUpExp) ShowTips(int64, int64) string {
+func (levelUpExp) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (l *levelUpExp) CheckAuth(int64, int64) bool {
+func (levelUpExp) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (l *levelUpExp) Execute(_ *GroupMessage, content string) MessageChain {
+func (levelUpExp) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return calculateLevelExp()
 	}
@@ -223,40 +223,40 @@ func (l *levelUpExp) Execute(_ *GroupMessage, content string) MessageChain {
 
 type boomCount struct{}
 
-func (b *boomCount) Name() string {
+func (boomCount) Name() string {
 	return "爆炸次数"
 }
 
-func (b *boomCount) ShowTips(int64, int64) string {
+func (boomCount) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (b *boomCount) CheckAuth(int64, int64) bool {
+func (boomCount) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (b *boomCount) Execute(_ *GroupMessage, content string) MessageChain {
+func (boomCount) Execute(_ *GroupMessage, content string) MessageChain {
 	return slices.Concat(calculateBoomCount(content, true), calculateBoomCount(content, false))
 }
 
 type searchMe struct{}
 
-func (s *searchMe) Name() string {
+func (searchMe) Name() string {
 	return "查询我"
 }
 
-func (s *searchMe) ShowTips(_ int64, qq int64) string {
+func (searchMe) ShowTips(_ int64, qq int64) string {
 	if findRoleData.GetStringMapString("data")[strconv.FormatInt(qq, 10)] == "" {
 		return ""
 	}
 	return "查询我"
 }
 
-func (s *searchMe) CheckAuth(int64, int64) bool {
+func (searchMe) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (s *searchMe) Execute(msg *GroupMessage, content string) MessageChain {
+func (searchMe) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(content) > 0 {
 		return nil
 	}
@@ -279,19 +279,19 @@ func (s *searchMe) Execute(msg *GroupMessage, content string) MessageChain {
 
 type searchSomeone struct{}
 
-func (s *searchSomeone) Name() string {
+func (searchSomeone) Name() string {
 	return "查询"
 }
 
-func (s *searchSomeone) ShowTips(int64, int64) string {
+func (searchSomeone) ShowTips(int64, int64) string {
 	return "查询 游戏名"
 }
 
-func (s *searchSomeone) CheckAuth(int64, int64) bool {
+func (searchSomeone) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (s *searchSomeone) Execute(msg *GroupMessage, content string) MessageChain {
+func (searchSomeone) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(content) == 0 || strings.Contains(content, " ") {
 		return nil
 	}
@@ -308,19 +308,19 @@ func (s *searchSomeone) Execute(msg *GroupMessage, content string) MessageChain 
 
 type searchBind struct{}
 
-func (s *searchBind) Name() string {
+func (searchBind) Name() string {
 	return "查询绑定"
 }
 
-func (s *searchBind) ShowTips(int64, int64) string {
+func (searchBind) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (s *searchBind) CheckAuth(int64, int64) bool {
+func (searchBind) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (s *searchBind) Execute(_ *GroupMessage, content string) MessageChain {
+func (searchBind) Execute(_ *GroupMessage, content string) MessageChain {
 	qq, err := strconv.ParseInt(content, 10, 64)
 	if err != nil {
 		return MessageChain{&Text{Text: "命令格式：“查询绑定 QQ号”"}}
@@ -335,22 +335,22 @@ func (s *searchBind) Execute(_ *GroupMessage, content string) MessageChain {
 
 type bind struct{}
 
-func (b *bind) Name() string {
+func (bind) Name() string {
 	return "绑定"
 }
 
-func (b *bind) ShowTips(_, qq int64) string {
+func (bind) ShowTips(_, qq int64) string {
 	if findRoleData.GetStringMapString("data")[strconv.FormatInt(qq, 10)] != "" {
 		return ""
 	}
 	return "绑定 游戏名"
 }
 
-func (b *bind) CheckAuth(int64, int64) bool {
+func (bind) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (b *bind) Execute(msg *GroupMessage, content string) MessageChain {
+func (bind) Execute(msg *GroupMessage, content string) MessageChain {
 	data := findRoleData.GetStringMapString("data")
 	if data[strconv.FormatInt(msg.Sender.UserId, 10)] != "" {
 		return MessageChain{&Text{Text: "你已经绑定过了，如需更换请先解绑"}}
@@ -367,22 +367,22 @@ func (b *bind) Execute(msg *GroupMessage, content string) MessageChain {
 
 type unbind struct{}
 
-func (u *unbind) Name() string {
+func (unbind) Name() string {
 	return "解绑"
 }
 
-func (u *unbind) ShowTips(_ int64, qq int64) string {
+func (unbind) ShowTips(_ int64, qq int64) string {
 	if findRoleData.GetStringMapString("data")[strconv.FormatInt(qq, 10)] == "" {
 		return ""
 	}
 	return "解绑"
 }
 
-func (u *unbind) CheckAuth(int64, int64) bool {
+func (unbind) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (u *unbind) Execute(msg *GroupMessage, content string) MessageChain {
+func (unbind) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(content) > 0 {
 		return nil
 	}
@@ -401,19 +401,19 @@ func (u *unbind) Execute(msg *GroupMessage, content string) MessageChain {
 
 type tryCube struct{}
 
-func (t *tryCube) Name() string {
+func (tryCube) Name() string {
 	return "洗魔方"
 }
 
-func (t *tryCube) ShowTips(int64, int64) string {
+func (tryCube) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (t *tryCube) CheckAuth(int64, int64) bool {
+func (tryCube) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (t *tryCube) Execute(_ *GroupMessage, content string) MessageChain {
+func (tryCube) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return calculateCubeAll()
 	}
@@ -453,7 +453,7 @@ func (i *iWannaFormParty) Execute(msg *GroupMessage, data string) MessageChain {
 			}
 		}
 		delete(qqNumbers, strconv.Itoa(int(msg.Sender.UserId))) // 自己发车不要艾特自己
-		members, err := B.GetGroupMemberList(msg.GroupId)
+		members, err := bot.GetGroupMemberList(msg.GroupId)
 		if err != nil {
 			slog.Error("获取群成员列表失败", "error", err, "group_id", msg.GroupId)
 		}
@@ -614,7 +614,7 @@ func saveImage(message MessageChain) (MessageChain, error) {
 			img.File = "file://" + abs
 			img.Url = ""
 		} else if forward, ok := m.(*Forward); ok {
-			msgs, err := B.GetForwardMessage(forward.Id)
+			msgs, err := bot.GetForwardMessage(forward.Id)
 			if err != nil {
 				slog.Error("获取转发消息失败", "forwardId", forward.Id)
 				return message, errors.New("获取转发消息失败")
@@ -668,10 +668,10 @@ func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMess
 		}
 		f1(messages)
 		if !reply {
-			_, err := B.SendGroupMessage(context.GroupId, messages)
+			_, err := bot.SendGroupMessage(context.GroupId, messages)
 			return err
 		}
-		_, err := B.SendGroupMessage(context.GroupId, append(MessageChain{
+		_, err := bot.SendGroupMessage(context.GroupId, append(MessageChain{
 			&Reply{Id: strconv.FormatInt(int64(context.MessageId), 10)},
 		}, messages...))
 		return err

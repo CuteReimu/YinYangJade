@@ -5,15 +5,15 @@ import (
 	"slices"
 )
 
-func IsSuperAdmin(qq int64) bool {
+func isSuperAdmin(qq int64) bool {
 	return qq == hkConfig.GetInt64("qq.super_admin_qq")
 }
 
-func IsAdmin(qq int64) bool {
+func isAdmin(qq int64) bool {
 	return qq == hkConfig.GetInt64("qq.super_admin_qq") || slices.Contains(permData.GetIntSlice("admin"), int(qq))
 }
 
-func AddAdmin(qq int64) bool {
+func doAddAdmin(qq int64) bool {
 	admins := permData.GetIntSlice("admin")
 	if slices.Contains(admins, int(qq)) {
 		return false
@@ -26,7 +26,7 @@ func AddAdmin(qq int64) bool {
 	return true
 }
 
-func RemoveAdmin(qq int64) bool {
+func doRemoveAdmin(qq int64) bool {
 	admins := permData.GetIntSlice("admin")
 	index := slices.Index(admins, int(qq))
 	if index < 0 {
@@ -40,11 +40,11 @@ func RemoveAdmin(qq int64) bool {
 	return true
 }
 
-func IsWhitelist(qq int64) bool {
+func isWhitelist(qq int64) bool {
 	return slices.Contains(permData.GetIntSlice("dictModify"), int(qq))
 }
 
-func AddWhitelist(qq int64) bool {
+func doAddWhitelist(qq int64) bool {
 	whitelist := permData.GetIntSlice("dictModify")
 	if slices.Contains(whitelist, int(qq)) {
 		return false
@@ -57,7 +57,7 @@ func AddWhitelist(qq int64) bool {
 	return true
 }
 
-func RemoveWhitelist(qq int64) bool {
+func doRemoveWhitelist(qq int64) bool {
 	whitelist := permData.GetIntSlice("dictModify")
 	index := slices.Index(whitelist, int(qq))
 	if index < 0 {

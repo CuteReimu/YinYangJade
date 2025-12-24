@@ -11,28 +11,28 @@ import (
 )
 
 func init() {
-	addCmdListener(&getLiveState{})
-	addCmdListener(&startLive{})
-	addCmdListener(&stopLive{})
-	addCmdListener(&changeLiveTitle{})
-	addCmdListener(&changeLiveArea{})
+	addCmdListener(getLiveState{})
+	addCmdListener(startLive{})
+	addCmdListener(stopLive{})
+	addCmdListener(changeLiveTitle{})
+	addCmdListener(changeLiveArea{})
 }
 
 type getLiveState struct{}
 
-func (g *getLiveState) Name() string {
+func (getLiveState) Name() string {
 	return "直播状态"
 }
 
-func (g *getLiveState) ShowTips(int64, int64) string {
+func (getLiveState) ShowTips(int64, int64) string {
 	return "直播状态"
 }
 
-func (g *getLiveState) CheckAuth(int64, int64) bool {
+func (getLiveState) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (g *getLiveState) Execute(_ *GroupMessage, content string) MessageChain {
+func (getLiveState) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) != 0 {
 		return nil
 	}
@@ -46,26 +46,26 @@ func (g *getLiveState) Execute(_ *GroupMessage, content string) MessageChain {
 	if ret.LiveStatus == 0 {
 		text = "直播间状态：未开播"
 	} else {
-		text = fmt.Sprintf("直播间状态：开播\n直播标题：%s\n人气：%d\n直播间地址：%s", ret.Title, ret.Online, getLiveUrl())
+		text = fmt.Sprintf("直播间状态：开播\n直播标题：%s\n人气：%d\n直播间地址：%s", ret.Title, ret.Online, getLiveURL())
 	}
 	return MessageChain{&Text{Text: text}}
 }
 
 type startLive struct{}
 
-func (s *startLive) Name() string {
+func (startLive) Name() string {
 	return "开始直播"
 }
 
-func (s *startLive) ShowTips(int64, int64) string {
+func (startLive) ShowTips(int64, int64) string {
 	return "开始直播"
 }
 
-func (s *startLive) CheckAuth(_ int64, senderId int64) bool {
-	return IsWhitelist(senderId)
+func (startLive) CheckAuth(_ int64, senderID int64) bool {
+	return isWhitelist(senderID)
 }
 
-func (s *startLive) Execute(msg *GroupMessage, content string) MessageChain {
+func (startLive) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(content) != 0 {
 		return nil
 	}
@@ -93,7 +93,7 @@ func (s *startLive) Execute(msg *GroupMessage, content string) MessageChain {
 		uin := bilibiliData.GetInt64("live")
 		if uin != 0 {
 			if uin != msg.Sender.UserId {
-				publicText = fmt.Sprintf("已经有人正在直播了\n直播间地址：%s\n快来围观吧！", getLiveUrl())
+				publicText = fmt.Sprintf("已经有人正在直播了\n直播间地址：%s\n快来围观吧！", getLiveURL())
 				return MessageChain{&Text{Text: publicText}}
 			}
 		} else {
@@ -102,36 +102,36 @@ func (s *startLive) Execute(msg *GroupMessage, content string) MessageChain {
 				slog.Error("write config failed", "error", err)
 			}
 		}
-		publicText = fmt.Sprintf("直播间本来就是开启的\n直播间地址：%s\n快来围观吧！", getLiveUrl())
+		publicText = fmt.Sprintf("直播间本来就是开启的\n直播间地址：%s\n快来围观吧！", getLiveURL())
 	} else {
 		bilibiliData.Set("live", msg.Sender.UserId)
 		if err = bilibiliData.WriteConfig(); err != nil {
 			slog.Error("write config failed", "error", err)
 		}
-		publicText = fmt.Sprintf("直播间已开启，别忘了修改直播间标题哦！\n直播间地址：%s\n快来围观吧！", getLiveUrl())
+		publicText = fmt.Sprintf("直播间已开启，别忘了修改直播间标题哦！\n直播间地址：%s\n快来围观吧！", getLiveURL())
 	}
 	return MessageChain{&Text{Text: publicText}}
 }
 
 type stopLive struct{}
 
-func (s *stopLive) Name() string {
+func (stopLive) Name() string {
 	return "关闭直播"
 }
 
-func (s *stopLive) ShowTips(int64, int64) string {
+func (stopLive) ShowTips(int64, int64) string {
 	return "关闭直播"
 }
 
-func (s *stopLive) CheckAuth(_ int64, senderId int64) bool {
-	return IsWhitelist(senderId)
+func (stopLive) CheckAuth(_ int64, senderID int64) bool {
+	return isWhitelist(senderID)
 }
 
-func (s *stopLive) Execute(msg *GroupMessage, content string) MessageChain {
+func (stopLive) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(content) != 0 {
 		return nil
 	}
-	if !IsAdmin(msg.Sender.UserId) {
+	if !isAdmin(msg.Sender.UserId) {
 		uin := bilibiliData.GetInt64("live")
 		if uin != 0 && uin != msg.Sender.UserId {
 			return MessageChain{&Text{Text: "谢绝唐突关闭直播"}}
@@ -161,23 +161,23 @@ func (s *stopLive) Execute(msg *GroupMessage, content string) MessageChain {
 
 type changeLiveTitle struct{}
 
-func (c *changeLiveTitle) Name() string {
+func (changeLiveTitle) Name() string {
 	return "修改直播标题"
 }
 
-func (c *changeLiveTitle) ShowTips(int64, int64) string {
+func (changeLiveTitle) ShowTips(int64, int64) string {
 	return "修改直播标题 新标题"
 }
 
-func (c *changeLiveTitle) CheckAuth(_ int64, senderId int64) bool {
-	return IsWhitelist(senderId)
+func (changeLiveTitle) CheckAuth(_ int64, senderID int64) bool {
+	return isWhitelist(senderID)
 }
 
-func (c *changeLiveTitle) Execute(msg *GroupMessage, content string) MessageChain {
+func (changeLiveTitle) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return MessageChain{&Text{Text: "指令格式如下：\n修改直播标题 新标题"}}
 	}
-	if !IsAdmin(msg.Sender.UserId) {
+	if !isAdmin(msg.Sender.UserId) {
 		uin := bilibiliData.GetInt64("live")
 		if uin != 0 && uin != msg.Sender.UserId {
 			return MessageChain{&Text{Text: "谢绝唐突修改直播标题"}}
@@ -200,19 +200,19 @@ func (c *changeLiveTitle) Execute(msg *GroupMessage, content string) MessageChai
 
 type changeLiveArea struct{}
 
-func (c *changeLiveArea) Name() string {
+func (changeLiveArea) Name() string {
 	return "修改直播分区"
 }
 
-func (c *changeLiveArea) ShowTips(int64, int64) string {
+func (changeLiveArea) ShowTips(int64, int64) string {
 	return "修改直播分区 新分区"
 }
 
-func (c *changeLiveArea) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (changeLiveArea) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
-func (c *changeLiveArea) Execute(_ *GroupMessage, content string) MessageChain {
+func (changeLiveArea) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return MessageChain{&Text{Text: "指令格式如下：\n修改直播分区 新分区"}}
 	}
@@ -235,6 +235,6 @@ func (c *changeLiveArea) Execute(_ *GroupMessage, content string) MessageChain {
 	return MessageChain{&Text{Text: "直播分区已修改为" + name}}
 }
 
-func getLiveUrl() string {
+func getLiveURL() string {
 	return "https://live.bilibili.com/" + tfccConfig.GetString("bilibili.room_id")
 }

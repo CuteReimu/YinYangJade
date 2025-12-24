@@ -1,3 +1,4 @@
+// Package db 用于初始化和管理 Badger 数据库连接。
 package db
 
 import (

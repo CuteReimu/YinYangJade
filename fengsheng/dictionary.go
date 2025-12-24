@@ -28,7 +28,7 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if len(message.Message) == 1 {
 		if text, ok := message.Message[0].(*Text); ok {
-			perm := IsWhitelist(message.Sender.UserId)
+			perm := isWhitelist(message.Sender.UserId)
 			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
@@ -204,38 +204,56 @@ func saveImage(message MessageChain) (MessageChain, error) {
 	}
 	return message, nil
 }
-func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
-	replyGroupMessage(false, context, messages...)
+
+func fillSpecificMessage(messages []SingleMessage) {
+	for _, m := range messages {
+		if img, ok := m.(*Image); ok && len(img.File) > 0 {
+			if strings.HasPrefix(img.File, "file://") {
+				fileName := img.File[len("file://"):]
+				buf, err := os.ReadFile(fileName)
+				if err != nil {
+					slog.Error("read file failed", "error", err)
+					continue
+				}
+				img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
+			}
+		} else if node, ok := m.(*Node); ok {
+			fillSpecificMessage(node.Content)
+		}
+	}
 }
 
-func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMessage) {
+func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
 	if len(messages) == 0 {
 		return
 	}
 	f := func(messages []SingleMessage) error {
-		var f1 func(messages []SingleMessage)
-		f1 = func(messages []SingleMessage) {
-			for _, m := range messages {
-				if img, ok := m.(*Image); ok && len(img.File) > 0 {
-					if strings.HasPrefix(img.File, "file://") {
-						fileName := img.File[len("file://"):]
-						buf, err := os.ReadFile(fileName)
-						if err != nil {
-							slog.Error("read file failed", "error", err)
-							continue
-						}
-						img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
-					}
-				} else if node, ok := m.(*Node); ok {
-					f1(node.Content)
-				}
+		fillSpecificMessage(messages)
+		_, err := B.SendGroupMessage(context.GroupId, messages)
+		return err
+	}
+	if err := f(messages); err != nil {
+		slog.Error("send group message failed", "error", err)
+		newMessages := make([]SingleMessage, 0, len(messages))
+		for _, m := range messages {
+			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
+				newMessages = append(newMessages, m)
 			}
 		}
-		f1(messages)
-		if !reply {
-			_, err := B.SendGroupMessage(context.GroupId, messages)
-			return err
+		if len(newMessages) != len(messages) && len(newMessages) > 0 {
+			if err = f(newMessages); err != nil {
+				slog.Error("send group message failed", "error", err)
+			}
 		}
+	}
+}
+
+func replyGroupMessage(context *GroupMessage, messages ...SingleMessage) {
+	if len(messages) == 0 {
+		return
+	}
+	f := func(messages []SingleMessage) error {
+		fillSpecificMessage(messages)
 		_, err := B.SendGroupMessage(context.GroupId, append(MessageChain{
 			&Reply{Id: strconv.FormatInt(int64(context.MessageId), 10)},
 		}, messages...))
@@ -325,8 +343,8 @@ func (d *dictionaryCommand) ShowTips(int64, int64) string {
 	return d.tips
 }
 
-func (d *dictionaryCommand) CheckAuth(_ int64, senderId int64) bool {
-	return !d.checkPerm || IsWhitelist(senderId)
+func (d *dictionaryCommand) CheckAuth(_ int64, senderID int64) bool {
+	return !d.checkPerm || isWhitelist(senderID)
 }
 
 func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChain {

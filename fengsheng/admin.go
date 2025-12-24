@@ -24,8 +24,8 @@ func (d *delAdmin) ShowTips(int64, int64) string {
 	return "删除管理员 对方QQ号"
 }
 
-func (d *delAdmin) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (d *delAdmin) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
 func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
@@ -41,10 +41,10 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 			slog.Error("parse failed: "+s, "error", err)
 			return nil
 		}
-		if IsSuperAdmin(qq) {
+		if isSuperAdmin(qq) {
 			return MessageChain{&Text{Text: "你不能删除自己"}}
 		}
-		if !IsAdmin(qq) {
+		if !isAdmin(qq) {
 			return MessageChain{&Text{Text: s + "并不是管理员"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
@@ -53,7 +53,7 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	for _, qq := range qqNumbers {
-		RemoveAdmin(qq)
+		doRemoveAdmin(qq)
 	}
 	ret := "已删除管理员"
 	if len(qqNumbers) == 1 {
@@ -72,8 +72,8 @@ func (a *addAdmin) ShowTips(int64, int64) string {
 	return "增加管理员 对方QQ号"
 }
 
-func (a *addAdmin) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (a *addAdmin) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
 func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
@@ -89,7 +89,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 			slog.Error("parse failed: "+s, "error", err)
 			return nil
 		}
-		if IsSuperAdmin(qq) || IsAdmin(qq) {
+		if isSuperAdmin(qq) || isAdmin(qq) {
 			return MessageChain{&Text{Text: s + "已经是管理员了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
@@ -98,7 +98,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	for _, qq := range qqNumbers {
-		AddAdmin(qq)
+		doAddAdmin(qq)
 	}
 	ret := "已增加管理员"
 	if len(qqNumbers) == 1 {

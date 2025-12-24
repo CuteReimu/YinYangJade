@@ -117,42 +117,42 @@ loop:
 }
 
 func init() {
-	addCmdListener(&getMyScore{})
-	addCmdListener(&getScore{})
-	addCmdListener(&rankList{})
-	addCmdListener(&seasonRankList{})
-	addCmdListener(&winRate{})
-	addCmdListener(&register{})
-	addCmdListener(&addNotifyOnStart{})
-	addCmdListener(&addNotifyOnEnd{})
-	addCmdListener(&addNotifyOnEnd2{})
-	addCmdListener(&atPlayer{})
-	addCmdListener(&resetPwd{})
-	addCmdListener(&sign{})
-	addCmdListener(&frequency{})
-	addCmdListener(&winRate2{})
-	addCmdListener(&watch{})
+	addCmdListener(getMyScore{})
+	addCmdListener(getScore{})
+	addCmdListener(rankList{})
+	addCmdListener(seasonRankList{})
+	addCmdListener(winRate{})
+	addCmdListener(register{})
+	addCmdListener(addNotifyOnStart{})
+	addCmdListener(addNotifyOnEnd{})
+	addCmdListener(addNotifyOnEnd2{})
+	addCmdListener(atPlayer{})
+	addCmdListener(resetPwd{})
+	addCmdListener(sign{})
+	addCmdListener(frequency{})
+	addCmdListener(winRate2{})
+	addCmdListener(watch{})
 }
 
 type getMyScore struct{}
 
-func (g *getMyScore) Name() string {
+func (getMyScore) Name() string {
 	return "查询我"
 }
 
-func (g *getMyScore) ShowTips(_ int64, senderId int64) string {
+func (getMyScore) ShowTips(_ int64, senderID int64) string {
 	data := permData.GetStringMapString("playerMap")
-	if _, ok := data[strconv.FormatInt(senderId, 10)]; ok {
+	if _, ok := data[strconv.FormatInt(senderID, 10)]; ok {
 		return "查询我"
 	}
 	return ""
 }
 
-func (g *getMyScore) CheckAuth(int64, int64) bool {
+func (getMyScore) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (g *getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
+func (getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
@@ -188,19 +188,19 @@ var getScoreFailResponse = []string{
 
 type getScore struct{}
 
-func (g *getScore) Name() string {
+func (getScore) Name() string {
 	return "查询"
 }
 
-func (g *getScore) ShowTips(int64, int64) string {
+func (getScore) ShowTips(int64, int64) string {
 	return "查询 名字"
 }
 
-func (g *getScore) CheckAuth(int64, int64) bool {
+func (getScore) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (g *getScore) Execute(message *GroupMessage, content string) MessageChain {
+func (getScore) Execute(message *GroupMessage, content string) MessageChain {
 	data := permData.GetStringMapString("playerMap")
 	operatorName := data[strconv.FormatInt(message.Sender.UserId, 10)]
 	if len(operatorName) == 0 {
@@ -223,19 +223,19 @@ func (g *getScore) Execute(message *GroupMessage, content string) MessageChain {
 
 type rankList struct{}
 
-func (r *rankList) Name() string {
+func (rankList) Name() string {
 	return "排行"
 }
 
-func (r *rankList) ShowTips(int64, int64) string {
+func (rankList) ShowTips(int64, int64) string {
 	return "排行"
 }
 
-func (r *rankList) CheckAuth(int64, int64) bool {
+func (rankList) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
+func (rankList) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
@@ -254,19 +254,19 @@ func (r *rankList) Execute(_ *GroupMessage, content string) MessageChain {
 
 type seasonRankList struct{}
 
-func (r *seasonRankList) Name() string {
+func (seasonRankList) Name() string {
 	return "赛季最高分排行"
 }
 
-func (r *seasonRankList) ShowTips(int64, int64) string {
+func (seasonRankList) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (r *seasonRankList) CheckAuth(int64, int64) bool {
+func (seasonRankList) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
+func (seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
@@ -285,19 +285,19 @@ func (r *seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
 
 type winRate struct{}
 
-func (r *winRate) Name() string {
+func (winRate) Name() string {
 	return "胜率"
 }
 
-func (r *winRate) ShowTips(int64, int64) string {
+func (winRate) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (r *winRate) CheckAuth(int64, int64) bool {
+func (winRate) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *winRate) Execute(_ *GroupMessage, content string) MessageChain {
+func (winRate) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) > 0 {
 		return nil
@@ -316,23 +316,23 @@ func (r *winRate) Execute(_ *GroupMessage, content string) MessageChain {
 
 type register struct{}
 
-func (r *register) Name() string {
+func (register) Name() string {
 	return "注册"
 }
 
-func (r *register) ShowTips(_ int64, senderId int64) string {
+func (register) ShowTips(_ int64, senderID int64) string {
 	data := permData.GetStringMapString("playerMap")
-	if _, ok := data[strconv.FormatInt(senderId, 10)]; !ok {
+	if _, ok := data[strconv.FormatInt(senderID, 10)]; !ok {
 		return "注册 名字"
 	}
 	return ""
 }
 
-func (r *register) CheckAuth(int64, int64) bool {
+func (register) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *register) Execute(msg *GroupMessage, content string) MessageChain {
+func (register) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n注册 名字"}}
@@ -359,19 +359,19 @@ func (r *register) Execute(msg *GroupMessage, content string) MessageChain {
 
 type addNotifyOnStart struct{}
 
-func (a *addNotifyOnStart) Name() string {
+func (addNotifyOnStart) Name() string {
 	return "开了喊我"
 }
 
-func (a *addNotifyOnStart) ShowTips(int64, int64) string {
+func (addNotifyOnStart) ShowTips(int64, int64) string {
 	return "开了喊我"
 }
 
-func (a *addNotifyOnStart) CheckAuth(int64, int64) bool {
+func (addNotifyOnStart) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (a *addNotifyOnStart) Execute(msg *GroupMessage, content string) MessageChain {
+func (addNotifyOnStart) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
@@ -390,19 +390,19 @@ func (a *addNotifyOnStart) Execute(msg *GroupMessage, content string) MessageCha
 
 type addNotifyOnEnd struct{}
 
-func (a *addNotifyOnEnd) Name() string {
+func (addNotifyOnEnd) Name() string {
 	return "结束喊我"
 }
 
-func (a *addNotifyOnEnd) ShowTips(int64, int64) string {
+func (addNotifyOnEnd) ShowTips(int64, int64) string {
 	return "结束喊我"
 }
 
-func (a *addNotifyOnEnd) CheckAuth(int64, int64) bool {
+func (addNotifyOnEnd) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (a *addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain {
+func (addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
@@ -422,19 +422,19 @@ func (a *addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain
 
 type addNotifyOnEnd2 struct{}
 
-func (a *addNotifyOnEnd2) Name() string {
+func (addNotifyOnEnd2) Name() string {
 	return "好了喊我"
 }
 
-func (a *addNotifyOnEnd2) ShowTips(int64, int64) string {
+func (addNotifyOnEnd2) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (a *addNotifyOnEnd2) CheckAuth(int64, int64) bool {
+func (addNotifyOnEnd2) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (a *addNotifyOnEnd2) Execute(msg *GroupMessage, content string) MessageChain {
+func (addNotifyOnEnd2) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
@@ -454,19 +454,19 @@ func (a *addNotifyOnEnd2) Execute(msg *GroupMessage, content string) MessageChai
 
 type atPlayer struct{}
 
-func (a *atPlayer) Name() string {
+func (atPlayer) Name() string {
 	return "艾特"
 }
 
-func (a *atPlayer) ShowTips(int64, int64) string {
+func (atPlayer) ShowTips(int64, int64) string {
 	return "艾特 游戏内的名字"
 }
 
-func (a *atPlayer) CheckAuth(int64, int64) bool {
+func (atPlayer) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
+func (atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n艾特 游戏内的名字"}}
@@ -487,26 +487,26 @@ func (a *atPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 
 type resetPwd struct{}
 
-func (u *resetPwd) Name() string {
+func (resetPwd) Name() string {
 	return "重置密码"
 }
 
-func (u *resetPwd) ShowTips(_ int64, senderId int64) string {
+func (resetPwd) ShowTips(_ int64, senderID int64) string {
 	data := permData.GetStringMapString("playerMap")
-	if _, ok := data[strconv.FormatInt(senderId, 10)]; ok {
+	if _, ok := data[strconv.FormatInt(senderID, 10)]; ok {
 		return "重置密码"
 	}
-	if IsAdmin(senderId) {
+	if isAdmin(senderID) {
 		return "重置密码 名字"
 	}
 	return ""
 }
 
-func (u *resetPwd) CheckAuth(int64, int64) bool {
+func (resetPwd) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
+func (resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	data := permData.GetStringMapString("playerMap")
 	var result string
@@ -514,14 +514,14 @@ func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		playerName := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 		if len(playerName) == 0 {
-			if !IsAdmin(msg.Sender.UserId) {
+			if !isAdmin(msg.Sender.UserId) {
 				return nil
 			}
 			return MessageChain{&Text{Text: "重置密码 名字"}}
 		}
 		result, returnError = httpGetString("/resetpwd", map[string]string{"name": playerName})
 	} else {
-		if !IsAdmin(msg.Sender.UserId) {
+		if !isAdmin(msg.Sender.UserId) {
 			return nil
 		}
 		result, returnError = httpGetString("/resetpwd", map[string]string{"name": name})
@@ -538,19 +538,19 @@ func (u *resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 
 type sign struct{}
 
-func (s *sign) Name() string {
+func (sign) Name() string {
 	return "签到"
 }
 
-func (s *sign) ShowTips(int64, int64) string {
+func (sign) ShowTips(int64, int64) string {
 	return "签到"
 }
 
-func (s *sign) CheckAuth(_ int64, _ int64) bool {
+func (sign) CheckAuth(_ int64, _ int64) bool {
 	return true
 }
 
-func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
+func (sign) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) != 0 {
 		return nil
 	}
@@ -606,19 +606,19 @@ func (s *sign) Execute(msg *GroupMessage, content string) MessageChain {
 
 type frequency struct{}
 
-func (f *frequency) Name() string {
+func (frequency) Name() string {
 	return "活跃"
 }
 
-func (f *frequency) ShowTips(int64, int64) string {
+func (frequency) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (f *frequency) CheckAuth(int64, int64) bool {
+func (frequency) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (f *frequency) Execute(message *GroupMessage, _ string) MessageChain {
+func (frequency) Execute(message *GroupMessage, _ string) MessageChain {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -659,12 +659,14 @@ func (f *frequency) Execute(message *GroupMessage, _ string) MessageChain {
 		}
 
 		slog.Debug("正在处理图片")
-		croppedImg := img.(interface {
+		if croppedImg, ok := img.(interface {
 			SubImage(r image.Rectangle) image.Image
-		}).SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1740)).(*image.RGBA)
+		}); ok {
+			img = croppedImg.SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1740))
+		}
 
 		var buf bytes.Buffer
-		if err := png.Encode(&buf, croppedImg); err != nil {
+		if err := png.Encode(&buf, img); err != nil {
 			slog.Error("png.Encode failed", "error", err)
 			sendGroupMessage(message, &Text{Text: "内部错误"})
 			return
@@ -676,19 +678,19 @@ func (f *frequency) Execute(message *GroupMessage, _ string) MessageChain {
 
 type winRate2 struct{}
 
-func (r *winRate2) Name() string {
+func (winRate2) Name() string {
 	return "胜率图"
 }
 
-func (r *winRate2) ShowTips(int64, int64) string {
+func (winRate2) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (r *winRate2) CheckAuth(int64, int64) bool {
+func (winRate2) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *winRate2) Execute(message *GroupMessage, _ string) MessageChain {
+func (winRate2) Execute(message *GroupMessage, _ string) MessageChain {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -727,12 +729,14 @@ func (r *winRate2) Execute(message *GroupMessage, _ string) MessageChain {
 			return
 		}
 
-		croppedImg := img.(interface {
+		if croppedImg, ok := img.(interface {
 			SubImage(r image.Rectangle) image.Image
-		}).SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1690)).(*image.RGBA)
+		}); ok {
+			img = croppedImg.SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1690))
+		}
 
 		var buf bytes.Buffer
-		if err := png.Encode(&buf, croppedImg); err != nil {
+		if err := png.Encode(&buf, img); err != nil {
 			slog.Error("png.Encode failed", "error", err)
 			sendGroupMessage(message, &Text{Text: "内部错误"})
 			return
@@ -744,19 +748,19 @@ func (r *winRate2) Execute(message *GroupMessage, _ string) MessageChain {
 
 type watch struct{}
 
-func (w *watch) Name() string {
+func (watch) Name() string {
 	return "观战"
 }
 
-func (w *watch) ShowTips(int64, int64) string {
+func (watch) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (w *watch) CheckAuth(int64, int64) bool {
+func (watch) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (w *watch) Execute(message *GroupMessage, _ string) MessageChain {
+func (watch) Execute(message *GroupMessage, _ string) MessageChain {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -806,8 +810,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()

@@ -144,7 +144,8 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 }
 
 // performExperiment return (totalMesos, totalBooms, totalCount)
-func performExperiment(newKms bool, currentStar, desiredStar, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (float64, int, int) {
+func performExperiment(newKms bool, currentStar, desiredStar, itemLevel int,
+	boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (float64, int, int) {
 	var (
 		totalMesos                            float64
 		totalBooms, totalCount, decreaseCount int
@@ -269,6 +270,7 @@ func parseFloat(s string) (float64, error) {
 		multiplier = 1e6
 	case 'k', 'K':
 		multiplier = 1e3
+	default:
 	}
 	if multiplier != 1.0 {
 		s = s[:len(s)-1]
@@ -364,31 +366,39 @@ func pythonStarForce(newKms bool, itemLevel, cur, des int, boomProtect, thirtyOf
 	return mesos, booms, count, noBoom, midway, nil
 }
 
+func parseStarForceInputParams(arr []string) (itemLevel, cur, des int, err error) {
+	itemLevel, err = strconv.Atoi(arr[0])
+	if err != nil {
+		return 0, 0, 0, errors.New("装备等级不合理")
+	}
+	if itemLevel < 5 || itemLevel > 300 {
+		return 0, 0, 0, errors.New("装备等级不合理")
+	}
+	cur, err = strconv.Atoi(arr[1])
+	if err != nil {
+		return 0, 0, 0, errors.New("当前星数不合理")
+	}
+	if cur < 0 {
+		return 0, 0, 0, errors.New("当前星数不合理")
+	}
+	des, err = strconv.Atoi(arr[2])
+	if err != nil {
+		return 0, 0, 0, errors.New("目标星数必须大于当前星数")
+	}
+	if des <= cur {
+		return 0, 0, 0, errors.New("目标星数必须大于当前星数")
+	}
+	return itemLevel, cur, des, nil
+}
+
 func calculateStarForce1(newKms bool, content string) MessageChain {
 	arr := strings.Split(content, " ")
 	if len(arr) < 3 {
 		return nil
 	}
-	itemLevel, err := strconv.Atoi(arr[0])
+	itemLevel, cur, des, err := parseStarForceInputParams(arr)
 	if err != nil {
-		return nil
-	}
-	if itemLevel < 5 || itemLevel > 300 {
-		return MessageChain{&Text{Text: "装备等级不合理"}}
-	}
-	cur, err := strconv.Atoi(arr[1])
-	if err != nil {
-		return nil
-	}
-	if cur < 0 {
-		return MessageChain{&Text{Text: "当前星数不合理"}}
-	}
-	des, err := strconv.Atoi(arr[2])
-	if err != nil {
-		return nil
-	}
-	if des <= cur {
-		return MessageChain{&Text{Text: "目标星数必须大于当前星数"}}
+		return MessageChain{&Text{Text: err.Error()}}
 	}
 	maxStar := getMaxStar(newKms, itemLevel)
 	if des > maxStar {
@@ -399,7 +409,8 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
 	boomEvent := strings.Contains(content, "超爆") || strings.Contains(content, "防爆") || strings.Contains(content, "减爆")
 
-	mesos, booms, count, noBoom, midway, err := pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	mesos, booms, count, noBoom, midway, err :=
+		pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	if err != nil {
 		return MessageChain{&Text{Text: err.Error()}}
 	}
@@ -504,12 +515,13 @@ func drawStarForce(cur, des int, midway []float64) *Image {
 	if err != nil {
 		slog.Error("render chart failed", "error", err)
 		return nil
-	} else if buf, err := p.Bytes(); err != nil {
+	}
+	buf, err := p.Bytes()
+	if err != nil {
 		slog.Error("render chart failed", "error", err)
 		return nil
-	} else {
-		return &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}
 	}
+	return &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}
 }
 
 type starForceResult int

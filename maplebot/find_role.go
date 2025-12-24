@@ -58,7 +58,7 @@ func FindRoleBackground() {
 			msg = append(msg, &At{QQ: strconv.Itoa(qq)})
 		}
 		for _, group := range notifyGroups {
-			_, _ = B.SendGroupMessage(int64(group), msg)
+			_, _ = bot.SendGroupMessage(int64(group), msg)
 		}
 		return
 	}

@@ -16,7 +16,7 @@ import (
 
 var (
 	avReg    = regexp.MustCompile(`^(?<![A-Za-z0-9])(?:https?://www\.bilibili\.com/video/)?av(\d+)$`, regexp.IgnoreCase)
-	bvReg    = regexp.MustCompile(`^(?<![A-Za-z0-9])(?:https?://www\.bilibili\.com/video/|https?://b23\.tv)?bv([0-9A-Za-z]{10})$`, regexp.IgnoreCase)
+	bvReg    = regexp.MustCompile(`^(?<![A-Za-z0-9])(?:https?://www\.bilibili\.com/video/|https?://b23\.tv)?bv([0-9A-Za-z]{10})$`, regexp.IgnoreCase) //nolint:revive
 	liveReg  = regexp.MustCompile(`^(?<![A-Za-z0-9])https?://live\.bilibili\.com/(\d+)$`, regexp.IgnoreCase)
 	shortReg = regexp.MustCompile(`^(?<![A-Za-z0-9])https?://b23\.tv/[0-9A-Za-z]{7}$`, regexp.IgnoreCase)
 )
@@ -65,7 +65,7 @@ func bilibiliAnalysis(message *GroupMessage) bool {
 			slog.Error("解析类型异常", "result", reflect.TypeOf(result))
 			return true
 		}
-		_, err := B.SendGroupMessage(message.GroupId, MessageChain{
+		_, err := bot.SendGroupMessage(message.GroupId, MessageChain{
 			&Reply{Id: strconv.FormatInt(int64(message.MessageId), 10)}, image, test,
 		})
 		if err != nil {

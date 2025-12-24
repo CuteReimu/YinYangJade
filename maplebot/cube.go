@@ -679,7 +679,7 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 /**
  * calculateTotal 计算属性的总值
  *
- * calcVal false-只算条数，true-算值之和
+ * calcVal false - 只算条数，true - 算值之和
  */
 func calculateTotal(outcome [][]any, desiredCategory string, calcVal bool) int {
 	if calcVal {

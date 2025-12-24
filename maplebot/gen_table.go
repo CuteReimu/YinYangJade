@@ -60,10 +60,11 @@ func genTable(s string) (ret MessageChain) {
 	if err != nil {
 		slog.Error("render chart failed", "error", err)
 		return MessageChain{&Text{Text: err.Error()}}
-	} else if buf, err := p.Bytes(); err != nil {
+	}
+	buf, err := p.Bytes()
+	if err != nil {
 		slog.Error("render chart failed", "error", err)
 		return MessageChain{&Text{Text: err.Error()}}
-	} else {
-		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
 	}
+	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)}}
 }

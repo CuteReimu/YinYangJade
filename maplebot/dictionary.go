@@ -21,7 +21,7 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if len(message.Message) == 1 {
 		if text, ok := message.Message[0].(*Text); ok {
-			perm := IsAdmin(message.GroupId, message.Sender.UserId)
+			perm := isAdmin(message.GroupId, message.Sender.UserId)
 			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
@@ -160,8 +160,8 @@ func (d *dictionaryCommand) ShowTips(int64, int64) string {
 	return d.tips
 }
 
-func (d *dictionaryCommand) CheckAuth(group, senderId int64) bool {
-	return !d.checkPerm || IsAdmin(group, senderId)
+func (d *dictionaryCommand) CheckAuth(group, senderID int64) bool {
+	return !d.checkPerm || isAdmin(group, senderID)
 }
 
 func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChain {

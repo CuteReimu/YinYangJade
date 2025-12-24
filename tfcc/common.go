@@ -12,28 +12,28 @@ import (
 )
 
 func init() {
-	addCmdListener(&showTips{})
-	addCmdListener(&ping{})
-	addCmdListener(&roll{})
-	addCmdListener(&randDraw{})
-	addCmdListener(&sliceGame{})
+	addCmdListener(showTips{})
+	addCmdListener(ping{})
+	addCmdListener(roll{})
+	addCmdListener(randDraw{})
+	addCmdListener(sliceGame{})
 }
 
 type showTips struct{}
 
-func (t *showTips) Name() string {
+func (showTips) Name() string {
 	return "查看帮助"
 }
 
-func (t *showTips) ShowTips(int64, int64) string {
+func (showTips) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (t *showTips) CheckAuth(int64, int64) bool {
+func (showTips) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (t *showTips) Execute(msg *GroupMessage, _ string) MessageChain {
+func (showTips) Execute(msg *GroupMessage, _ string) MessageChain {
 	var ret []string
 	for _, h := range cmdMap {
 		if h.CheckAuth(msg.GroupId, msg.Sender.UserId) {
@@ -48,19 +48,19 @@ func (t *showTips) Execute(msg *GroupMessage, _ string) MessageChain {
 
 type ping struct{}
 
-func (p *ping) Name() string {
+func (ping) Name() string {
 	return "ping"
 }
 
-func (p *ping) ShowTips(int64, int64) string {
+func (ping) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (p *ping) CheckAuth(int64, int64) bool {
+func (ping) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (p *ping) Execute(_ *GroupMessage, content string) MessageChain {
+func (ping) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return MessageChain{&Text{Text: "pong"}}
 	}
@@ -69,40 +69,40 @@ func (p *ping) Execute(_ *GroupMessage, content string) MessageChain {
 
 type roll struct{}
 
-func (r *roll) Name() string {
+func (roll) Name() string {
 	return "roll"
 }
 
-func (r *roll) ShowTips(int64, int64) string {
+func (roll) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (r *roll) CheckAuth(int64, int64) bool {
+func (roll) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *roll) Execute(message *GroupMessage, content string) MessageChain {
+func (roll) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
-		replyGroupMessage(true, message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
+		replyGroupMessage(message, &Text{Text: "roll: " + strconv.Itoa(rand.IntN(100))})
 	}
 	return nil
 }
 
 type randDraw struct{}
 
-func (r *randDraw) Name() string {
+func (randDraw) Name() string {
 	return "抽签"
 }
 
-func (r *randDraw) ShowTips(int64, int64) string {
+func (randDraw) ShowTips(int64, int64) string {
 	return "抽签 选手数量"
 }
 
-func (r *randDraw) CheckAuth(int64, int64) bool {
+func (randDraw) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
+func (randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 	count, err := strconv.Atoi(content)
 	if err != nil {
 		return MessageChain{&Text{Text: "指令格式如下：\n抽签 选手数量"}}
@@ -146,19 +146,19 @@ func (r *randDraw) Execute(_ *GroupMessage, content string) MessageChain {
 
 type sliceGame struct{}
 
-func (r *sliceGame) Name() string {
+func (sliceGame) Name() string {
 	return "滑块"
 }
 
-func (r *sliceGame) ShowTips(int64, int64) string {
+func (sliceGame) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (r *sliceGame) CheckAuth(int64, int64) bool {
+func (sliceGame) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (r *sliceGame) Execute(message *GroupMessage, content string) MessageChain {
+func (sliceGame) Execute(message *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		sendGroupMessage(message, slicegame.DoStuff()...)
 	}

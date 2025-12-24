@@ -35,8 +35,8 @@ func (a *bind) ShowTips(int64, int64) string {
 	return "绑定 QQ号 名字"
 }
 
-func (a *bind) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (a *bind) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (a *bind) Execute(msg *GroupMessage, content string) MessageChain {
@@ -101,8 +101,8 @@ func (a *unbind) ShowTips(int64, int64) string {
 	return "解绑 QQ号"
 }
 
-func (a *unbind) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (a *unbind) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (a *unbind) Execute(_ *GroupMessage, content string) MessageChain {
@@ -133,8 +133,8 @@ func (a *unbindExpired) ShowTips(int64, int64) string {
 	return "解绑所有0分玩家"
 }
 
-func (a *unbindExpired) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (a *unbindExpired) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
 func (a *unbindExpired) Execute(_ *GroupMessage, content string) MessageChain {
@@ -170,8 +170,8 @@ func (a *forbidPlayer) ShowTips(int64, int64) string {
 	return "封号 名字 小时"
 }
 
-func (a *forbidPlayer) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (a *forbidPlayer) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (a *forbidPlayer) Execute(_ *GroupMessage, content string) MessageChain {
@@ -208,8 +208,8 @@ func (a *releasePlayer) ShowTips(int64, int64) string {
 	return "解封 名字"
 }
 
-func (a *releasePlayer) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (a *releasePlayer) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (a *releasePlayer) Execute(_ *GroupMessage, content string) MessageChain {
@@ -235,8 +235,8 @@ func (a *forbidRole) ShowTips(int64, int64) string {
 	return "禁用角色 名字"
 }
 
-func (a *forbidRole) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (a *forbidRole) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (a *forbidRole) Execute(_ *GroupMessage, content string) MessageChain {
@@ -265,8 +265,8 @@ func (a *releaseRole) ShowTips(int64, int64) string {
 	return "启用角色 名字"
 }
 
-func (a *releaseRole) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (a *releaseRole) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (a *releaseRole) Execute(_ *GroupMessage, content string) MessageChain {
@@ -295,8 +295,8 @@ func (s *setVersion) ShowTips(int64, int64) string {
 	return "修改版本号 版本号"
 }
 
-func (s *setVersion) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (s *setVersion) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (s *setVersion) Execute(_ *GroupMessage, content string) MessageChain {
@@ -321,8 +321,8 @@ func (f *forceEnd) ShowTips(int64, int64) string {
 	return "强制结束所有游戏"
 }
 
-func (f *forceEnd) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (f *forceEnd) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (f *forceEnd) Execute(_ *GroupMessage, content string) MessageChain {
@@ -347,8 +347,8 @@ func (s *setNotice) ShowTips(int64, int64) string {
 	return "修改公告 公告内容"
 }
 
-func (s *setNotice) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (s *setNotice) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (s *setNotice) Execute(_ *GroupMessage, content string) MessageChain {
@@ -374,8 +374,8 @@ func (s *setWaitSecond) ShowTips(int64, int64) string {
 	return "修改出牌时间 秒数"
 }
 
-func (s *setWaitSecond) CheckAuth(_ int64, senderId int64) bool {
-	return IsAdmin(senderId)
+func (s *setWaitSecond) CheckAuth(_ int64, senderID int64) bool {
+	return isAdmin(senderID)
 }
 
 func (s *setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
@@ -402,8 +402,8 @@ func (c *createAccount) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (c *createAccount) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (c *createAccount) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
 func (c *createAccount) Execute(msg *GroupMessage, content string) MessageChain {
@@ -432,8 +432,8 @@ func (c *addEnergy) ShowTips(int64, int64) string {
 	return "增加精力 名字 数量"
 }
 
-func (c *addEnergy) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (c *addEnergy) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
 func (c *addEnergy) Execute(msg *GroupMessage, content string) MessageChain {

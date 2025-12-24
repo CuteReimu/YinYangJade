@@ -1,3 +1,4 @@
+// Package fengsheng 风声机器人
 package fengsheng
 
 import (
@@ -160,7 +161,7 @@ func handleGroupRequest(request *GroupRequest) bool {
 }
 
 func handlePrivateRequest(request *PrivateMessage) bool {
-	if IsSuperAdmin(request.Sender.UserId) && len(request.Message) == 1 {
+	if isSuperAdmin(request.Sender.UserId) && len(request.Message) == 1 {
 		if text, ok := request.Message[0].(*Text); ok && text.Text == "管理" {
 			qqGroups := fengshengConfig.GetIntSlice("qq.qq_group")
 			if len(qqGroups) == 0 {

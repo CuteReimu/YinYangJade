@@ -18,18 +18,18 @@ func init() {
 		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%", "苔穴", "PoP", "白宫"},
 		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白色宫殿"},
 		url: map[string]string{
-			"anylp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=qj70747q",
-			"anyrp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=10vzvmol",
+			"anylp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=qj70747q", //nolint:revive
+			"anyrp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=10vzvmol", //nolint:revive
 			"te":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/n2y0m18d?var-dloed1dn=qyzod221",
-			"100noab":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=1w4p4dmq",
-			"100ab":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=qoxpx35q",
+			"100noab":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=1w4p4dmq", //nolint:revive
+			"100ab":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=qoxpx35q", //nolint:revive
 			"judgement": "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wk6544o2?var-jlz631q8=1w4ozxvq",
 			"low":       "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
 			"ab":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
 			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
-			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
 			"pop":       "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/r9g1qop9/wkpq608d",
-			"白色宫殿":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
+			"白色宫殿":  "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
 		},
 		categoryNames: map[string]string{
 			"anylp":     "丝之歌 — Any% 新",
@@ -41,9 +41,9 @@ func init() {
 			"low":       "丝之歌 — Low%",
 			"ab":        "丝之歌 — All Bosses",
 			"twisted":   "丝之歌 — Twisted%",
-			"苔穴":        "丝之歌 — 苔穴",
+			"苔穴":      "丝之歌 — 苔穴",
 			"pop":       "空洞骑士 — 苦痛之路",
-			"白色宫殿":      "空洞骑士 — 白色宫殿 1.3.1.5+",
+			"白色宫殿":  "空洞骑士 — 白色宫殿 1.3.1.5+",
 		},
 		mapKeys: map[string][]string{
 			"any":        {"anyrp", "anylp"},
@@ -52,9 +52,9 @@ func init() {
 			"all boss":   {"ab"},
 			"allbosses":  {"ab"},
 			"allboss":    {"ab"},
-			"苦痛之路":       {"pop"},
-			"苦痛":         {"pop"},
-			"白宫":         {"白色宫殿"},
+			"苦痛之路":   {"pop"},
+			"苦痛":       {"pop"},
+			"白宫":       {"白色宫殿"},
 		},
 		resty: resty.New(),
 	}
@@ -72,15 +72,15 @@ type speedrunLeaderboards struct {
 	resty           *resty.Client
 }
 
-func (t *speedrunLeaderboards) Name() string {
+func (*speedrunLeaderboards) Name() string {
 	return "查榜"
 }
 
-func (t *speedrunLeaderboards) ShowTips(int64, int64) string {
+func (*speedrunLeaderboards) ShowTips(int64, int64) string {
 	return "查榜"
 }
 
-func (t *speedrunLeaderboards) CheckAuth(int64, int64) bool {
+func (*speedrunLeaderboards) CheckAuth(int64, int64) bool {
 	return true
 }
 
@@ -122,21 +122,23 @@ type speedrunPlayerData struct {
 	} `json:"names"`
 }
 
-type speedrunApiResp struct {
+type speedrunRunData struct {
+	Place int `json:"place"`
+	Run   struct {
+		Times struct {
+			PrimaryT float64 `json:"primary_t"`
+		} `json:"times"`
+		Players []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"players"`
+		Date string `json:"date"`
+	} `json:"run"`
+}
+
+type speedrunAPIResp struct {
 	Data struct {
-		Runs []struct {
-			Place int `json:"place"`
-			Run   struct {
-				Times struct {
-					PrimaryT float64 `json:"primary_t"`
-				} `json:"times"`
-				Players []struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"players"`
-				Date string `json:"date"`
-			} `json:"run"`
-		} `json:"runs"`
+		Runs    []speedrunRunData `json:"runs"`
 		Players struct {
 			Data []speedrunPlayerData `json:"data"`
 		} `json:"players"`
@@ -191,7 +193,7 @@ func formatRelativeDate(dateStr string) string {
 	}
 }
 
-func (t *speedrunLeaderboards) getPlayerName(refID string, players []speedrunPlayerData, refName string) string {
+func (*speedrunLeaderboards) getPlayerName(refID string, players []speedrunPlayerData, refName string) string {
 	for _, p := range players {
 		if p.ID == refID {
 			return p.Names.International
@@ -220,7 +222,7 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 	if resp.StatusCode() >= 400 {
 		return "", fmt.Errorf("http 错误: %d", resp.StatusCode())
 	}
-	var ar speedrunApiResp
+	var ar speedrunAPIResp
 	if err := json.Unmarshal(resp.Body(), &ar); err != nil {
 		return "", err
 	}

@@ -28,7 +28,7 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if len(message.Message) == 1 {
 		if text, ok := message.Message[0].(*Text); ok {
-			perm := IsWhitelist(message.Sender.UserId)
+			perm := isWhitelist(message.Sender.UserId)
 			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
 				key := dealKey(text.Text[len("添加词条"):])
 				if strings.Contains(key, ".") {
@@ -108,12 +108,12 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
-		if msg, err := saveImage(message.Message); err != nil {
+		msg, err := saveImage(message.Message)
+		if err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
-		} else {
-			message.Message = msg
 		}
+		message.Message = msg
 		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
@@ -171,12 +171,12 @@ func saveImage(message MessageChain) (MessageChain, error) {
 				return message, errors.New("保存图片失败")
 			}
 			cmd := exec.Command("curl", "-o", p, u)
-			if out, err := cmd.CombinedOutput(); err != nil {
+			out, err := cmd.CombinedOutput()
+			if err != nil {
 				slog.Error("cmd.Run() failed", "error", err)
 				return message, errors.New("保存图片失败")
-			} else {
-				slog.Debug(string(out))
 			}
+			slog.Debug(string(out))
 			img.File = "file://" + abs
 			img.Url = ""
 		} else if forward, ok := m.(*Forward); ok {
@@ -326,8 +326,8 @@ func (d *dictionaryCommand) ShowTips(int64, int64) string {
 	return d.tips
 }
 
-func (d *dictionaryCommand) CheckAuth(_ int64, senderId int64) bool {
-	return !d.checkPerm || IsWhitelist(senderId)
+func (d *dictionaryCommand) CheckAuth(_ int64, senderID int64) bool {
+	return !d.checkPerm || isWhitelist(senderID)
 }
 
 func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChain {

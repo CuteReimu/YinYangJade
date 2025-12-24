@@ -11,7 +11,6 @@ linters:
     - gocognit
     - funlen
     - cyclop
-    - revive
     - nestif
     - mnd
     - gochecknoglobals
@@ -53,5 +52,24 @@ linters:
         - G304
         - G306
         - G404
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: dot-imports
+          disabled: true
+        - name: add-constant
+          disabled: true
+        - name: line-length-limit
+          arguments: [128]
+        - name: cognitive-complexity
+          arguments: [25]
+        - name: function-length
+          arguments: [200, 0]
+        - name: cyclomatic
+          arguments: [20]
+        - name: exported
+          arguments: ["disable-checks-on-methods"]
+        - name: function-result-limit
+          arguments: [4]
 run:
   timeout: 3m
