@@ -154,7 +154,7 @@ func init() {
 	ClassNameMap = classNameMap
 }
 
-// TranslateClassId 根据职业ID翻译成中文职业名
+// TranslateClassID 根据职业ID翻译成中文职业名
 func TranslateClassID(id int) string {
 	if name, ok := ClassIDMap[id]; ok {
 		return TranslateClassName(name)
@@ -182,7 +182,7 @@ func GetClassImage(name string) (image.Image, error) {
 		name = "Lynn"
 	}
 	if name := classImageData.GetString(strings.ToLower(name)); len(name) > 0 {
-		img, err := getClassImage(name)
+		img, err := doGetClassImage(name)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +203,7 @@ func GetClassOriginImageBuff(name string) ([]byte, error) {
 	return nil, errors.Errorf("class image not found: %s", name)
 }
 
-func getClassImage(name string) (image.Image, error) {
+func doGetClassImage(name string) (image.Image, error) {
 	buf, err := os.ReadFile(filepath.Join("class_image", name))
 	if err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ func SetClassImage(name string, img *Image) MessageChain {
 		return MessageChain{&Text{Text: "保存图片失败"}}
 	}
 	slog.Debug(string(out))
-	_, err = getClassImage(img.File)
+	_, err = doGetClassImage(img.File)
 	if err != nil {
 		slog.Error("invalid image", "error", err)
 		_ = os.Remove(p)

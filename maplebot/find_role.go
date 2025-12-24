@@ -231,7 +231,12 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 		maxValue = math.Ceil(maxValue/factor) * factor
 		divideCount := int(maxValue / factor)
 		var yAxisOptions []YAxisOption
-		yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(0), Max: &maxValue, DivideCount: divideCount, Unit: 1})
+		yAxisOptions = append(yAxisOptions, YAxisOption{
+			Min:         NewFloatPoint(0),
+			Max:         &maxValue,
+			DivideCount: divideCount,
+			Unit:        1,
+		})
 		for _, diff := range []float64{0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100} {
 			minLevel, maxLevel := math.Floor(slices.Min(levelValues)/diff)*diff, math.Ceil(slices.Max(levelValues)/diff)*diff
 			remainCount := divideCount - int(math.Round((maxLevel-minLevel)/diff))
@@ -251,7 +256,12 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 						minLevel = 220
 					}
 				}
-				yAxisOptions = append(yAxisOptions, YAxisOption{Min: NewFloatPoint(minLevel), Max: NewFloatPoint(maxLevel), DivideCount: divideCount, Unit: 1})
+				yAxisOptions = append(yAxisOptions, YAxisOption{
+					Min:         NewFloatPoint(minLevel),
+					Max:         NewFloatPoint(maxLevel),
+					DivideCount: divideCount,
+					Unit:        1,
+				})
 				break
 			}
 		}
@@ -260,7 +270,8 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelStr))); totalExp > 0 {
 					if expPercentStart := strings.Index(levelExp, "("); expPercentStart >= 0 {
 						if expPercentEnd := strings.Index(levelExp, "%"); expPercentEnd >= 0 {
-							if expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64); err == nil {
+							expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64)
+							if err == nil {
 								var sumExp, n float64
 								for _, v := range expValues {
 									if v != 0 || n > 0 {
@@ -322,7 +333,11 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 			} else if buf, err := p.Bytes(); err != nil {
 				slog.Error("render chart failed", "error", err)
 			} else {
-				messageChain = append(messageChain, &Text{Text: s}, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+				messageChain = append(
+					messageChain,
+					&Text{Text: s},
+					&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)},
+				)
 			}
 		} else {
 			messageChain = append(messageChain, &Text{Text: s + "近日无经验变化"})

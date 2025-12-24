@@ -193,7 +193,7 @@ func formatRelativeDate(dateStr string) string {
 	}
 }
 
-func (*speedrunLeaderboards) getPlayerName(refID string, players []speedrunPlayerData, refName string) string {
+func getPlayerName(refID string, players []speedrunPlayerData, refName string) string {
 	for _, p := range players {
 		if p.ID == refID {
 			return p.Names.International
@@ -241,7 +241,7 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 		playerRef := run.Players
 		playerName := "Unknown"
 		if len(playerRef) > 0 {
-			playerName = t.getPlayerName(playerRef[0].ID, players, playerRef[0].Name)
+			playerName = getPlayerName(playerRef[0].ID, players, playerRef[0].Name)
 		}
 		rel := ""
 		if run.Date != "" {

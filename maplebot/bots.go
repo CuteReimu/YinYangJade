@@ -28,13 +28,14 @@ func init() {
 	restyClient.SetTimeout(20 * time.Second)
 	restyClient.SetHeaders(map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
-		"user-agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69",
+		"user-agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69", //nolint:revive
 		"connection":   "close",
 	})
 }
 
 var bot *Bot
 
+// Init 初始化
 func Init(b *Bot) {
 	initConfig()
 	bot = b
@@ -264,16 +265,15 @@ func (searchMe) Execute(msg *GroupMessage, content string) MessageChain {
 	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "你还未绑定"}}
-	} else {
-		go func() {
-			defer func() {
-				if err := recover(); err != nil {
-					slog.Error("panic recovered", "error", err)
-				}
-			}()
-			sendGroupMessage(msg, findRole(name)...)
-		}()
 	}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err)
+			}
+		}()
+		sendGroupMessage(msg, findRole(name)...)
+	}()
 	return nil
 }
 
@@ -328,9 +328,8 @@ func (searchBind) Execute(_ *GroupMessage, content string) MessageChain {
 	data := findRoleData.GetStringMapString("data")
 	if name := data[strconv.FormatInt(qq, 10)]; name != "" {
 		return MessageChain{&Text{Text: "该玩家绑定了：" + name}}
-	} else {
-		return MessageChain{&Text{Text: "该玩家还未绑定"}}
 	}
+	return MessageChain{&Text{Text: "该玩家还未绑定"}}
 }
 
 type bind struct{}
@@ -394,9 +393,8 @@ func (unbind) Execute(msg *GroupMessage, content string) MessageChain {
 			slog.Error("write config failed", "error", err)
 		}
 		return MessageChain{&Text{Text: "解绑成功"}}
-	} else {
-		return MessageChain{&Text{Text: "你还未绑定"}}
 	}
+	return MessageChain{&Text{Text: "你还未绑定"}}
 }
 
 type tryCube struct{}
@@ -441,44 +439,42 @@ func (i *iWannaFormParty) Execute(msg *GroupMessage, data string) MessageChain {
 	arr := getBossNumber(i.bossList, data)
 	if len(arr) == 0 {
 		return MessageChain{&Text{Text: "不准开车!"}}
-	} else {
-		var messageArr []SingleMessage
-		qqNumbers := make(map[string]bool) // 用map，随机顺序取人，公平一些
-		messageArr = append(messageArr, &Text{Text: string(arr) + " 发车了! "})
-		for _, num := range arr {
-			subscribed, _ := db.Get("boss_subscribe_" + string(num))
-			subArr := strings.SplitSeq(subscribed, ",")
-			for qqNumber := range subArr {
-				qqNumbers[qqNumber] = true
-			}
-		}
-		delete(qqNumbers, strconv.Itoa(int(msg.Sender.UserId))) // 自己发车不要艾特自己
-		members, err := bot.GetGroupMemberList(msg.GroupId)
-		if err != nil {
-			slog.Error("获取群成员列表失败", "error", err, "group_id", msg.GroupId)
-		}
-		groupMembers := make(map[int64]bool) // 把list转成map，方便查找
-		for _, member := range members {
-			groupMembers[member.UserId] = true
-		}
-		for qqNumber := range qqNumbers {
-			if err == nil { // 获取群成员列表失败，就不检查了
-				qq, err2 := strconv.ParseInt(qqNumber, 10, 64)
-				if err2 != nil {
-					slog.Error("QQ号解析错误", "error", err2, "qq", qqNumber)
-					continue
-				}
-				if !groupMembers[qq] { // 群里无此人
-					continue
-				}
-			}
-			messageArr = append(messageArr, &At{QQ: qqNumber})
-			if len(messageArr) > 20 { // 最多艾特20个人
-				break
-			}
-		}
-		return messageArr
 	}
+	qqNumbers := make(map[string]bool) // 用map，随机顺序取人，公平一些
+	messageArr := MessageChain{&Text{Text: string(arr) + " 发车了! "}}
+	for _, num := range arr {
+		subscribed, _ := db.Get("boss_subscribe_" + string(num))
+		subArr := strings.SplitSeq(subscribed, ",")
+		for qqNumber := range subArr {
+			qqNumbers[qqNumber] = true
+		}
+	}
+	delete(qqNumbers, strconv.Itoa(int(msg.Sender.UserId))) // 自己发车不要艾特自己
+	members, err := bot.GetGroupMemberList(msg.GroupId)
+	if err != nil {
+		slog.Error("获取群成员列表失败", "error", err, "group_id", msg.GroupId)
+	}
+	groupMembers := make(map[int64]bool) // 把list转成map，方便查找
+	for _, member := range members {
+		groupMembers[member.UserId] = true
+	}
+	for qqNumber := range qqNumbers {
+		if err == nil { // 获取群成员列表失败，就不检查了
+			qq, err2 := strconv.ParseInt(qqNumber, 10, 64)
+			if err2 != nil {
+				slog.Error("QQ号解析错误", "error", err2, "qq", qqNumber)
+				continue
+			}
+			if !groupMembers[qq] { // 群里无此人
+				continue
+			}
+		}
+		messageArr = append(messageArr, &At{QQ: qqNumber})
+		if len(messageArr) > 20 { // 最多艾特20个人
+			break
+		}
+	}
+	return messageArr
 }
 
 type registerFormParty struct {
@@ -502,11 +498,10 @@ func (r *registerFormParty) Execute(msg *GroupMessage, content string) MessageCh
 	arr := getBossNumber(r.bossList, content)
 	if len(arr) == 0 {
 		return MessageChain{&Text{Text: "这是去幼儿园的车"}}
-	} else {
-		userId := strconv.Itoa(int(msg.Sender.UserId))
-		subscribe(arr, userId)
-		return MessageChain{&Text{Text: "订阅成功 " + string(arr)}}
 	}
+	userID := strconv.Itoa(int(msg.Sender.UserId))
+	subscribe(arr, userID)
+	return MessageChain{&Text{Text: "订阅成功 " + string(arr)}}
 }
 
 type cancelRegisterFormParty struct {
@@ -527,25 +522,24 @@ func (*cancelRegisterFormParty) CheckAuth(int64, int64) bool {
 }
 
 func (c *cancelRegisterFormParty) Execute(msg *GroupMessage, content string) MessageChain {
-	userId := strconv.Itoa(int(msg.Sender.UserId))
+	userID := strconv.Itoa(int(msg.Sender.UserId))
 	if len(content) == 0 {
-		unSubscribe(c.bossList, userId)
+		unSubscribe(c.bossList, userID)
 		return MessageChain{&Text{Text: "取消全部订阅成功"}}
-	} else {
-		arr := getBossNumber(c.bossList, content)
-		unSubscribe(arr, userId)
-		return MessageChain{&Text{Text: "取消订阅成功 " + string(arr)}}
 	}
+	arr := getBossNumber(c.bossList, content)
+	unSubscribe(arr, userID)
+	return MessageChain{&Text{Text: "取消订阅成功 " + string(arr)}}
 }
 
-func subscribe(arr []rune, userId string) {
+func subscribe(arr []rune, userID string) {
 	for _, num := range arr {
 		subscribed, _ := db.Get("boss_subscribe_" + string(num))
 		subArr := strings.Split(subscribed, ",")
-		if slices.Contains(subArr, userId) {
+		if slices.Contains(subArr, userID) {
 			continue
 		}
-		subArr = append(subArr, userId)
+		subArr = append(subArr, userID)
 		if len(subArr) > 50 { // 最多存50个人，多了就把旧的删了
 			subArr = subArr[:50]
 		}
@@ -554,11 +548,11 @@ func subscribe(arr []rune, userId string) {
 	}
 }
 
-func unSubscribe(arr []rune, userId string) {
+func unSubscribe(arr []rune, userID string) {
 	for _, num := range arr {
 		subscribed, _ := db.Get("boss_subscribe_" + string(num))
 		subArr := strings.Split(subscribed, ",")
-		pos := slices.Index(subArr, userId)
+		pos := slices.Index(subArr, userID)
 		if pos >= 0 {
 			subArr = append(subArr[:pos], subArr[pos+1:]...)
 			subscribed = strings.Join(subArr, ",")
@@ -605,12 +599,12 @@ func saveImage(message MessageChain) (MessageChain, error) {
 				return message, errors.New("保存图片失败")
 			}
 			cmd := exec.Command("curl", "-o", p, u)
-			if out, err := cmd.CombinedOutput(); err != nil {
+			out, err := cmd.CombinedOutput()
+			if err != nil {
 				slog.Error("cmd.Run() failed", "error", err)
 				return message, errors.New("保存图片失败")
-			} else {
-				slog.Debug(string(out))
 			}
+			slog.Debug(string(out))
 			img.File = "file://" + abs
 			img.Url = ""
 		} else if forward, ok := m.(*Forward); ok {
