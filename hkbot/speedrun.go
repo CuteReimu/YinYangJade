@@ -27,9 +27,9 @@ func init() {
 			"low":       "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
 			"ab":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
 			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
-			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
 			"pop":       "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/r9g1qop9/wkpq608d",
-			"白色宫殿":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
+			"白色宫殿":  "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
 		},
 		categoryNames: map[string]string{
 			"anylp":     "丝之歌 — Any% 新",
@@ -41,9 +41,9 @@ func init() {
 			"low":       "丝之歌 — Low%",
 			"ab":        "丝之歌 — All Bosses",
 			"twisted":   "丝之歌 — Twisted%",
-			"苔穴":        "丝之歌 — 苔穴",
+			"苔穴":      "丝之歌 — 苔穴",
 			"pop":       "空洞骑士 — 苦痛之路",
-			"白色宫殿":      "空洞骑士 — 白色宫殿 1.3.1.5+",
+			"白色宫殿":  "空洞骑士 — 白色宫殿 1.3.1.5+",
 		},
 		mapKeys: map[string][]string{
 			"any":        {"anyrp", "anylp"},
@@ -52,9 +52,9 @@ func init() {
 			"all boss":   {"ab"},
 			"allbosses":  {"ab"},
 			"allboss":    {"ab"},
-			"苦痛之路":       {"pop"},
-			"苦痛":         {"pop"},
-			"白宫":         {"白色宫殿"},
+			"苦痛之路":   {"pop"},
+			"苦痛":       {"pop"},
+			"白宫":       {"白色宫殿"},
 		},
 		resty: resty.New(),
 	}
@@ -143,7 +143,7 @@ type speedrunApiResp struct {
 	} `json:"data"`
 }
 
-func (t *speedrunLeaderboards) formatTime(tm float64) string {
+func formatTime(tm float64) string {
 	m := int(tm) / 60
 	sFloat := tm - float64(m*60)
 	h := m / 60
@@ -157,7 +157,7 @@ func (t *speedrunLeaderboards) formatTime(tm float64) string {
 	return fmt.Sprintf("%02d:%02d", m, int(sFloat))
 }
 
-func (t *speedrunLeaderboards) formatRelativeDate(dateStr string) string {
+func formatRelativeDate(dateStr string) string {
 	if dateStr == "" {
 		return dateStr
 	}
@@ -179,8 +179,11 @@ func (t *speedrunLeaderboards) formatRelativeDate(dateStr string) string {
 		return fmt.Sprintf("%d天前", days)
 	case days >= 30 && days < 60:
 		return "上个月"
-	case days >= 60:
+	case days >= 60 && days < 360:
 		months := days / 30
+		if months >= 12 {
+			return fmt.Sprintf("%d年前", months/12)
+		}
 		return fmt.Sprintf("%d个月前", months)
 	default:
 		// 未来日期或其他情况，返回原字符串
@@ -232,7 +235,7 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 	for _, entry := range runs {
 		place := entry.Place
 		run := entry.Run
-		timeStr := t.formatTime(run.Times.PrimaryT)
+		timeStr := formatTime(run.Times.PrimaryT)
 		playerRef := run.Players
 		playerName := "Unknown"
 		if len(playerRef) > 0 {
@@ -240,7 +243,7 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 		}
 		rel := ""
 		if run.Date != "" {
-			rel = " — " + t.formatRelativeDate(run.Date)
+			rel = " — " + formatRelativeDate(run.Date)
 		}
 		_, _ = fmt.Fprintf(&buf, "%d. %s — %s%s\r\n", place, playerName, timeStr, rel)
 	}
