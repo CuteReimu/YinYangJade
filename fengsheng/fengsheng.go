@@ -56,6 +56,7 @@ loop:
 			_, _ = resultBuilder.WriteString("，" + line)
 		} else if strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") ||
 		(strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩")) {
+		// Skip these lines
 		} else if isWinRate {
 			var r []string
 			for s := range strings.SplitSeq(line, "\t") {

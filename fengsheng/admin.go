@@ -16,19 +16,19 @@ func init() {
 
 type delAdmin struct{}
 
-func (_ *delAdmin) Name() string {
+func (*delAdmin) Name() string {
 	return "删除管理员"
 }
 
-func (_ *delAdmin) ShowTips(int64, int64) string {
+func (*delAdmin) ShowTips(int64, int64) string {
 	return "删除管理员 对方QQ号"
 }
 
-func (_ *delAdmin) CheckAuth(_ int64, senderID int64) bool {
+func (*delAdmin) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
-func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
+func (*delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -64,19 +64,19 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 
 type addAdmin struct{}
 
-func (_ *addAdmin) Name() string {
+func (*addAdmin) Name() string {
 	return "增加管理员"
 }
 
-func (_ *addAdmin) ShowTips(int64, int64) string {
+func (*addAdmin) ShowTips(int64, int64) string {
 	return "增加管理员 对方QQ号"
 }
 
-func (_ *addAdmin) CheckAuth(_ int64, senderID int64) bool {
+func (*addAdmin) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
-func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
+func (*addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -109,19 +109,19 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 
 type listAllAdmin struct{}
 
-func (_ *listAllAdmin) Name() string {
+func (*listAllAdmin) Name() string {
 	return "查看管理员"
 }
 
-func (_ *listAllAdmin) ShowTips(int64, int64) string {
+func (*listAllAdmin) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (_ *listAllAdmin) CheckAuth(int64, int64) bool {
+func (*listAllAdmin) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (l *listAllAdmin) Execute(*GroupMessage, string) MessageChain {
+func (*listAllAdmin) Execute(*GroupMessage, string) MessageChain {
 	superAdmin := fengshengConfig.GetInt64("qq.super_admin_qq")
 	admin := permData.GetIntSlice("admin")
 	s := make([]string, 0, len(admin)+2)

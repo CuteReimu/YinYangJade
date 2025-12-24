@@ -328,12 +328,12 @@ func calculateCube(s string) MessageChain {
 
 var (
 	//go:embed cubeRates.json
-	cubeRatesJson []byte
+	cubeRatesJSON []byte
 	cubeRates     map[string]any
 )
 
 func init() {
-	if err := json.Unmarshal(cubeRatesJson, &cubeRates); err != nil {
+	if err := json.Unmarshal(cubeRatesJSON, &cubeRates); err != nil {
 		panic(err)
 	}
 }

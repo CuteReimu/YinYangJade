@@ -155,7 +155,7 @@ func init() {
 }
 
 // TranslateClassId 根据职业ID翻译成中文职业名
-func TranslateClassId(id int) string {
+func TranslateClassID(id int) string {
 	if name, ok := ClassIDMap[id]; ok {
 		return TranslateClassName(name)
 	}
