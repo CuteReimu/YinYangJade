@@ -173,10 +173,12 @@ func buildCharacterImage(img, imgURL string) MessageChain {
 		return MessageChain{&Image{File: "base64://" + img}}
 	}
 	if len(imgURL) > 0 {
-		if resp, err := restyClient.R().Get(imgURL); err == nil {
-			return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())}}
+		resp, err := restyClient.R().Get(imgURL)
+		if err != nil {
+			slog.Error("请求失败", "url", imgURL, "error", err)
+			return nil
 		}
-		slog.Error("请求失败", "url", imgURL)
+		return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(resp.Body())}}
 	}
 	return nil
 }

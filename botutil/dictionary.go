@@ -208,11 +208,16 @@ func DealModifyDict(
 }
 
 // DealRemoveDict 处理删除词条（通用版本，不包含特殊逻辑）
-func DealRemoveDict(message *GroupMessage, key string, qunDb *viper.Viper, sendFunc func(*GroupMessage, ...SingleMessage)) bool {
+func DealRemoveDict(
+	message *GroupMessage,
+	key string,
+	qunDb *viper.Viper,
+	sendFunc func(*GroupMessage, ...SingleMessage),
+) {
 	m := qunDb.GetStringMapString("data")
 	if _, ok := m[key]; !ok {
 		sendFunc(message, &Text{Text: "词条不存在"})
-		return false
+		return
 	}
 	delete(m, key)
 	qunDb.Set("data", m)
@@ -220,7 +225,6 @@ func DealRemoveDict(message *GroupMessage, key string, qunDb *viper.Viper, sendF
 		slog.Error("write data failed", "error", err)
 	}
 	sendFunc(message, &Text{Text: "删除词条成功"})
-	return true
 }
 
 // DealSearchDict 处理搜索词条
