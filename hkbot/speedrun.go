@@ -179,7 +179,7 @@ func formatRelativeDate(dateStr string) string {
 		return fmt.Sprintf("%d天前", days)
 	case days >= 30 && days < 60:
 		return "上个月"
-	case days >= 60 && days < 360:
+	case days >= 60:
 		months := days / 30
 		if months >= 12 {
 			return fmt.Sprintf("%d年前", months/12)
