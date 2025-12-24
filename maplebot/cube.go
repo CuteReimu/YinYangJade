@@ -673,7 +673,7 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 		}
 		return ret
 	}
-	return [][]any{f(cubeData[0]), f(cubeData[1]), f(cubeData[2])}
+	return [][]any{f(cubeData[0]), f(cubeData[1]), f(cubeData[2])} //nolint:gosec
 }
 
 /**
