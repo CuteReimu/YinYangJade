@@ -1,3 +1,4 @@
+// Package imageutil 提供图像处理工具，包括抠图等功能
 package imageutil
 
 import (
@@ -5,8 +6,8 @@ import (
 	"encoding/base64"
 	"image"
 	"image/color"
-	_ "image/gif"
-	_ "image/jpeg"
+	_ "image/gif"  // 注册 GIF 图像格式解码器
+	_ "image/jpeg" // 注册 JPEG 图像格式解码器
 	"image/png"
 	"log/slog"
 	"net/url"

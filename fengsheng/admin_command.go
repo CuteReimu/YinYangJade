@@ -27,19 +27,19 @@ func init() {
 
 type bind struct{}
 
-func (a *bind) Name() string {
+func (*bind) Name() string {
 	return "绑定"
 }
 
-func (a *bind) ShowTips(int64, int64) string {
+func (*bind) ShowTips(int64, int64) string {
 	return "绑定 QQ号 名字"
 }
 
-func (a *bind) CheckAuth(_ int64, senderID int64) bool {
+func (*bind) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (a *bind) Execute(msg *GroupMessage, content string) MessageChain {
+func (*bind) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	arr := strings.SplitN(name, " ", 2)
 	if len(arr) != 2 {
@@ -93,15 +93,15 @@ func (a *bind) Execute(msg *GroupMessage, content string) MessageChain {
 
 type unbind struct{}
 
-func (a *unbind) Name() string {
+func (*unbind) Name() string {
 	return "解绑"
 }
 
-func (a *unbind) ShowTips(int64, int64) string {
+func (*unbind) ShowTips(int64, int64) string {
 	return "解绑 QQ号"
 }
 
-func (a *unbind) CheckAuth(_ int64, senderID int64) bool {
+func (*unbind) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
@@ -287,19 +287,19 @@ func (a *releaseRole) Execute(_ *GroupMessage, content string) MessageChain {
 
 type setVersion struct{}
 
-func (s *setVersion) Name() string {
+func (*setVersion) Name() string {
 	return "修改版本号"
 }
 
-func (s *setVersion) ShowTips(int64, int64) string {
+func (*setVersion) ShowTips(int64, int64) string {
 	return "修改版本号 版本号"
 }
 
-func (s *setVersion) CheckAuth(_ int64, senderID int64) bool {
+func (*setVersion) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (s *setVersion) Execute(_ *GroupMessage, content string) MessageChain {
+func (*setVersion) Execute(_ *GroupMessage, content string) MessageChain {
 	if _, err := strconv.Atoi(content); err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n修改版本号 版本号"}}
 	}
@@ -313,19 +313,19 @@ func (s *setVersion) Execute(_ *GroupMessage, content string) MessageChain {
 
 type forceEnd struct{}
 
-func (f *forceEnd) Name() string {
+func (*forceEnd) Name() string {
 	return "强制结束所有游戏"
 }
 
-func (f *forceEnd) ShowTips(int64, int64) string {
+func (*forceEnd) ShowTips(int64, int64) string {
 	return "强制结束所有游戏"
 }
 
-func (f *forceEnd) CheckAuth(_ int64, senderID int64) bool {
+func (*forceEnd) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (f *forceEnd) Execute(_ *GroupMessage, content string) MessageChain {
+func (*forceEnd) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
@@ -339,19 +339,19 @@ func (f *forceEnd) Execute(_ *GroupMessage, content string) MessageChain {
 
 type setNotice struct{}
 
-func (s *setNotice) Name() string {
+func (*setNotice) Name() string {
 	return "修改公告"
 }
 
-func (s *setNotice) ShowTips(int64, int64) string {
+func (*setNotice) ShowTips(int64, int64) string {
 	return "修改公告 公告内容"
 }
 
-func (s *setNotice) CheckAuth(_ int64, senderID int64) bool {
+func (*setNotice) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (s *setNotice) Execute(_ *GroupMessage, content string) MessageChain {
+func (*setNotice) Execute(_ *GroupMessage, content string) MessageChain {
 	content = strings.TrimSpace(content)
 	if len(content) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n修改公告 公告内容"}}
@@ -366,19 +366,19 @@ func (s *setNotice) Execute(_ *GroupMessage, content string) MessageChain {
 
 type setWaitSecond struct{}
 
-func (s *setWaitSecond) Name() string {
+func (*setWaitSecond) Name() string {
 	return "修改出牌时间"
 }
 
-func (s *setWaitSecond) ShowTips(int64, int64) string {
+func (*setWaitSecond) ShowTips(int64, int64) string {
 	return "修改出牌时间 秒数"
 }
 
-func (s *setWaitSecond) CheckAuth(_ int64, senderID int64) bool {
+func (*setWaitSecond) CheckAuth(_ int64, senderID int64) bool {
 	return isAdmin(senderID)
 }
 
-func (s *setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
+func (*setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
 	if second, err := strconv.Atoi(strings.TrimSpace(content)); err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n修改出牌时间 秒数"}}
 	} else if second <= 0 {
@@ -394,19 +394,19 @@ func (s *setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
 
 type createAccount struct{}
 
-func (c *createAccount) Name() string {
+func (*createAccount) Name() string {
 	return "创号"
 }
 
-func (c *createAccount) ShowTips(int64, int64) string {
+func (*createAccount) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (c *createAccount) CheckAuth(_ int64, senderID int64) bool {
+func (*createAccount) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
-func (c *createAccount) Execute(msg *GroupMessage, content string) MessageChain {
+func (*createAccount) Execute(_ *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n创号 名字"}}
@@ -424,19 +424,19 @@ func (c *createAccount) Execute(msg *GroupMessage, content string) MessageChain 
 
 type addEnergy struct{}
 
-func (c *addEnergy) Name() string {
+func (*addEnergy) Name() string {
 	return "增加精力"
 }
 
-func (c *addEnergy) ShowTips(int64, int64) string {
+func (*addEnergy) ShowTips(int64, int64) string {
 	return "增加精力 名字 数量"
 }
 
-func (c *addEnergy) CheckAuth(_ int64, senderID int64) bool {
+func (*addEnergy) CheckAuth(_ int64, senderID int64) bool {
 	return isSuperAdmin(senderID)
 }
 
-func (c *addEnergy) Execute(msg *GroupMessage, content string) MessageChain {
+func (*addEnergy) Execute(_ *GroupMessage, content string) MessageChain {
 	arr := strings.Split(strings.TrimSpace(content), " ")
 	if len(arr) != 2 {
 		return MessageChain{&Text{Text: "命令格式：\n增加精力 名字 数量"}}

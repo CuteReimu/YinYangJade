@@ -108,12 +108,12 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
-		if msg, err := saveImage(message.Message); err != nil {
+		msg, err := saveImage(message.Message)
+		if err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
-		} else {
-			message.Message = msg
 		}
+		message.Message = msg
 		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
@@ -171,12 +171,12 @@ func saveImage(message MessageChain) (MessageChain, error) {
 				return message, errors.New("保存图片失败")
 			}
 			cmd := exec.Command("curl", "-o", p, u)
-			if out, err := cmd.CombinedOutput(); err != nil {
+			out, err := cmd.CombinedOutput()
+			if err != nil {
 				slog.Error("cmd.Run() failed", "error", err, "p", p, "u", u)
 				return message, errors.New("保存图片失败")
-			} else {
-				slog.Debug(string(out))
 			}
+			slog.Debug(string(out))
 			img.File = "file://" + abs
 			img.Url = ""
 		} else if forward, ok := m.(*Forward); ok {

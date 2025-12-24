@@ -92,10 +92,10 @@ func attemptCost(newKms bool, currentStar int, itemLevel int, boomProtect, thirt
 	return math.Round(cost)
 }
 
-// determineOutcome return either _SUCCESS, _MAINTAIN, _DECREASE, or _BOOM
+// determineOutcome return either resultSuccess, resultMaintain, resultDecrease, or resultBoom
 func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen, boomEvent bool) starForceResult {
 	if fiveTenFifteen && (currentStar == 5 || currentStar == 10 || currentStar == 15) {
-		return _SUCCESS
+		return resultSuccess
 	}
 	rates := rates
 	if newKms {
@@ -103,10 +103,10 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 	}
 	var (
 		outcome             = rand.Float64()
-		probabilitySuccess  = rates[currentStar][_SUCCESS]
-		probabilityMaintain = rates[currentStar][_MAINTAIN]
-		probabilityDecrease = rates[currentStar][_DECREASE]
-		probabilityBoom     = rates[currentStar][_BOOM]
+		probabilitySuccess  = rates[currentStar][resultSuccess]
+		probabilityMaintain = rates[currentStar][resultMaintain]
+		probabilityDecrease = rates[currentStar][resultDecrease]
+		probabilityBoom     = rates[currentStar][resultBoom]
 	)
 	if boomEvent && currentStar <= 21 {
 		probabilityMaintain += probabilityBoom * 0.3
@@ -131,16 +131,16 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 		probabilityBoom = leftOver - probabilityDecrease
 	}
 	if outcome < probabilitySuccess {
-		return _SUCCESS
+		return resultSuccess
 	} else if outcome < probabilitySuccess+probabilityMaintain {
-		return _MAINTAIN
+		return resultMaintain
 	} else if outcome < probabilitySuccess+probabilityMaintain+probabilityDecrease {
-		return _DECREASE
+		return resultDecrease
 	} else if outcome < probabilitySuccess+probabilityMaintain+probabilityDecrease+probabilityBoom {
-		return _BOOM
+		return resultBoom
 	}
 	slog.Error("Case not caputured")
-	return _SUCCESS
+	return resultSuccess
 }
 
 // performExperiment return (totalMesos, totalBooms, totalCount)
@@ -159,15 +159,15 @@ func performExperiment(newKms bool, currentStar, desiredStar, itemLevel int,
 			currentStar++
 		} else {
 			switch determineOutcome(newKms, currentStar, boomProtect, fiveTenFifteen, boomEvent) {
-			case _SUCCESS:
+			case resultSuccess:
 				decreaseCount = 0
 				currentStar++
-			case _DECREASE:
+			case resultDecrease:
 				decreaseCount++
 				currentStar--
-			case _MAINTAIN:
+			case resultMaintain:
 				decreaseCount = 0
-			case _BOOM:
+			case resultBoom:
 				decreaseCount = 0
 				currentStar = 12
 				totalBooms++
@@ -527,10 +527,10 @@ func drawStarForce(cur, des int, midway []float64) *Image {
 type starForceResult int
 
 const (
-	_SUCCESS starForceResult = iota
-	_MAINTAIN
-	_DECREASE
-	_BOOM
+	resultSuccess starForceResult = iota
+	resultMaintain
+	resultDecrease
+	resultBoom
 )
 
 // current_star => (success, maintain, decrease, boom)

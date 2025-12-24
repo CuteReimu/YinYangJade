@@ -1,7 +1,7 @@
 package maplebot
 
 import (
-	_ "embed"
+	_ "embed" // 用于嵌入资源文件
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -40,6 +40,7 @@ type findRoleReturnData struct {
 	} `json:"CharacterData"`
 }
 
+// FindRoleBackground 在后台预抓取角色数据
 func FindRoleBackground() {
 	slog.Info("开始角色数据预抓取")
 	for _, name := range findRoleData.GetStringMapString("data") {
@@ -118,7 +119,7 @@ func findRole(name string) MessageChain {
 
 func resolveFindData(data *findRoleReturnData) MessageChain {
 	img := data.CharacterData.Image
-	imgUrl := data.CharacterData.CharacterImageURL
+	imgURL := data.CharacterData.CharacterImageURL
 	rawName := data.CharacterData.Name
 	class := TranslateClassName(data.CharacterData.Class)
 	level := data.CharacterData.Level
@@ -127,10 +128,10 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 	legionLevel := data.CharacterData.LegionLevel
 
 	if len(class) == 0 {
-		class = TranslateClassId(data.CharacterData.ClassID)
+		class = TranslateClassID(data.CharacterData.ClassID)
 		if len(class) == 0 {
 			for _, d := range slices.Backward(data.CharacterData.GraphData) {
-				class = TranslateClassId(d.ClassID)
+				class = TranslateClassID(d.ClassID)
 			}
 		}
 	}
@@ -138,8 +139,8 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 	var messageChain MessageChain
 	if len(img) > 0 {
 		messageChain = append(messageChain, &Image{File: "base64://" + img})
-	} else if len(imgUrl) > 0 {
-		resp, err := restyClient.R().Get(imgUrl)
+	} else if len(imgURL) > 0 {
+		resp, err := restyClient.R().Get(imgURL)
 		if err != nil {
 			slog.Error("请求失败", "error", err)
 		} else {
@@ -286,7 +287,7 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 				ThemeOptionFunc(ThemeDark),
 				PaddingOptionFunc(Box{Top: 30, Left: 10, Right: 10, Bottom: 10}),
 				XAxisDataOptionFunc(labels),
-				//MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
+				// MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
 				YAxisOptionFunc(yAxisOptions...),
 				func(opt *ChartOption) {
 					opt.XAxis.TextRotation = -math.Pi / 4

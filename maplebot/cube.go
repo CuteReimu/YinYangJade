@@ -328,12 +328,12 @@ func calculateCube(s string) MessageChain {
 
 var (
 	//go:embed cubeRates.json
-	cubeRatesJson []byte
+	cubeRatesJSON []byte
 	cubeRates     map[string]any
 )
 
 func init() {
-	if err := json.Unmarshal(cubeRatesJson, &cubeRates); err != nil {
+	if err := json.Unmarshal(cubeRatesJSON, &cubeRates); err != nil {
 		panic(err)
 	}
 }
@@ -676,11 +676,9 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 	return [][]any{f(cubeData[0]), f(cubeData[1]), f(cubeData[2])} //nolint:gosec
 }
 
-/**
- * calculateTotal 计算属性的总值
- *
- * calcVal false - 只算条数，true - 算值之和
- */
+// calculateTotal 计算属性的总值
+//
+// calcVal false - 只算条数，true - 算值之和
 func calculateTotal(outcome [][]any, desiredCategory string, calcVal bool) int {
 	if calcVal {
 		var actualVal int

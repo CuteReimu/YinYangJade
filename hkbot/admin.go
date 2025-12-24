@@ -1,3 +1,4 @@
+// Package hkbot 实现空洞骑士speedrun推送小助手功能
 package hkbot
 
 import (

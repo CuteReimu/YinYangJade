@@ -56,7 +56,7 @@ func initConfig() {
 
 func init() {
 	var ok bool
-	_ = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
+	_ = filepath.Walk(".", func(path string, info fs.FileInfo, _ error) error {
 		if info != nil && info.Name() == "simhei.ttf" {
 			buf, err := os.ReadFile(path)
 			if err != nil {
@@ -75,7 +75,7 @@ func init() {
 	if ok {
 		return
 	}
-	_ = filepath.Walk(filepath.Join("/usr", "share", "fonts"), func(path string, info fs.FileInfo, err error) error {
+	_ = filepath.Walk(filepath.Join("/usr", "share", "fonts"), func(path string, info fs.FileInfo, _ error) error {
 		if info != nil && info.Name() == "simhei.ttf" {
 			buf, err := os.ReadFile(path)
 			if err != nil {

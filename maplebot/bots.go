@@ -425,7 +425,7 @@ type iWannaFormParty struct {
 	tips     string
 }
 
-func (i *iWannaFormParty) Name() string {
+func (*iWannaFormParty) Name() string {
 	return "我要开车"
 }
 
@@ -433,7 +433,7 @@ func (i *iWannaFormParty) ShowTips(int64, int64) string {
 	return i.tips
 }
 
-func (i *iWannaFormParty) CheckAuth(int64, int64) bool {
+func (*iWannaFormParty) CheckAuth(int64, int64) bool {
 	return true
 }
 
@@ -486,7 +486,7 @@ type registerFormParty struct {
 	tips     string
 }
 
-func (r *registerFormParty) Name() string {
+func (*registerFormParty) Name() string {
 	return "订阅开车"
 }
 
@@ -494,7 +494,7 @@ func (r *registerFormParty) ShowTips(int64, int64) string {
 	return r.tips
 }
 
-func (r *registerFormParty) CheckAuth(int64, int64) bool {
+func (*registerFormParty) CheckAuth(int64, int64) bool {
 	return true
 }
 
@@ -514,7 +514,7 @@ type cancelRegisterFormParty struct {
 	tips     string
 }
 
-func (c *cancelRegisterFormParty) Name() string {
+func (*cancelRegisterFormParty) Name() string {
 	return "取消订阅"
 }
 
@@ -522,7 +522,7 @@ func (c *cancelRegisterFormParty) ShowTips(int64, int64) string {
 	return c.tips
 }
 
-func (c *cancelRegisterFormParty) CheckAuth(int64, int64) bool {
+func (*cancelRegisterFormParty) CheckAuth(int64, int64) bool {
 	return true
 }
 

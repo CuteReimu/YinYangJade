@@ -52,5 +52,5 @@ func Get(key string) (value string, ok bool) {
 	if err != nil {
 		slog.Error("get failed", "error", err, "key", key)
 	}
-	return
+	return value, ok
 }
