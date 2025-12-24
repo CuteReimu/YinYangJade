@@ -1,20 +1,14 @@
 package maplebot
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"log/slog"
-	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/db"
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
@@ -576,61 +570,7 @@ func getBossNumber(bossList []rune, numberString string) []rune {
 }
 
 func saveImage(message MessageChain) (MessageChain, error) {
-	for _, m := range message {
-		if img, ok := m.(*Image); ok && len(img.Url) > 0 {
-			u := img.Url
-			_, err := url.Parse(u)
-			if err != nil {
-				slog.Error("userInput is not a valid URL, reject it", "error", err)
-				return message, err
-			}
-			if err := os.MkdirAll("chat-images", 0755); err != nil {
-				slog.Error("mkdir failed", "error", err)
-				return message, errors.New("保存图片失败")
-			}
-			nameLen := len(filepath.Ext(img.File)) + 32
-			if len(img.File) > nameLen {
-				img.File = img.File[len(img.File)-nameLen:]
-			}
-			p := filepath.Join("chat-images", img.File)
-			abs, err := filepath.Abs(p)
-			if err != nil {
-				slog.Error("filepath.Abs() failed", "error", err)
-				return message, errors.New("保存图片失败")
-			}
-			cmd := exec.Command("curl", "-o", p, u)
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				slog.Error("cmd.Run() failed", "error", err)
-				return message, errors.New("保存图片失败")
-			}
-			slog.Debug(string(out))
-			img.File = "file://" + abs
-			img.Url = ""
-		} else if forward, ok := m.(*Forward); ok {
-			msgs, err := bot.GetForwardMessage(forward.Id)
-			if err != nil {
-				slog.Error("获取转发消息失败", "forwardId", forward.Id)
-				return message, errors.New("获取转发消息失败")
-			}
-			var ret MessageChain
-			for _, msg := range msgs {
-				if m, ok := msg.(*GroupMessage); ok {
-					newMsg, err := saveImage(m.Message)
-					if err != nil {
-						slog.Error("嵌套saveImage失败", "error", err)
-					}
-					ret = append(ret, &Node{
-						UserId:   strconv.FormatInt(m.UserId, 10),
-						Nickname: m.Sender.Nickname,
-						Content:  newMsg,
-					})
-				}
-			}
-			return ret, nil
-		}
-	}
-	return message, nil
+	return botutil.SaveImage(message, "chat-images", bot)
 }
 
 func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
@@ -638,104 +578,13 @@ func sendGroupMessage(context *GroupMessage, messages ...SingleMessage) {
 }
 
 func replyGroupMessage(reply bool, context *GroupMessage, messages ...SingleMessage) {
-	if len(messages) == 0 {
-		return
+	if reply {
+		botutil.ReplyGroupMessageWithRetry(bot, context, botutil.FillSpecificMessage, messages...)
+	} else {
+		botutil.SendGroupMessageWithRetry(bot, context, botutil.FillSpecificMessage, messages...)
 	}
-	f := func(messages []SingleMessage) error {
-		var f1 func(messages []SingleMessage)
-		f1 = func(messages []SingleMessage) {
-			for _, m := range messages {
-				if img, ok := m.(*Image); ok && len(img.File) > 0 {
-					if strings.HasPrefix(img.File, "file://") {
-						fileName := img.File[len("file://"):]
-						buf, err := os.ReadFile(fileName)
-						if err != nil {
-							slog.Error("read file failed", "error", err)
-							continue
-						}
-						img.File = "base64://" + base64.StdEncoding.EncodeToString(buf)
-					}
-				} else if node, ok := m.(*Node); ok {
-					f1(node.Content)
-				}
-			}
-		}
-		f1(messages)
-		if !reply {
-			_, err := bot.SendGroupMessage(context.GroupId, messages)
-			return err
-		}
-		_, err := bot.SendGroupMessage(context.GroupId, append(MessageChain{
-			&Reply{Id: strconv.FormatInt(int64(context.MessageId), 10)},
-		}, messages...))
-		return err
-	}
-	if err := f(messages); err != nil {
-		slog.Error("send group message failed", "error", err)
-		newMessages := make([]SingleMessage, 0, len(messages))
-		for _, m := range messages {
-			if image, ok := m.(*Image); !ok || !strings.HasPrefix(image.File, "http") {
-				newMessages = append(newMessages, m)
-			}
-		}
-		if len(newMessages) != len(messages) && len(newMessages) > 0 {
-			if err = f(newMessages); err != nil {
-				slog.Error("send group message failed", "error", err)
-			}
-		}
-	}
-}
-
-func dealKey(s string) string {
-	s = strings.TrimSpace(s)
-	s = strings.ReplaceAll(s, "零", "0")
-	s = strings.ReplaceAll(s, "一", "1")
-	s = strings.ReplaceAll(s, "二", "2")
-	s = strings.ReplaceAll(s, "三", "3")
-	s = strings.ReplaceAll(s, "四", "4")
-	s = strings.ReplaceAll(s, "五", "5")
-	s = strings.ReplaceAll(s, "六", "6")
-	s = strings.ReplaceAll(s, "七", "7")
-	s = strings.ReplaceAll(s, "八", "8")
-	s = strings.ReplaceAll(s, "九", "9")
-	return strings.ToLower(s)
 }
 
 func clearExpiredImages() {
-	defer func() {
-		if err := recover(); err != nil {
-			slog.Error("panic recovered", "error", err)
-		}
-	}()
-	data := qunDb.GetStringMapString("data")
-	data2 := make(map[string]bool)
-	var f func(ms MessageChain)
-	f = func(ms MessageChain) {
-		for _, m := range ms {
-			if img, ok := m.(*Image); ok && len(img.File) > 0 && strings.HasPrefix(img.File, "file://") {
-				data2[filepath.Base(img.File[len("file://"):])] = true
-			} else if node, ok := m.(*Node); ok {
-				f(node.Content)
-			}
-		}
-	}
-	for _, v := range data {
-		var ms MessageChain
-		if err := json.Unmarshal([]byte(v), &ms); err != nil {
-			slog.Error("json unmarshal failed", "error", err)
-			continue
-		}
-		f(ms)
-	}
-	files, err := os.ReadDir("chat-images")
-	if err != nil {
-		slog.Error("read dir failed", "error", err)
-	}
-	for _, file := range files {
-		if !data2[file.Name()] {
-			if err = os.Remove(filepath.Join("chat-images", file.Name())); err != nil {
-				slog.Error("remove file failed", "error", err)
-			}
-		}
-	}
+	botutil.ClearExpiredImages(qunDb, "chat-images")
 }
