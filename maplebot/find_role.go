@@ -1,7 +1,7 @@
 package maplebot
 
 import (
-	_ "embed"
+	_ "embed" // 用于嵌入资源文件
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -40,6 +40,7 @@ type findRoleReturnData struct {
 	} `json:"CharacterData"`
 }
 
+// FindRoleBackground 在后台预抓取角色数据
 func FindRoleBackground() {
 	slog.Info("开始角色数据预抓取")
 	for _, name := range findRoleData.GetStringMapString("data") {
@@ -286,7 +287,7 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 				ThemeOptionFunc(ThemeDark),
 				PaddingOptionFunc(Box{Top: 30, Left: 10, Right: 10, Bottom: 10}),
 				XAxisDataOptionFunc(labels),
-				//MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
+				// MarkLineOptionFunc(0, SeriesMarkDataTypeAverage),
 				YAxisOptionFunc(yAxisOptions...),
 				func(opt *ChartOption) {
 					opt.XAxis.TextRotation = -math.Pi / 4

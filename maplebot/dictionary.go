@@ -107,12 +107,12 @@ func handleDictionary(message *GroupMessage) bool {
 			sendGroupMessage(message, &Text{Text: "未知错误"})
 			return true
 		}
-		if msg, err := saveImage(message.Message); err != nil {
+		msg, err := saveImage(message.Message)
+		if err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
-		} else {
-			message.Message = msg
 		}
+		message.Message = msg
 		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)

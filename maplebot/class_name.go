@@ -3,9 +3,9 @@ package maplebot
 import (
 	"bytes"
 	"image"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
+	_ "image/gif"  // 注册 GIF 图像格式解码器
+	_ "image/jpeg" // 注册 JPEG 图像格式解码器
+	_ "image/png"  // 注册 PNG 图像格式解码器
 	"log/slog"
 	"net/url"
 	"os"
@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ClassNameMap 将英文职业名翻译成中文
 var ClassNameMap = map[string]string{
 	"Hero":        "英雄",
 	"Dark Knight": "黑骑士",
@@ -89,6 +90,7 @@ var ClassNameMap = map[string]string{
 	"Sia Astelle": "施亚",
 }
 
+// ClassIDMap 将职业ID翻译成英文职业名
 var ClassIDMap = map[int]string{
 	1:   "Warrior",
 	2:   "Magician",
@@ -152,6 +154,7 @@ func init() {
 	ClassNameMap = classNameMap
 }
 
+// TranslateClassId 根据职业ID翻译成中文职业名
 func TranslateClassId(id int) string {
 	if name, ok := ClassIDMap[id]; ok {
 		return TranslateClassName(name)
@@ -162,6 +165,7 @@ func TranslateClassId(id int) string {
 	return ""
 }
 
+// TranslateClassName 将英文职业名翻译成中文
 func TranslateClassName(s string) string {
 	if len(s) == 0 {
 		return ""
@@ -172,6 +176,7 @@ func TranslateClassName(s string) string {
 	return s
 }
 
+// GetClassImage 获取指定职业的图像
 func GetClassImage(name string) (image.Image, error) {
 	if len(name) == 0 {
 		name = "Lynn"
@@ -186,6 +191,7 @@ func GetClassImage(name string) (image.Image, error) {
 	return nil, errors.Errorf("class image not found: %s", name)
 }
 
+// GetClassOriginImageBuff 获取指定职业的原始图像数据
 func GetClassOriginImageBuff(name string) ([]byte, error) {
 	if name := classImageData.GetString(strings.ToLower(name)); len(name) > 0 {
 		buf, err := os.ReadFile(filepath.Join("class_image", name))
@@ -206,6 +212,7 @@ func getClassImage(name string) (image.Image, error) {
 	return img, err
 }
 
+// SetClassImage 设置指定职业的图像
 func SetClassImage(name string, img *Image) MessageChain {
 	if len(name) == 0 || !classImageData.IsSet(name) {
 		return MessageChain{&Text{Text: "职业不存在"}}
@@ -226,12 +233,12 @@ func SetClassImage(name string, img *Image) MessageChain {
 	}
 	p := filepath.Join("class_image", img.File)
 	cmd := exec.Command("curl", "-o", p, u)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	out, err := cmd.CombinedOutput()
+	if err != nil {
 		slog.Error("cmd.Run() failed", "error", err)
 		return MessageChain{&Text{Text: "保存图片失败"}}
-	} else {
-		slog.Debug(string(out))
 	}
+	slog.Debug(string(out))
 	_, err = getClassImage(img.File)
 	if err != nil {
 		slog.Error("invalid image", "error", err)

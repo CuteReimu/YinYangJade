@@ -433,7 +433,7 @@ func (i *iWannaFormParty) ShowTips(int64, int64) string {
 	return i.tips
 }
 
-func (i *iWannaFormParty) CheckAuth(int64, int64) bool {
+func (_ *iWannaFormParty) CheckAuth(int64, int64) bool {
 	return true
 }
 
@@ -494,7 +494,7 @@ func (r *registerFormParty) ShowTips(int64, int64) string {
 	return r.tips
 }
 
-func (r *registerFormParty) CheckAuth(int64, int64) bool {
+func (_ *registerFormParty) CheckAuth(int64, int64) bool {
 	return true
 }
 
@@ -522,7 +522,7 @@ func (c *cancelRegisterFormParty) ShowTips(int64, int64) string {
 	return c.tips
 }
 
-func (c *cancelRegisterFormParty) CheckAuth(int64, int64) bool {
+func (_ *cancelRegisterFormParty) CheckAuth(int64, int64) bool {
 	return true
 }
 
