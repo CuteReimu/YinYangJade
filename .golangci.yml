@@ -60,15 +60,13 @@ linters:
         - name: add-constant
           disabled: true
         - name: line-length-limit
-          arguments: [140]
+          arguments: [150]
         - name: cognitive-complexity
-          arguments: [30]
-          disabled: true
+          arguments: [70]
         - name: cyclomatic
-          arguments: [20]
-          disabled: true
+          arguments: [30]
         - name: max-control-nesting
-          disabled: true
+          arguments: [5]
         - name: function-length
           arguments: [200, 0]
         - name: exported

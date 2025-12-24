@@ -19,6 +19,74 @@ import (
 
 var addDbQQList = make(map[int64]string)
 
+func dealAddDict(message *GroupMessage, key string) {
+	if strings.Contains(key, ".") {
+		sendGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
+		return
+	}
+	if _, ok := cmdMap[key]; ok {
+		sendGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
+		return
+	}
+	if len(key) > 0 {
+		m := qunDb.GetStringMapString("data")
+		if _, ok := m[key]; ok {
+			sendGroupMessage(message, &Text{Text: "词条已存在"})
+		} else {
+			sendGroupMessage(message, &Text{Text: "请输入要添加的内容"})
+			addDbQQList[message.Sender.UserId] = key
+		}
+	}
+}
+
+func dealModifyDict(message *GroupMessage, key string) {
+	m := qunDb.GetStringMapString("data")
+	if _, ok := m[key]; !ok {
+		sendGroupMessage(message, &Text{Text: "词条不存在"})
+	} else {
+		sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
+		addDbQQList[message.Sender.UserId] = key
+	}
+}
+
+func dealRemoveDict(message *GroupMessage, key string) {
+	m := qunDb.GetStringMapString("data")
+	if _, ok := m[key]; !ok {
+		sendGroupMessage(message, &Text{Text: "词条不存在"})
+	} else {
+		delete(m, key)
+		qunDb.Set("data", m)
+		if err := qunDb.WriteConfig(); err != nil {
+			slog.Error("write data failed", "error", err)
+		}
+		sendGroupMessage(message, &Text{Text: "删除词条成功"})
+	}
+}
+
+func dealSearchDict(message *GroupMessage, key string) {
+	var res []string
+	m := qunDb.GetStringMapString("data")
+	for k := range m {
+		if strings.Contains(k, key) {
+			res = append(res, k)
+		}
+	}
+	if len(res) > 0 {
+		slices.Sort(res)
+		num := len(res)
+		if num > 10 {
+			res = res[:10]
+			res[9] += fmt.Sprintf("\n等%d个词条", num)
+		}
+		for i := range res {
+			res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
+		}
+		sendGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
+	} else {
+		sendGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
+	}
+}
+
 func handleDictionary(message *GroupMessage) bool {
 	if len(message.Message) == 0 {
 		return true
@@ -26,81 +94,33 @@ func handleDictionary(message *GroupMessage) bool {
 	if !slices.Contains(hkConfig.GetIntSlice("speedrun_push_qq_group"), int(message.GroupId)) {
 		return true
 	}
-	if len(message.Message) == 1 {
-		if text, ok := message.Message[0].(*Text); ok {
-			perm := isWhitelist(message.Sender.UserId)
-			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
+	if len(message.Message) != 1 {
+		return true
+	}
+	if text, ok := message.Message[0].(*Text); ok {
+		if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
+			key := dealKey(text.Text[len("搜索词条"):])
+			if len(key) > 0 {
+				dealSearchDict(message, key)
+			}
+			return true
+		}
+		if isWhitelist(message.Sender.UserId) {
+			switch {
+			case strings.HasPrefix(text.Text, "添加词条 "):
 				key := dealKey(text.Text[len("添加词条"):])
-				if strings.Contains(key, ".") {
-					sendGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
-					return true
-				}
-				if _, ok = cmdMap[key]; ok {
-					sendGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
-					return true
-				}
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; ok {
-						sendGroupMessage(message, &Text{Text: "词条已存在"})
-					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要添加的内容"})
-						addDbQQList[message.Sender.UserId] = key
-					}
-				}
+				dealAddDict(message, key)
 				return true
-			} else if perm && strings.HasPrefix(text.Text, "修改词条 ") {
+			case strings.HasPrefix(text.Text, "修改词条 "):
 				key := dealKey(text.Text[len("修改词条"):])
 				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; !ok {
-						sendGroupMessage(message, &Text{Text: "词条不存在"})
-					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-						addDbQQList[message.Sender.UserId] = key
-					}
+					dealModifyDict(message, key)
 				}
 				return true
-			} else if perm && strings.HasPrefix(text.Text, "删除词条 ") {
+			case strings.HasPrefix(text.Text, "删除词条 "):
 				key := dealKey(text.Text[len("删除词条"):])
 				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; !ok {
-						sendGroupMessage(message, &Text{Text: "词条不存在"})
-					} else {
-						delete(m, key)
-						qunDb.Set("data", m)
-						if err := qunDb.WriteConfig(); err != nil {
-							slog.Error("write data failed", "error", err)
-						}
-						sendGroupMessage(message, &Text{Text: "删除词条成功"})
-					}
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
-				key := dealKey(text.Text[len("搜索词条"):])
-				if len(key) > 0 {
-					var res []string
-					m := qunDb.GetStringMapString("data")
-					for k := range m {
-						if strings.Contains(k, key) {
-							res = append(res, k)
-						}
-					}
-					if len(res) > 0 {
-						slices.Sort(res)
-						num := len(res)
-						if num > 10 {
-							res = res[:10]
-							res[9] += fmt.Sprintf("\n等%d个词条", num)
-						}
-						for i := range res {
-							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
-						}
-						sendGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
-					} else {
-						sendGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
-					}
+					dealRemoveDict(message, key)
 				}
 				return true
 			}

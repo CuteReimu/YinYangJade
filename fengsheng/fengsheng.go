@@ -52,17 +52,18 @@ loop:
 			}
 			continue
 		}
-		if strings.HasPrefix(line, "剩余精力") {
+		switch {
+		case strings.HasPrefix(line, "剩余精力"):
 			_, _ = resultBuilder.WriteString("，" + line)
-		} else if strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") ||
-			(strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩")) { //nolint:revive // Skip these lines
-		} else if isWinRate {
+		case strings.HasPrefix(line, "身份\t 胜率\t 平均胜率\t 场次") || (strings.HasPrefix(line, "最近") && strings.HasSuffix(line, "场战绩")):
+		// Skip these lines
+		case isWinRate:
 			var r []string
 			for s := range strings.SplitSeq(line, "\t") {
 				r = append(r, strings.TrimSpace(s))
 			}
 			winRateData = append(winRateData, r)
-		} else if isHistory {
+		case isHistory:
 			arr := strings.Split(line, ",")
 			identity := strings.ReplaceAll(strings.ReplaceAll(arr[1], "神秘人[", ""), "]", "")
 			role := strings.ReplaceAll(arr[0], "(死亡)", "")
@@ -77,7 +78,7 @@ loop:
 				}
 			}
 			historyData = append(historyData, []string{role, alive, identity, arr[2], tier, arr[4]})
-		} else {
+		default:
 			_, _ = resultBuilder.WriteString(line)
 		}
 	}

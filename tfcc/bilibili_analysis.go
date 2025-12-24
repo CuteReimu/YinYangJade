@@ -16,7 +16,7 @@ import (
 
 var (
 	avReg    = regexp.MustCompile(`^(?<![A-Za-z0-9])(?:https?://www\.bilibili\.com/video/)?av(\d+)$`, regexp.IgnoreCase)
-	bvReg    = regexp.MustCompile(`^(?<![A-Za-z0-9])(?:https?://www\.bilibili\.com/video/|https?://b23\.tv)?bv([0-9A-Za-z]{10})$`, regexp.IgnoreCase) //nolint:revive
+	bvReg    = regexp.MustCompile(`^(?<![A-Za-z0-9])(?:https?://www\.bilibili\.com/video/|https?://b23\.tv)?bv([0-9A-Za-z]{10})$`, regexp.IgnoreCase)
 	liveReg  = regexp.MustCompile(`^(?<![A-Za-z0-9])https?://live\.bilibili\.com/(\d+)$`, regexp.IgnoreCase)
 	shortReg = regexp.MustCompile(`^(?<![A-Za-z0-9])https?://b23\.tv/[0-9A-Za-z]{7}$`, regexp.IgnoreCase)
 )

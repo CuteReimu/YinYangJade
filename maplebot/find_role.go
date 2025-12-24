@@ -267,24 +267,21 @@ func resolveFindData(data *findRoleReturnData) MessageChain {
 		}
 		if slices.ContainsFunc(expValues, func(f float64) bool { return f != 0 }) {
 			if levelStr, _, ok := strings.Cut(levelExp, "("); ok {
-				if totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelStr))); totalExp > 0 {
-					if expPercentStart := strings.Index(levelExp, "("); expPercentStart >= 0 {
-						if expPercentEnd := strings.Index(levelExp, "%"); expPercentEnd >= 0 {
-							expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64)
-							if err == nil {
-								var sumExp, n float64
-								for _, v := range expValues {
-									if v != 0 || n > 0 {
-										sumExp += v
-										n++
-									}
-								}
-								aveExp := sumExp / n
-								days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
-								s += fmt.Sprintf("预计还有%d天升级\n", days)
-							}
+				totalExp := float64(levelExpData.GetInt64("data." + strings.TrimSpace(levelStr)))
+				expPercentStart := strings.Index(levelExp, "(")
+				expPercentEnd := strings.Index(levelExp, "%")
+				expPercent, err := strconv.ParseFloat(levelExp[expPercentStart+1:expPercentEnd], 64)
+				if totalExp > 0 && expPercentStart >= 0 && expPercentEnd >= 0 && err == nil {
+					var sumExp, n float64
+					for _, v := range expValues {
+						if v != 0 || n > 0 {
+							sumExp += v
+							n++
 						}
 					}
+					aveExp := sumExp / n
+					days := int(math.Ceil((totalExp - totalExp/100.0*expPercent) / aveExp))
+					s += fmt.Sprintf("预计还有%d天升级\n", days)
 				}
 			}
 			var seriesList []Series

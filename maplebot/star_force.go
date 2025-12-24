@@ -76,29 +76,29 @@ func saviorCost(newKms bool, currentStar, itemLevel int) float64 {
 	return saviorMesoFn(newKms, currentStar)(currentStar, itemLevel)
 }
 
-func attemptCost(newKms bool, currentStar int, itemLevel int, boomProtect, thirtyOff, fiveTenFifteen, chanceTime bool) float64 {
+func attemptCost(currentStar int, params starForceParams, chanceTime bool) float64 {
 	multiplier := 1.0
-	if boomProtect && !(fiveTenFifteen && currentStar == 15) && !chanceTime && (currentStar == 15 || currentStar == 16) {
-		if newKms {
+	if params.boomProtect && !(params.fiveTenFifteen && currentStar == 15) && !chanceTime && (currentStar == 15 || currentStar == 16) {
+		if params.newKms {
 			multiplier += 2.0
 		} else {
 			multiplier += 1.0
 		}
 	}
-	if thirtyOff {
+	if params.thirtyOff {
 		multiplier -= 0.3
 	}
-	cost := saviorCost(newKms, currentStar, itemLevel) * multiplier
+	cost := saviorCost(params.newKms, currentStar, params.itemLevel) * multiplier
 	return math.Round(cost)
 }
 
 // determineOutcome return either resultSuccess, resultMaintain, resultDecrease, or resultBoom
-func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen, boomEvent bool) starForceResult {
-	if fiveTenFifteen && (currentStar == 5 || currentStar == 10 || currentStar == 15) {
+func determineOutcome(currentStar int, params starForceParams) starForceResult {
+	if params.fiveTenFifteen && (currentStar == 5 || currentStar == 10 || currentStar == 15) {
 		return resultSuccess
 	}
 	rates := rates
-	if newKms {
+	if params.newKms {
 		rates = rates2
 	}
 	var (
@@ -108,11 +108,11 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 		probabilityDecrease = rates[currentStar][resultDecrease]
 		probabilityBoom     = rates[currentStar][resultBoom]
 	)
-	if boomEvent && currentStar <= 21 {
+	if params.boomEvent && currentStar <= 21 {
 		probabilityMaintain += probabilityBoom * 0.3
 		probabilityBoom *= 0.7
 	}
-	if boomProtect && (newKms && currentStar <= 17 || currentStar <= 16) { // boom protection enabled
+	if params.boomProtect && (params.newKms && currentStar <= 17 || currentStar <= 16) { // boom protection enabled
 		if probabilityDecrease > 0 {
 			probabilityDecrease += probabilityBoom
 		} else {
@@ -143,19 +143,24 @@ func determineOutcome(newKms bool, currentStar int, boomProtect, fiveTenFifteen,
 	return resultSuccess
 }
 
+type starForceParams struct {
+	newKms                                            bool
+	itemLevel                                         int
+	boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool
+}
+
 // performExperiment return (totalMesos, totalBooms, totalCount)
-func performExperiment(newKms bool, currentStar, desiredStar, itemLevel int,
-	boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (totalMesos float64, totalBooms, totalCount int) {
+func performExperiment(currentStar, desiredStar int, params starForceParams) (totalMesos float64, totalBooms, totalCount int) {
 	var decreaseCount int
 	for currentStar < desiredStar {
-		chanceTime := !newKms && decreaseCount == 2
-		totalMesos += attemptCost(newKms, currentStar, itemLevel, boomProtect, thirtyOff, fiveTenFifteen, chanceTime)
+		chanceTime := !params.newKms && decreaseCount == 2
+		totalMesos += attemptCost(currentStar, params, chanceTime)
 		totalCount++
 		if chanceTime {
 			decreaseCount = 0
 			currentStar++
 		} else {
-			switch determineOutcome(newKms, currentStar, boomProtect, fiveTenFifteen, boomEvent) {
+			switch determineOutcome(currentStar, params) {
 			case resultSuccess:
 				decreaseCount = 0
 				currentStar++
@@ -217,7 +222,14 @@ func calculateBoomCount(content string, newKms bool) MessageChain {
 	title += buildStarForceImageTitle(boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
 	booms := make(map[int]int)
 	for range 1000 {
-		_, b, _ := performExperiment(newKms, 0, 22, 200, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+		_, b, _ := performExperiment(0, 22, starForceParams{
+			newKms:         newKms,
+			itemLevel:      200,
+			boomProtect:    boomProtect,
+			thirtyOff:      thirtyOff,
+			fiveTenFifteen: fiveTenFifteen,
+			boomEvent:      boomEvent,
+		})
 		booms[b]++
 	}
 	values := make([]float64, 0, len(booms))
@@ -294,21 +306,20 @@ type pythonStartForceResult struct {
 	midway                      []float64
 }
 
-func pythonStarForce(newKms bool, itemLevel, cur, des int,
-	boomProtect, thirtyOff, fiveTenFifteen, boomEvent bool) (pythonStartForceResult, error) {
+func pythonStarForce(cur, des int, params starForceParams) (pythonStartForceResult, error) {
 	result, err := scripts.RunPythonScript(
 		"sf_cal_shell.py",
-		strconv.Itoa(itemLevel),
+		strconv.Itoa(params.itemLevel),
 		strconv.Itoa(cur),
 		strconv.Itoa(des),
-		strconv.FormatBool(boomProtect),
+		strconv.FormatBool(params.boomProtect),
 		"true",
 		"false",
-		strconv.FormatBool(newKms),
-		strconv.FormatBool(thirtyOff),
-		strconv.FormatBool(fiveTenFifteen),
+		strconv.FormatBool(params.newKms),
+		strconv.FormatBool(params.thirtyOff),
+		strconv.FormatBool(params.fiveTenFifteen),
 		"false",
-		strconv.FormatBool(boomEvent),
+		strconv.FormatBool(params.boomEvent),
 	)
 	if err != nil {
 		slog.Error("计算失败", "err", err, "result", string(result))
@@ -428,8 +439,14 @@ func calculateStarForce1(newKms bool, content string) MessageChain {
 	fiveTenFifteen := strings.Contains(content, "必成") || strings.Contains(content, "超必")
 	boomEvent := strings.Contains(content, "超爆") || strings.Contains(content, "防爆") || strings.Contains(content, "减爆")
 
-	pr, err :=
-		pythonStarForce(newKms, itemLevel, cur, des, boomProtect, thirtyOff, fiveTenFifteen, boomEvent)
+	pr, err := pythonStarForce(cur, des, starForceParams{
+		newKms:         newKms,
+		itemLevel:      itemLevel,
+		boomProtect:    boomProtect,
+		thirtyOff:      thirtyOff,
+		fiveTenFifteen: fiveTenFifteen,
+		boomEvent:      boomEvent,
+	})
 	if err != nil {
 		return MessageChain{&Text{Text: err.Error()}}
 	}

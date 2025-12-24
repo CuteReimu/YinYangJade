@@ -191,11 +191,9 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 			strings.Contains(request.Comment, "进群交流") {
 			err := B.SetGroupAddRequest(request.Flag, request.SubType, false, "")
 			if err != nil {
-				slog.Error("拒绝申请请求失败", "approve", false,
-					"error", err)
+				slog.Error("拒绝申请请求失败", "approve", false, "error", err)
 			} else {
-				slog.Info("拒绝申请请求成功", "approve", false,
-					"error", err)
+				slog.Info("拒绝申请请求成功", "approve", false, "error", err)
 			}
 		}
 	}
