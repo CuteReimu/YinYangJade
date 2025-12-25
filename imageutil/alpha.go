@@ -1,3 +1,4 @@
+// Package imageutil 提供图像处理工具，包括抠图等功能
 package imageutil
 
 import (
@@ -5,8 +6,8 @@ import (
 	"encoding/base64"
 	"image"
 	"image/color"
-	_ "image/gif"
-	_ "image/jpeg"
+	_ "image/gif"  // 注册 GIF 图像格式解码器
+	_ "image/jpeg" // 注册 JPEG 图像格式解码器
 	"image/png"
 	"log/slog"
 	"net/url"
@@ -20,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// RemoveBackground 去除图片背景
 func RemoveBackground(buf []byte, rate int) ([]byte, error) {
 	if rate <= 0 || rate >= 100 {
 		return nil, errors.New("rate必须在1-99之间")
@@ -69,11 +71,12 @@ func RemoveBackground(buf []byte, rate int) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-var B *Bot
+var bot *Bot
 
+// Init 初始化
 func Init(b *Bot) {
-	B = b
-	B.ListenPrivateMessage(handlePrivateMessage)
+	bot = b
+	bot.ListenPrivateMessage(handlePrivateMessage)
 }
 
 var alphaImageList = make(map[int64]int)
@@ -89,10 +92,10 @@ func handlePrivateMessage(message *PrivateMessage) bool {
 				if err == nil {
 					if rate <= 0 || rate >= 100 {
 						sendPrivateMessage(message, &Text{Text: "抠图范围必须在1-99之间"})
-					} else {
-						alphaImageList[message.Sender.UserId] = rate
-						sendPrivateMessage(message, &Text{Text: "请输入要抠图的图片"})
+						return true
 					}
+					alphaImageList[message.Sender.UserId] = rate
+					sendPrivateMessage(message, &Text{Text: "请输入要抠图的图片"})
 				}
 				return true
 			}
@@ -102,24 +105,28 @@ func handlePrivateMessage(message *PrivateMessage) bool {
 		delete(alphaImageList, message.Sender.UserId)
 		if len(message.Message) != 1 {
 			sendPrivateMessage(message, &Text{Text: "提供的不是一张图片，抠图失败"})
-		} else if img, ok := message.Message[0].(*Image); !ok {
-			sendPrivateMessage(message, &Text{Text: "提供的不是一张图片，抠图失败"})
-		} else if len(img.Url) == 0 {
-			sendPrivateMessage(message, &Text{Text: "无法识别图片，抠图失败"})
-		} else {
-			buf, err := getImage(img)
-			if err != nil {
-				sendPrivateMessage(message, &Text{Text: "无法识别图片，抠图失败"})
-			} else {
-				buf, err = RemoveBackground(buf, key)
-				if err != nil {
-					sendPrivateMessage(message, &Text{Text: err.Error()})
-				} else {
-					sendPrivateMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
-				}
-			}
+			return true
 		}
-		return true
+		img, ok := message.Message[0].(*Image)
+		if !ok {
+			sendPrivateMessage(message, &Text{Text: "提供的不是一张图片，抠图失败"})
+			return true
+		}
+		if len(img.Url) == 0 {
+			sendPrivateMessage(message, &Text{Text: "无法识别图片，抠图失败"})
+			return true
+		}
+		buf, err := getImage(img)
+		if err != nil {
+			sendPrivateMessage(message, &Text{Text: "无法识别图片，抠图失败"})
+			return true
+		}
+		buf, err = RemoveBackground(buf, key)
+		if err != nil {
+			sendPrivateMessage(message, &Text{Text: err.Error()})
+			return true
+		}
+		sendPrivateMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
 	}
 	return true
 }
@@ -138,12 +145,12 @@ func getImage(img *Image) ([]byte, error) {
 	defer func() { _ = os.RemoveAll("temp_image") }()
 	p := filepath.Join("temp_image", img.File)
 	cmd := exec.Command("curl", "-o", p, u)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	out, err := cmd.CombinedOutput()
+	if err != nil {
 		slog.Error("cmd.Run() failed", "error", err)
 		return nil, err
-	} else {
-		slog.Debug(string(out))
 	}
+	slog.Debug(string(out))
 	buf, err := os.ReadFile(p)
 	if err != nil {
 		slog.Error("read file failed", "error", err)
@@ -157,7 +164,7 @@ func sendPrivateMessage(context *PrivateMessage, messages ...SingleMessage) {
 		return
 	}
 	f := func(messages []SingleMessage) error {
-		_, err := B.SendPrivateMessage(context.UserId, messages)
+		_, err := bot.SendPrivateMessage(context.UserId, messages)
 		return err
 	}
 	if err := f(messages); err != nil {

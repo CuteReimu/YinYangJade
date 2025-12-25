@@ -16,19 +16,19 @@ func init() {
 
 type delAdmin struct{}
 
-func (d *delAdmin) Name() string {
+func (*delAdmin) Name() string {
 	return "删除管理员"
 }
 
-func (d *delAdmin) ShowTips(int64, int64) string {
+func (*delAdmin) ShowTips(int64, int64) string {
 	return "删除管理员 对方QQ号"
 }
 
-func (d *delAdmin) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (*delAdmin) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
-func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
+func (*delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -41,10 +41,10 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 			slog.Error("parse failed: "+s, "error", err)
 			return nil
 		}
-		if IsSuperAdmin(qq) {
+		if isSuperAdmin(qq) {
 			return MessageChain{&Text{Text: "你不能删除自己"}}
 		}
-		if !IsAdmin(qq) {
+		if !isAdmin(qq) {
 			return MessageChain{&Text{Text: s + "并不是管理员"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
@@ -53,7 +53,7 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	for _, qq := range qqNumbers {
-		RemoveAdmin(qq)
+		doRemoveAdmin(qq)
 	}
 	ret := "已删除管理员"
 	if len(qqNumbers) == 1 {
@@ -64,19 +64,19 @@ func (d *delAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 
 type addAdmin struct{}
 
-func (a *addAdmin) Name() string {
+func (*addAdmin) Name() string {
 	return "增加管理员"
 }
 
-func (a *addAdmin) ShowTips(int64, int64) string {
+func (*addAdmin) ShowTips(int64, int64) string {
 	return "增加管理员 对方QQ号"
 }
 
-func (a *addAdmin) CheckAuth(_ int64, senderId int64) bool {
-	return IsSuperAdmin(senderId)
+func (*addAdmin) CheckAuth(_ int64, senderID int64) bool {
+	return isSuperAdmin(senderID)
 }
 
-func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
+func (*addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 	ss := strings.Split(content, " ")
 	qqNumbers := make([]int64, 0, len(ss))
 	for _, s := range ss {
@@ -89,7 +89,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 			slog.Error("parse failed: "+s, "error", err)
 			return nil
 		}
-		if IsSuperAdmin(qq) || IsAdmin(qq) {
+		if isSuperAdmin(qq) || isAdmin(qq) {
 			return MessageChain{&Text{Text: s + "已经是管理员了"}}
 		}
 		qqNumbers = append(qqNumbers, qq)
@@ -98,7 +98,7 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	for _, qq := range qqNumbers {
-		AddAdmin(qq)
+		doAddAdmin(qq)
 	}
 	ret := "已增加管理员"
 	if len(qqNumbers) == 1 {
@@ -109,19 +109,19 @@ func (a *addAdmin) Execute(_ *GroupMessage, content string) MessageChain {
 
 type listAllAdmin struct{}
 
-func (l *listAllAdmin) Name() string {
+func (*listAllAdmin) Name() string {
 	return "查看管理员"
 }
 
-func (l *listAllAdmin) ShowTips(int64, int64) string {
+func (*listAllAdmin) ShowTips(int64, int64) string {
 	return ""
 }
 
-func (l *listAllAdmin) CheckAuth(int64, int64) bool {
+func (*listAllAdmin) CheckAuth(int64, int64) bool {
 	return true
 }
 
-func (l *listAllAdmin) Execute(*GroupMessage, string) MessageChain {
+func (*listAllAdmin) Execute(*GroupMessage, string) MessageChain {
 	superAdmin := fengshengConfig.GetInt64("qq.super_admin_qq")
 	admin := permData.GetIntSlice("admin")
 	s := make([]string, 0, len(admin)+2)

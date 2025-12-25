@@ -1,3 +1,4 @@
+// Package scriptutil 用于执行 Python 脚本
 package scriptutil
 
 import (

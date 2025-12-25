@@ -1,9 +1,11 @@
+// Package slicegame 数字华容道
 package slicegame
 
 import (
 	"bytes"
 	"cmp"
 	"encoding/base64"
+	"errors"
 	"image"
 	"image/draw"
 	"image/gif"
@@ -20,14 +22,14 @@ import (
 	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
-func DoStuff() MessageChain {
+func generateProblem() ([]int, error) {
 	problem := []int{1, 2, 3, 4, 5, 6, 7, 8}
 	tryCount := 0
 	var reverseCount int
 	for {
 		tryCount++
 		if tryCount > 100 {
-			return MessageChain{&Text{Text: "可能出现了意想不到的问题"}}
+			return nil, errors.New("可能出现了意想不到的问题")
 		}
 		rand.Shuffle(len(problem), func(i, j int) {
 			problem[i], problem[j] = problem[j], problem[i]
@@ -45,24 +47,28 @@ func DoStuff() MessageChain {
 			break
 		}
 	}
-	openSet := goutil.NewPriorityQueue(nil, func(o1, o2 *Problem) int {
+	return problem, nil
+}
+
+func resolveProblem(problem []int) (*gif.GIF, error) {
+	openSet := goutil.NewPriorityQueue(nil, func(o1, o2 *problemData) int {
 		return cmp.Compare(o1.dist, o2.dist)
 	})
-	img := new(gif.GIF)
-	openSet.Add(&Problem{
+	openSet.Add(&problemData{
 		hash:    hash(problem),
 		dist:    dist(problem),
 		problem: problem,
 	})
 	closeSet := make(map[int]bool)
-	results := make(map[int]*Result)
-	results[hash(problem)] = &Result{}
+	results := make(map[int]*problemResult)
+	results[hash(problem)] = &problemResult{}
+	img := new(gif.GIF)
 	for openSet.Len() > 0 {
 		p := openSet.Poll()
 		r0 := results[p.hash]
 		if p.hash == 123456780 {
 			if err := displayResult(img, p.hash, results); err != nil {
-				return MessageChain{&Text{Text: err.Error()}}
+				return nil, err
 			}
 			break
 		}
@@ -70,7 +76,7 @@ func DoStuff() MessageChain {
 		for _, idx := range directions[index0] {
 			newProblem := slices.Clone(p.problem)
 			newProblem[index0], newProblem[idx] = newProblem[idx], newProblem[index0]
-			p2 := &Problem{
+			p2 := &problemData{
 				hash:    hash(newProblem),
 				dist:    dist(newProblem) + r0.dist + 1,
 				problem: newProblem,
@@ -78,10 +84,8 @@ func DoStuff() MessageChain {
 			if !closeSet[p2.hash] {
 				openSet.Add(p2)
 			}
-			if r, ok := results[p2.hash]; ok && r0.dist+1 >= r.dist {
-
-			} else {
-				results[p2.hash] = &Result{
+			if r, ok := results[p2.hash]; !ok || r0.dist+1 < r.dist {
+				results[p2.hash] = &problemResult{
 					lastHash: p.hash,
 					dist:     r0.dist + 1,
 					which:    idx,
@@ -91,18 +95,31 @@ func DoStuff() MessageChain {
 		}
 		closeSet[p.hash] = true
 	}
+	return img, nil
+}
+
+// DoStuff 主要逻辑
+func DoStuff() MessageChain {
+	problem, err := generateProblem()
+	if err != nil {
+		return MessageChain{&Text{Text: err.Error()}}
+	}
+	img, err := resolveProblem(problem)
+	if err != nil {
+		return MessageChain{&Text{Text: err.Error()}}
+	}
 	if len(img.Delay) > 0 {
 		img.Delay[len(img.Delay)-1] *= 3
 	}
 	var buf bytes.Buffer
-	err := gif.EncodeAll(&buf, img)
+	err = gif.EncodeAll(&buf, img)
 	if err != nil {
 		return MessageChain{&Text{Text: err.Error()}}
 	}
 	return MessageChain{&Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf.Bytes())}}
 }
 
-func displayResult(img *gif.GIF, h int, results map[int]*Result) error {
+func displayResult(img *gif.GIF, h int, results map[int]*problemResult) error {
 	r := results[h]
 	if r.dist != 0 {
 		if err := displayResult(img, r.lastHash, results); err != nil {
@@ -136,7 +153,7 @@ func drawImage(img *gif.GIF, hash int) error {
 		Data:            [][]string{problem[3:6], problem[6:]},
 		HeaderFontColor: Color{A: 255},
 		FontColor:       Color{A: 255},
-		CellStyle: func(cell TableCell) *Style {
+		CellStyle: func(_ TableCell) *Style {
 			return &Style{FillColor: drawing.Color{R: 255, G: 255, B: 255, A: 255}}
 		},
 	})
@@ -165,14 +182,14 @@ func drawImage(img *gif.GIF, hash int) error {
 	return nil
 }
 
-type Result struct {
+type problemResult struct {
 	lastHash int
 	dist     int
 	which    int
 	toWhich  int
 }
 
-type Problem struct {
+type problemData struct {
 	hash, dist int
 	problem    []int
 }

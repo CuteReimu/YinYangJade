@@ -61,7 +61,10 @@ var statMap = map[string]string{
 }
 
 var (
-	defaultSelections    = slices.Clip([]string{"percStat+18", "percStat+21", "percStat+24", "percStat+27", "percStat+30", "percStat+33", "percStat+36"})
+	defaultSelections = slices.Clip([]string{
+		"percStat+18", "percStat+21", "percStat+24",
+		"percStat+27", "percStat+30", "percStat+33", "percStat+36",
+	})
 	defaultSelections160 = append(defaultSelections, "percStat+39")
 	accessorySelections  = append(defaultSelections,
 		"lineMeso+1", "lineDrop+1", "lineMesoOrDrop+1",
@@ -130,39 +133,33 @@ func getSelection(name string, itemLevel int) []string {
 	case "emblem":
 		if itemLevel < 160 {
 			return eSelections
-		} else {
-			return eSelections160
 		}
+		return eSelections160
 	case "weapon", "secondary":
 		if itemLevel < 160 {
 			return wsSelections
-		} else {
-			return wsSelections160
 		}
+		return wsSelections160
 	case "accessory":
 		if itemLevel < 160 {
 			return accessorySelections
-		} else {
-			return accessorySelections160
 		}
+		return accessorySelections160
 	case "hat":
 		if itemLevel < 160 {
 			return hatSelections
-		} else {
-			return hatSelections160
 		}
+		return hatSelections160
 	case "gloves":
 		if itemLevel < 160 {
 			return gloveSelections
-		} else {
-			return gloveSelections160
 		}
+		return gloveSelections160
 	default:
 		if itemLevel < 160 {
 			return defaultSelections
-		} else {
-			return defaultSelections160
 		}
+		return defaultSelections160
 	}
 }
 
@@ -328,12 +325,12 @@ func calculateCube(s string) MessageChain {
 
 var (
 	//go:embed cubeRates.json
-	cubeRatesJson []byte
+	cubeRatesJSON []byte
 	cubeRates     map[string]any
 )
 
 func init() {
-	if err := json.Unmarshal(cubeRatesJson, &cubeRates); err != nil {
+	if err := json.Unmarshal(cubeRatesJSON, &cubeRates); err != nil {
 		panic(err)
 	}
 }
@@ -364,7 +361,7 @@ func cubingCost(cubeType string, itemLevel int, totalCubeCount float64) float64 
 	return cubeCost*totalCubeCount + totalCubeCount*revealPotentialCost
 }
 
-func getTierCosts(currentTier, desireTier int, cubeType string) DistrQuantileResult {
+func getTierCosts(currentTier, desireTier int, cubeType string) distrQuantileResult {
 	var mean, median, seventyFifth, eightyFifth, ninetyFifth float64
 	for i := currentTier; i < desireTier; i++ {
 		p := tierRates[cubeType][i]
@@ -375,7 +372,13 @@ func getTierCosts(currentTier, desireTier int, cubeType string) DistrQuantileRes
 		eightyFifth += stats.eightyFifth
 		ninetyFifth += stats.ninetyFifth
 	}
-	return DistrQuantileResult{mean: mean, median: median, seventyFifth: seventyFifth, eightyFifth: eightyFifth, ninetyFifth: ninetyFifth}
+	return distrQuantileResult{
+		mean:         mean,
+		median:       median,
+		seventyFifth: seventyFifth,
+		eightyFifth:  eightyFifth,
+		ninetyFifth:  ninetyFifth,
+	}
 }
 
 // Nexon rates: https://maplestory.nexon.com/Guide/OtherProbability/cube/strange
@@ -395,20 +398,26 @@ var tierRates = map[string]map[int]float64{
 	"black": {0: 0.17, 1: 0.11, 2: 0.05},
 }
 
-type DistrQuantileResult struct {
+type distrQuantileResult struct {
 	mean, median, seventyFifth, eightyFifth, ninetyFifth float64
 }
 
-func getDistrQuantile(p float64) DistrQuantileResult {
+func getDistrQuantile(p float64) distrQuantileResult {
 	mean := 1 / p
 	median := math.Log(1-0.5) / math.Log(1-p)
 	seventyFifth := math.Log(1-0.75) / math.Log(1-p)
 	eightyFifth := math.Log(1-0.85) / math.Log(1-p)
 	ninetyFifth := math.Log(1-0.95) / math.Log(1-p)
-	return DistrQuantileResult{mean: mean, median: median, seventyFifth: seventyFifth, eightyFifth: eightyFifth, ninetyFifth: ninetyFifth}
+	return distrQuantileResult{
+		mean:         mean,
+		median:       median,
+		seventyFifth: seventyFifth,
+		eightyFifth:  eightyFifth,
+		ninetyFifth:  ninetyFifth,
+	}
 }
 
-func runCalculator(itemType, cubeType string, currentTier, itemLevel, desiredTier int, desiredStat string) (int64, int64) {
+func runCalculator(itemType, cubeType string, currentTier, itemLevel, desiredTier int, desiredStat string) (mean, meanCost int64) {
 	anyStats := len(desiredStat) == 0
 	probabilityInputObject := translateInputToObject(desiredStat)
 	p := 1.0
@@ -416,14 +425,14 @@ func runCalculator(itemType, cubeType string, currentTier, itemLevel, desiredTie
 		p = getProbability(desiredTier, probabilityInputObject, itemType, cubeType, itemLevel)
 	}
 	tierUp := getTierCosts(currentTier, desiredTier, cubeType)
-	stats := DistrQuantileResult{}
+	stats := distrQuantileResult{}
 	if !anyStats {
 		stats = getDistrQuantile(p)
 	}
 
-	mean := stats.mean + tierUp.mean
-	meanCost := cubingCost(cubeType, itemLevel, mean)
-	return int64(math.Round(mean)), int64(math.Round(meanCost))
+	meanFloat := stats.mean + tierUp.mean
+	meanCostFloat := cubingCost(cubeType, itemLevel, meanFloat)
+	return int64(math.Round(meanFloat)), int64(math.Round(meanCostFloat))
 }
 
 func getProbability(desiredTier int, probabilityInput map[string]int, itemType string, cubeType string, itemLevel int) float64 {
@@ -438,9 +447,9 @@ func getProbability(desiredTier int, probabilityInput map[string]int, itemType s
 
 	// get the cubing data for this input criteria from cubeRates (which is based on json data)
 	rawCubedata := [][]any{
-		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["first_line"].([]any),
-		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["second_line"].([]any),
-		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["third_line"].([]any),
+		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["first_line"].([]any),  //nolint:revive
+		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["second_line"].([]any), //nolint:revive
+		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["third_line"].([]any),  //nolint:revive
 	}
 
 	// make adjustments to stat values if needed (for items lvl 160 or above)
@@ -465,7 +474,7 @@ func getProbability(desiredTier int, probabilityInput map[string]int, itemType s
 				outcome := [][]any{line1, line2, line3}
 				ok := true
 				for field, input := range probabilityInput {
-					if !OUTCOME_MATCH_FUNCTION_MAP[field](outcome, input) {
+					if !outcomeMatchFunctionMap[field](outcome, input) {
 						ok = false
 					}
 				}
@@ -478,25 +487,25 @@ func getProbability(desiredTier int, probabilityInput map[string]int, itemType s
 	return totalChance / 100.0
 }
 
-type Tier string
+type tier string
 
 const (
-	Rare      Tier = "rare"
-	Epic      Tier = "epic"
-	Unique    Tier = "unique"
-	Legendary Tier = "legendary"
+	tierRare      tier = "rare"
+	tierEpic      tier = "epic"
+	tierUnique    tier = "unique"
+	tierLegendary tier = "legendary"
 )
 
-func tierForNumber(n int) Tier {
+func tierForNumber(n int) tier {
 	switch n {
 	case 0:
-		return Rare
+		return tierRare
 	case 1:
-		return Epic
+		return tierEpic
 	case 2:
-		return Unique
+		return tierUnique
 	case 3:
-		return Legendary
+		return tierLegendary
 	default:
 		panic("unknown tier: " + strconv.Itoa(n))
 	}
@@ -538,7 +547,7 @@ func calculateRate(outcome [][]any, filteredRates [][][]any) float64 {
 		)
 		for _, a := range previousLines {
 			cat := a[0].(string)
-			if _, ok := MAX_CATEGORY_COUNT[cat]; ok {
+			if _, ok := maxCategoryCount[cat]; ok {
 				prevSpecialLinesCount[cat]++
 			}
 		}
@@ -546,9 +555,9 @@ func calculateRate(outcome [][]any, filteredRates [][][]any) float64 {
 		// populate the list of special lines to be removed from the current pool
 		// exit early with rate of 0 if this set of lines is not valid (exceeds max category count)
 		for spCat, count := range prevSpecialLinesCount {
-			if count > MAX_CATEGORY_COUNT[spCat] || spCat == currentCategory && (count+1) > MAX_CATEGORY_COUNT[spCat] {
+			if count > maxCategoryCount[spCat] || spCat == currentCategory && (count+1) > maxCategoryCount[spCat] {
 				return 0.0
-			} else if count == MAX_CATEGORY_COUNT[spCat] {
+			} else if count == maxCategoryCount[spCat] {
 				toBeRemoved = append(toBeRemoved, spCat)
 			}
 		}
@@ -603,9 +612,9 @@ func getConsolidatedRates(ratesList []any, usefulCategories []string) [][]any {
 			rate     = item[2].(float64)
 		)
 
-		if slices.Contains(usefulCategories, category) || MAX_CATEGORY_COUNT[category] > 0 {
+		if slices.Contains(usefulCategories, category) || maxCategoryCount[category] > 0 {
 			consolidatedRates = append(consolidatedRates, item)
-		} else if category == CATEGORY_JUNK {
+		} else if category == categoryJunk {
 			// using concat here since "Junk" is already a category that exists in the json data.
 			// we're expanding it here with additional "contextual junk" based on the user input, so we want to preserve
 			// the old list of junk categories too
@@ -619,14 +628,14 @@ func getConsolidatedRates(ratesList []any, usefulCategories []string) [][]any {
 		}
 	}
 
-	consolidatedRates = append(consolidatedRates, []any{CATEGORY_JUNK, junkCategories, junkRate})
+	consolidatedRates = append(consolidatedRates, []any{categoryJunk, junkCategories, junkRate})
 	return consolidatedRates
 }
 
 // getUsefulCategories 筛选有用的属性
 func getUsefulCategories(probabilityInput map[string]int) []string {
 	var usefulCategories []string
-	for field, val := range INPUT_CATEGORY_MAP {
+	for field, val := range inputCategoryMap {
 		input, ok := probabilityInput[field]
 		if !ok {
 			continue
@@ -650,8 +659,8 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 	}
 
 	affectedCategories := []string{
-		CATEGORY_STR_PERC, CATEGORY_LUK_PERC, CATEGORY_DEX_PERC, CATEGORY_INT_PERC,
-		CATEGORY_ALLSTATS_PERC, CATEGORY_ATT_PERC, CATEGORY_MATT_PERC,
+		categoryStrPerc, categoryLukPerc, categoryDexPerc, categoryIntPerc,
+		categoryAllstatsPerc, categoryAttPerc, categoryMattPerc,
 	}
 
 	f := func(cubeDataLine []any) []any {
@@ -676,11 +685,9 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 	return [][]any{f(cubeData[0]), f(cubeData[1]), f(cubeData[2])} //nolint:gosec
 }
 
-/**
- * calculateTotal 计算属性的总值
- *
- * calcVal false-只算条数，true-算值之和
- */
+// calculateTotal 计算属性的总值
+//
+// calcVal false - 只算条数，true - 算值之和
 func calculateTotal(outcome [][]any, desiredCategory string, calcVal bool) int {
 	if calcVal {
 		var actualVal int
@@ -692,26 +699,25 @@ func calculateTotal(outcome [][]any, desiredCategory string, calcVal bool) int {
 			}
 		}
 		return actualVal
-	} else {
-		var count int
-		for _, a := range outcome {
-			if a[0].(string) == desiredCategory {
-				count++
-			}
-		}
-		return count
 	}
+	var count int
+	for _, a := range outcome {
+		if a[0].(string) == desiredCategory {
+			count++
+		}
+	}
+	return count
 }
 
-// OUTCOME_MATCH_FUNCTION_MAP 判断是否满足条件的函数
-var OUTCOME_MATCH_FUNCTION_MAP = map[string]func([][]any, int) bool{
+// outcomeMatchFunctionMap 判断是否满足条件的函数
+var outcomeMatchFunctionMap = map[string]func([][]any, int) bool{
 	"percStat": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_STR_PERC, true)+
-			calculateTotal(outcome, CATEGORY_ALLSTATS_PERC, true) >= requiredVal
+		return calculateTotal(outcome, categoryStrPerc, true)+
+			calculateTotal(outcome, categoryAllstatsPerc, true) >= requiredVal
 	},
 	"lineStat": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_STR_PERC, false)+
-			calculateTotal(outcome, CATEGORY_ALLSTATS_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryStrPerc, false)+
+			calculateTotal(outcome, categoryAllstatsPerc, false) >= requiredVal
 	},
 	"percAllStat": func(outcome [][]any, requiredVal int) bool {
 		var actualVal float64
@@ -720,135 +726,136 @@ var OUTCOME_MATCH_FUNCTION_MAP = map[string]func([][]any, int) bool{
 			{
 				val := a[1].(float64)
 				switch category { // （尖兵）力量、敏捷、运气都算作1/3全属性
-				case CATEGORY_ALLSTATS_PERC:
+				case categoryAllstatsPerc:
 					actualVal += val
-				case CATEGORY_STR_PERC, CATEGORY_DEX_PERC, CATEGORY_LUK_PERC:
+				case categoryStrPerc, categoryDexPerc, categoryLukPerc:
 					actualVal += val / 3
+				default:
 				}
 			}
 		}
 		return actualVal >= float64(requiredVal)
 	},
 	"lineAllStat": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_ALLSTATS_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryAllstatsPerc, false) >= requiredVal
 	},
 	"percHp": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_MAXHP_PERC, true) >= requiredVal
+		return calculateTotal(outcome, categoryMaxhpPerc, true) >= requiredVal
 	},
 	"lineHp": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_MAXHP_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryMaxhpPerc, false) >= requiredVal
 	},
 	"percAtt": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_ATT_PERC, true) >= requiredVal
+		return calculateTotal(outcome, categoryAttPerc, true) >= requiredVal
 	},
 	"lineAtt": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_ATT_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryAttPerc, false) >= requiredVal
 	},
 	"percBoss": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_BOSSDMG_PERC, true) >= requiredVal
+		return calculateTotal(outcome, categoryBossdmgPerc, true) >= requiredVal
 	},
 	"lineBoss": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_BOSSDMG_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryBossdmgPerc, false) >= requiredVal
 	},
 	"lineIed": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_IED_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryIedPerc, false) >= requiredVal
 	},
 	"lineCritDamage": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_CRITDMG_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryCritdmgPerc, false) >= requiredVal
 	},
 	"lineMeso": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_MESO_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryMesoPerc, false) >= requiredVal
 	},
 	"lineDrop": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_DROP_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryDropPerc, false) >= requiredVal
 	},
 	"lineMesoOrDrop": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_MESO_PERC, false)+calculateTotal(outcome, CATEGORY_DROP_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryMesoPerc, false)+calculateTotal(outcome, categoryDropPerc, false) >= requiredVal
 	},
 	"secCooldown": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_CDR_TIME, true) >= requiredVal
+		return calculateTotal(outcome, categoryCdrTime, true) >= requiredVal
 	},
 	"lineAutoSteal": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_AUTOSTEAL_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryAutostealPerc, false) >= requiredVal
 	},
 	"lineAttOrBoss": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_ATT_PERC, false)+
-			calculateTotal(outcome, CATEGORY_BOSSDMG_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryAttPerc, false)+
+			calculateTotal(outcome, categoryBossdmgPerc, false) >= requiredVal
 	},
 	"lineAttOrBossOrIed": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_ATT_PERC, false)+
-			calculateTotal(outcome, CATEGORY_BOSSDMG_PERC, false)+
-			calculateTotal(outcome, CATEGORY_IED_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryAttPerc, false)+
+			calculateTotal(outcome, categoryBossdmgPerc, false)+
+			calculateTotal(outcome, categoryIedPerc, false) >= requiredVal
 	},
 	"lineBossOrIed": func(outcome [][]any, requiredVal int) bool {
-		return calculateTotal(outcome, CATEGORY_BOSSDMG_PERC, false)+
-			calculateTotal(outcome, CATEGORY_IED_PERC, false) >= requiredVal
+		return calculateTotal(outcome, categoryBossdmgPerc, false)+
+			calculateTotal(outcome, categoryIedPerc, false) >= requiredVal
 	},
 }
 
 const (
-	CATEGORY_STR_PERC       = "STR %"
-	CATEGORY_DEX_PERC       = "DEX %"
-	CATEGORY_INT_PERC       = "INT %"
-	CATEGORY_LUK_PERC       = "LUK %"
-	CATEGORY_MAXHP_PERC     = "Max HP %"
-	CATEGORY_MAXMP_PERC     = "Max MP %"
-	CATEGORY_ALLSTATS_PERC  = "All Stats %"
-	CATEGORY_ATT_PERC       = "ATT %"
-	CATEGORY_MATT_PERC      = "MATT %"
-	CATEGORY_BOSSDMG_PERC   = "Boss Damage"
-	CATEGORY_IED_PERC       = "Ignore Enemy Defense %"
-	CATEGORY_MESO_PERC      = "Meso Amount %"
-	CATEGORY_DROP_PERC      = "Item Drop Rate %"
-	CATEGORY_AUTOSTEAL_PERC = "Chance to auto steal %"
-	CATEGORY_CRITDMG_PERC   = "Critical Damage %"
-	CATEGORY_CDR_TIME       = "Skill Cooldown Reduction"
-	CATEGORY_JUNK           = "Junk"
+	categoryStrPerc       = "STR %"
+	categoryDexPerc       = "DEX %"
+	categoryIntPerc       = "INT %"
+	categoryLukPerc       = "LUK %"
+	categoryMaxhpPerc     = "Max HP %"
+	categoryMaxmpPerc     = "Max MP %"
+	categoryAllstatsPerc  = "All Stats %"
+	categoryAttPerc       = "ATT %"
+	categoryMattPerc      = "MATT %"
+	categoryBossdmgPerc   = "Boss Damage"
+	categoryIedPerc       = "Ignore Enemy Defense %"
+	categoryMesoPerc      = "Meso Amount %"
+	categoryDropPerc      = "Item Drop Rate %"
+	categoryAutostealPerc = "Chance to auto steal %"
+	categoryCritdmgPerc   = "Critical Damage %"
+	categoryCdrTime       = "Skill Cooldown Reduction"
+	categoryJunk          = "Junk"
 )
 
 // only used for special line probability adjustment calculation
 const (
-	CATEGORY_DECENT_SKILL    = "Decent Skill"
-	CATEGORY_INVINCIBLE_PERC = "Chance of being invincible for seconds when hit"
-	CATEGORY_INVINCIBLE_TIME = "Increase invincibility time after being hit"
-	CATEGORY_IGNOREDMG_PERC  = "Chance to ignore % damage when hit"
+	categoryDecentSkill    = "Decent Skill"
+	categoryInvinciblePerc = "Chance of being invincible for seconds when hit"
+	categoryInvincibleTime = "Increase invincibility time after being hit"
+	categoryIgnoredmgPerc  = "Chance to ignore % damage when hit"
 )
 
 var (
-	// INPUT_CATEGORY_MAP 有用的属性，例如：
+	// inputCategoryMap 有用的属性，例如：
 	//
 	// 如果需要力量%，则力量%和全属性%都是有用的属性
 	//
 	// 如果需要全属性%（尖兵），则除了全属性%以外，力量%|敏捷%|运气%都有用（算作1/3全属性%）
-	INPUT_CATEGORY_MAP = map[string][]string{
-		"percStat":           {CATEGORY_STR_PERC, CATEGORY_ALLSTATS_PERC},
-		"lineStat":           {CATEGORY_STR_PERC, CATEGORY_ALLSTATS_PERC},
-		"percAllStat":        {CATEGORY_ALLSTATS_PERC, CATEGORY_STR_PERC, CATEGORY_DEX_PERC, CATEGORY_LUK_PERC},
-		"lineAllStat":        {CATEGORY_ALLSTATS_PERC},
-		"percHp":             {CATEGORY_MAXHP_PERC},
-		"lineHp":             {CATEGORY_MAXHP_PERC},
-		"percAtt":            {CATEGORY_ATT_PERC},
-		"lineAtt":            {CATEGORY_ATT_PERC},
-		"percBoss":           {CATEGORY_BOSSDMG_PERC},
-		"lineBoss":           {CATEGORY_BOSSDMG_PERC},
-		"lineIed":            {CATEGORY_IED_PERC},
-		"lineCritDamage":     {CATEGORY_CRITDMG_PERC},
-		"lineMeso":           {CATEGORY_MESO_PERC},
-		"lineDrop":           {CATEGORY_DROP_PERC},
-		"lineMesoOrDrop":     {CATEGORY_DROP_PERC, CATEGORY_MESO_PERC},
-		"secCooldown":        {CATEGORY_CDR_TIME},
-		"lineAutoSteal":      {CATEGORY_AUTOSTEAL_PERC},
-		"lineAttOrBoss":      {CATEGORY_ATT_PERC, CATEGORY_BOSSDMG_PERC},
-		"lineAttOrBossOrIed": {CATEGORY_ATT_PERC, CATEGORY_BOSSDMG_PERC, CATEGORY_IED_PERC},
+	inputCategoryMap = map[string][]string{
+		"percStat":           {categoryStrPerc, categoryAllstatsPerc},
+		"lineStat":           {categoryStrPerc, categoryAllstatsPerc},
+		"percAllStat":        {categoryAllstatsPerc, categoryStrPerc, categoryDexPerc, categoryLukPerc},
+		"lineAllStat":        {categoryAllstatsPerc},
+		"percHp":             {categoryMaxhpPerc},
+		"lineHp":             {categoryMaxhpPerc},
+		"percAtt":            {categoryAttPerc},
+		"lineAtt":            {categoryAttPerc},
+		"percBoss":           {categoryBossdmgPerc},
+		"lineBoss":           {categoryBossdmgPerc},
+		"lineIed":            {categoryIedPerc},
+		"lineCritDamage":     {categoryCritdmgPerc},
+		"lineMeso":           {categoryMesoPerc},
+		"lineDrop":           {categoryDropPerc},
+		"lineMesoOrDrop":     {categoryDropPerc, categoryMesoPerc},
+		"secCooldown":        {categoryCdrTime},
+		"lineAutoSteal":      {categoryAutostealPerc},
+		"lineAttOrBoss":      {categoryAttPerc, categoryBossdmgPerc},
+		"lineAttOrBossOrIed": {categoryAttPerc, categoryBossdmgPerc, categoryIedPerc},
 	}
-	// MAX_CATEGORY_COUNT 以下属性最多出现1条或者2条
-	MAX_CATEGORY_COUNT = map[string]int{
-		CATEGORY_DECENT_SKILL:    1,
-		CATEGORY_INVINCIBLE_TIME: 1,
-		CATEGORY_IED_PERC:        3,
-		CATEGORY_BOSSDMG_PERC:    3,
-		CATEGORY_DROP_PERC:       3,
-		CATEGORY_IGNOREDMG_PERC:  2,
-		CATEGORY_INVINCIBLE_PERC: 2,
+	// maxCategoryCount 以下属性最多出现1条或者2条
+	maxCategoryCount = map[string]int{
+		categoryDecentSkill:    1,
+		categoryInvincibleTime: 1,
+		categoryIedPerc:        3,
+		categoryBossdmgPerc:    3,
+		categoryDropPerc:       3,
+		categoryIgnoredmgPerc:  2,
+		categoryInvinciblePerc: 2,
 	}
 )

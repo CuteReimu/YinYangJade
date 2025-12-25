@@ -1,3 +1,4 @@
+// Package maplebot 实现冒险岛GMSR群机器人功能
 package maplebot
 
 import (
@@ -9,6 +10,7 @@ import (
 	. "github.com/vicanso/go-charts/v2"
 )
 
+// BossArcData 表示boss所需的ARC数据
 type BossArcData struct {
 	Name    string
 	NeedArc int
@@ -23,6 +25,7 @@ var bossArc = []*BossArcData{
 	{Name: "BlackMage", NeedArc: 1320},
 }
 
+// GetMoreDamageArc 生成更多伤害所需ARC的图表
 func GetMoreDamageArc() (ret MessageChain) {
 	data := make([][]string, 0, len(bossArc))
 	for _, v := range bossArc {
@@ -42,10 +45,13 @@ func GetMoreDamageArc() (ret MessageChain) {
 	})
 	if err != nil {
 		slog.Error("render chart failed", "error", err)
-	} else if buf, err := p.Bytes(); err != nil {
-		slog.Error("render chart failed", "error", err)
-	} else {
-		ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+		return nil
 	}
-	return
+	buf, err := p.Bytes()
+	if err != nil {
+		slog.Error("render chart failed", "error", err)
+		return nil
+	}
+	ret = append(ret, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
+	return ret
 }

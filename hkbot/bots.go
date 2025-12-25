@@ -21,14 +21,17 @@ func init() {
 	restyClient.SetTimeout(20 * time.Second)
 	restyClient.SetHeaders(map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
-		"user-agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69",
-		"connection":   "close",
-		"Accept":       "application/json",
+		"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36 Edg/97.0.1072.69",
+		"connection": "close",
+		"Accept":     "application/json",
 	})
 }
 
+// B 是空洞骑士机器人使用的 OneBot 实例
 var B *Bot
 
+// Init 初始化空洞骑士机器人模块
 func Init(b *Bot) {
 	initConfig()
 	B = b
@@ -127,10 +130,10 @@ func doTimer() {
 	var changed bool
 	pushedMessages := hkData.GetStringSlice("pushedMessages")
 	for _, v := range data.Data {
-		if slices.Contains(pushedMessages, v.Id) {
+		if slices.Contains(pushedMessages, v.ID) {
 			continue
 		}
-		pushedMessages = append(pushedMessages, v.Id)
+		pushedMessages = append(pushedMessages, v.ID)
 		changed = true
 		s := re.ReplaceAllString(v.Text, "")
 		if strings.Contains(s, "beat the WR") || strings.Contains(s, "got a new top 3 PB") {
@@ -150,19 +153,21 @@ func doTimer() {
 	if len(result1) == 0 {
 		return
 	}
-	for _, groupId := range hkConfig.GetIntSlice("speedrun_push_qq_group") {
-		_, err := B.SendGroupMessage(int64(groupId), MessageChain{&Text{Text: strings.Join(result1, "\n")}})
+	for _, groupID := range hkConfig.GetIntSlice("speedrun_push_qq_group") {
+		_, err := B.SendGroupMessage(int64(groupID), MessageChain{&Text{Text: strings.Join(result1, "\n")}})
 		if err != nil {
 			slog.Error("send group message failed", "error", err)
 		}
 	}
 }
 
+// RespData 响应数据结构
 type RespData struct {
 	Data []SpeedrunData `json:"data"`
 }
 
+// SpeedrunData speedrun数据结构
 type SpeedrunData struct {
-	Id   string `json:"id"`
+	ID   string `json:"id"`
 	Text string `json:"text"`
 }

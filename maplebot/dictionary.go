@@ -2,15 +2,36 @@ package maplebot
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	. "github.com/CuteReimu/onebot"
 )
 
 var addDbQQList = make(map[int64]string)
+
+func dealAddDict(message *GroupMessage, key string) {
+	botutil.DealAddDict(message, key, qunDb, cmdMap, addDbQQList, sendGroupMessage)
+}
+
+func dealModifyDict(message *GroupMessage, key string) {
+	botutil.DealModifyDict(message, key, qunDb, addDbQQList, sendGroupMessage)
+}
+
+func dealRemoveDict(message *GroupMessage, key string) {
+	// maplebot特殊逻辑：不能删除"太阳"词条
+	if key == "太阳" {
+		sendGroupMessage(message, &Text{Text: "未知错误"})
+		return
+	}
+	botutil.DealRemoveDict(message, key, qunDb, sendGroupMessage)
+}
+
+func dealSearchDict(message *GroupMessage, key string) {
+	botutil.DealSearchDict(message, key, qunDb, sendGroupMessage)
+}
 
 func handleDictionary(message *GroupMessage) bool {
 	if len(message.Message) == 0 {
@@ -21,98 +42,48 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if len(message.Message) == 1 {
 		if text, ok := message.Message[0].(*Text); ok {
-			perm := IsAdmin(message.GroupId, message.Sender.UserId)
-			if perm && strings.HasPrefix(text.Text, "添加词条 ") {
-				key := dealKey(text.Text[len("添加词条"):])
-				if strings.Contains(key, ".") {
-					sendGroupMessage(message, &Text{Text: "词条名称中不能包含 . 符号"})
+			if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
+				key := botutil.DealKey(text.Text[len("搜索词条"):])
+				if len(key) > 0 {
+					dealSearchDict(message, key)
+				}
+				return true
+			}
+			if isAdmin(message.GroupId, message.Sender.UserId) {
+				switch {
+				case strings.HasPrefix(text.Text, "添加词条 "):
+					key := botutil.DealKey(text.Text[len("添加词条"):])
+					dealAddDict(message, key)
+					return true
+				case strings.HasPrefix(text.Text, "修改词条 "):
+					key := botutil.DealKey(text.Text[len("修改词条"):])
+					if len(key) > 0 {
+						dealModifyDict(message, key)
+					}
+					return true
+				case strings.HasPrefix(text.Text, "删除词条 "):
+					key := botutil.DealKey(text.Text[len("删除词条"):])
+					if len(key) > 0 {
+						dealRemoveDict(message, key)
+					}
 					return true
 				}
-				if _, ok = cmdMap[key]; ok {
-					sendGroupMessage(message, &Text{Text: "不能用" + key + "作为词条"})
-					return true
-				}
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; ok {
-						sendGroupMessage(message, &Text{Text: "词条已存在"})
-					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要添加的内容"})
-						addDbQQList[message.Sender.UserId] = key
-					}
-				}
-				return true
-			} else if perm && strings.HasPrefix(text.Text, "修改词条 ") {
-				key := dealKey(text.Text[len("修改词条"):])
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; !ok {
-						sendGroupMessage(message, &Text{Text: "词条不存在"})
-					} else {
-						sendGroupMessage(message, &Text{Text: "请输入要修改的内容"})
-						addDbQQList[message.Sender.UserId] = key
-					}
-				}
-				return true
-			} else if perm && strings.HasPrefix(text.Text, "删除词条 ") {
-				key := dealKey(text.Text[len("删除词条"):])
-				if len(key) > 0 {
-					m := qunDb.GetStringMapString("data")
-					if _, ok = m[key]; !ok {
-						sendGroupMessage(message, &Text{Text: "词条不存在"})
-					} else if key == "太阳" {
-						sendGroupMessage(message, &Text{Text: "未知错误"})
-					} else {
-						delete(m, key)
-						qunDb.Set("data", m)
-						if err := qunDb.WriteConfig(); err != nil {
-							slog.Error("write data failed", "error", err)
-						}
-						sendGroupMessage(message, &Text{Text: "删除词条成功"})
-					}
-				}
-				return true
-			} else if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
-				key := dealKey(text.Text[len("搜索词条"):])
-				if len(key) > 0 {
-					var res []string
-					m := qunDb.GetStringMapString("data")
-					for k := range m {
-						if strings.Contains(k, key) {
-							res = append(res, k)
-						}
-					}
-					if len(res) > 0 {
-						slices.Sort(res)
-						num := len(res)
-						if num > 10 {
-							res = res[:10]
-							res[9] += fmt.Sprintf("\n等%d个词条", num)
-						}
-						for i := range res {
-							res[i] = fmt.Sprintf("%d. %s", i+1, res[i])
-						}
-						sendGroupMessage(message, &Text{Text: "搜索到以下词条：\n" + strings.Join(res, "\n")})
-					} else {
-						sendGroupMessage(message, &Text{Text: "搜索不到词条(" + key + ")"})
-					}
-				}
-				return true
 			}
 		}
 	}
 	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
+		// maplebot特殊逻辑：不能添加"太阳"词条
 		if key == "太阳" {
 			sendGroupMessage(message, &Text{Text: "未知错误"})
 			return true
 		}
-		if msg, err := saveImage(message.Message); err != nil {
+		msg, err := saveImage(message.Message)
+		if err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
 			return true
-		} else {
-			message.Message = msg
 		}
+		message.Message = msg
 		buf, err := json.Marshal(&message.Message)
 		if err != nil {
 			slog.Error("json marshal failed", "error", err)
@@ -130,7 +101,7 @@ func handleDictionary(message *GroupMessage) bool {
 		if len(message.Message) == 1 {
 			if text, ok := message.Message[0].(*Text); ok {
 				m := qunDb.GetStringMapString("data")
-				s := m[dealKey(text.Text)]
+				s := m[botutil.DealKey(text.Text)]
 				if len(s) > 0 {
 					var ms MessageChain
 					if err := json.Unmarshal([]byte(s), &ms); err != nil {
@@ -160,8 +131,8 @@ func (d *dictionaryCommand) ShowTips(int64, int64) string {
 	return d.tips
 }
 
-func (d *dictionaryCommand) CheckAuth(group, senderId int64) bool {
-	return !d.checkPerm || IsAdmin(group, senderId)
+func (d *dictionaryCommand) CheckAuth(group, senderID int64) bool {
+	return !d.checkPerm || isAdmin(group, senderID)
 }
 
 func (d *dictionaryCommand) Execute(_ *GroupMessage, content string) MessageChain {
@@ -177,3 +148,4 @@ func init() {
 	addCmdListener(&dictionaryCommand{name: "修改词条", tips: "修改词条 词条名称", checkPerm: true})
 	addCmdListener(&dictionaryCommand{name: "搜索词条", tips: "搜索词条 关键词"})
 }
+

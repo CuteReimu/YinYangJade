@@ -65,7 +65,7 @@ func bilibiliAnalysis(message *GroupMessage) bool {
 			slog.Error("解析类型异常", "result", reflect.TypeOf(result))
 			return true
 		}
-		_, err := B.SendGroupMessage(message.GroupId, MessageChain{
+		_, err := bot.SendGroupMessage(message.GroupId, MessageChain{
 			&Reply{Id: strconv.FormatInt(int64(message.MessageId), 10)}, image, test,
 		})
 		if err != nil {
@@ -102,11 +102,17 @@ func getVideoInfo(content string) (any, bool, error) {
 			return nil, true, err
 		}
 		if typ == "bvid" {
-			bvid := result.(string)
+			bvid, ok := result.(string)
+			if !ok {
+				return nil, true, errors.New("invalid bvid type")
+			}
 			result, err := bili.GetVideoInfo(bilibili.VideoParam{Bvid: bvid})
 			return result, true, err
 		} else if typ == "live" {
-			rid := result.(int)
+			rid, ok := result.(int)
+			if !ok {
+				return nil, true, errors.New("invalid room id type")
+			}
 			result, err := bili.GetLiveRoomInfo(bilibili.GetLiveRoomInfoParam{RoomId: rid})
 			return result, true, err
 		}

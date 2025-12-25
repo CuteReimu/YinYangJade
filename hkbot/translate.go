@@ -11,7 +11,7 @@ import (
 	regexp "github.com/dlclark/regexp2"
 )
 
-var translateDict = &Trie{}
+var translateDict = &trie{}
 var regexpSpace = regexp.MustCompile(`(?<![()\[\]{}%'"A-Za-z]) (?![()\[\]{}%'"A-Za-z])`, regexp.None)
 
 //go:embed translate.csv
@@ -117,11 +117,11 @@ type trieNode struct {
 	exists bool
 }
 
-type Trie struct {
+type trie struct {
 	root trieNode
 }
 
-func (t *Trie) Put(key, value string) bool {
+func (t *trie) Put(key, value string) bool {
 	node := &t.root
 	for _, c := range strings.ToLower(key) {
 		var n *trieNode
@@ -143,7 +143,7 @@ func (t *Trie) Put(key, value string) bool {
 	return notExists
 }
 
-func (t *Trie) ReplaceAll(str string) string {
+func (t *trie) ReplaceAll(str string) string {
 	s := []rune(str)
 	var s2 []rune
 	for len(s) > 0 {
@@ -164,9 +164,9 @@ func (t *Trie) ReplaceAll(str string) string {
 	return string(s2)
 }
 
-func (t *Trie) getLongest(s string) (string, string) {
+func (t *trie) getLongest(s string) (key, value string) {
 	var node, node2 *trieNode
-	var key, key2 string
+	var key2 string
 	node = &t.root
 	r := []rune(strings.ToLower(s))
 	for idx, c := range r {

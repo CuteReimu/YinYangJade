@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// BuildLvlData 从 viper 配置中读取等级数据并生成 lvl_data.json 文件
 func BuildLvlData(data *viper.Viper) error {
 	m := make(map[int]int64, 299)
 	c := make(map[int]any, 301)
