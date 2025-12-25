@@ -155,4 +155,3 @@ func init() {
 	addCmdListener(&dictionaryCommand{name: "修改词条", tips: "修改词条 词条名称", checkPerm: true})
 	addCmdListener(&dictionaryCommand{name: "搜索词条", tips: "搜索词条 关键词"})
 }
-
