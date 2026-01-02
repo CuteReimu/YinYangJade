@@ -1,7 +1,7 @@
 github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f h1:2dk3eOnYllh+wUOuDhOoC2vUVoJF/5z478ryJ+wzEII=
 github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f/go.mod h1:4a58ifQTEe2uwwsaqbh3i2un5/CBPg+At/qHpt18Tmk=
-github.com/CuteReimu/bilibili/v2 v2.5.0 h1:WXfKUb2h7+V+UmbY3wMgGIM/UhpP07k6299XBuD1YPE=
-github.com/CuteReimu/bilibili/v2 v2.5.0/go.mod h1:dPP7dm6K5WcT//UsKUrFWZO1Pw5kn2H+qYk0vEfj5BE=
+github.com/CuteReimu/bilibili/v2 v2.5.1 h1:0kYaJ/XnPTurFpQYIAZAzuR/KTpqJYZlnO1ZCwoYowI=
+github.com/CuteReimu/bilibili/v2 v2.5.1/go.mod h1:dPP7dm6K5WcT//UsKUrFWZO1Pw5kn2H+qYk0vEfj5BE=
 github.com/CuteReimu/goutil v0.0.0-20250319114149-4d3965d6581c h1:ZFfrFaO0O30j/pY+1dPEKdsRwq7A0gyovQRGk1jv7+M=
 github.com/CuteReimu/goutil v0.0.0-20250319114149-4d3965d6581c/go.mod h1:V2hZ6Hcawpca/FPdpFSWyvnRnNeYnzO4sWrdvjDN4ME=
 github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb h1:y2i7+TFgJnITu8NJQsnm9xCeHcCnLI3HfcP7m6cD9jI=
