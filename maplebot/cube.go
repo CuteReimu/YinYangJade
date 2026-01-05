@@ -447,9 +447,9 @@ func getProbability(desiredTier int, probabilityInput map[string]int, itemType s
 
 	// get the cubing data for this input criteria from cubeRates (which is based on json data)
 	rawCubedata := [][]any{
-		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["first_line"].([]any),  //nolint:revive
-		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["second_line"].([]any), //nolint:revive
-		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["third_line"].([]any),  //nolint:revive
+		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["first_line"].([]any),
+		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["second_line"].([]any),
+		cubeRates["lvl120to200"].(map[string]any)[itemLabel].(map[string]any)[cubeType].(map[string]any)[tier].(map[string]any)["third_line"].([]any),
 	}
 
 	// make adjustments to stat values if needed (for items lvl 160 or above)

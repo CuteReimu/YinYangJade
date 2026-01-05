@@ -20,7 +20,6 @@ linters:
     - tagliatelle
     - nlreturn
     - depguard
-    - dupl
     - err113
     - forbidigo
     - errname
@@ -60,7 +59,7 @@ linters:
         - name: add-constant
           disabled: true
         - name: line-length-limit
-          arguments: [150]
+          arguments: [160]
         - name: cognitive-complexity
           arguments: [70]
         - name: cyclomatic

@@ -10,9 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
 )
+
+var httpClient = botutil.NewHTTPClient(fengshengConfig.GetString("fengshengUrl"))
 
 // B 是风声机器人使用的 OneBot 实例
 var B *Bot
@@ -117,10 +120,10 @@ func searchAt(message *GroupMessage) bool {
 							"name":     name,
 							"operator": operatorName,
 						}
-						result, returnError := httpGetString("/getscore", params)
+						result, returnError := httpClient.HTTPGetString("/getscore", params)
 						if returnError != nil {
-							slog.Error("请求失败", "error", returnError.error)
-							sendGroupMessage(message, returnError.message...)
+							slog.Error("请求失败", "error", returnError)
+							sendGroupMessage(message, returnError.Message...)
 							return
 						}
 						if result == "差距太大，无法查询" {
@@ -185,10 +188,10 @@ func handlePrivateRequest(request *PrivateMessage) bool {
 				}
 				reverseMap[name] = qqInt
 			}
-			result, returnError := httpGetString("/ranklist2", nil)
+			result, returnError := httpClient.HTTPGetString("/ranklist2", nil)
 			if returnError != nil {
-				slog.Error("请求失败", "error", returnError.error)
-				sendPrivateMessage(request.UserId, returnError.message)
+				slog.Error("请求失败", "error", returnError)
+				sendPrivateMessage(request.UserId, returnError.Message)
 				return true
 			}
 			infos, err := B.GetGroupMemberList(qqGroup)

@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/db"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-rod/rod"
@@ -164,10 +165,10 @@ func (getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "请先绑定"}}
 	}
-	result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetString("/getscore", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return dealGetScore(result)
 }
@@ -212,10 +213,10 @@ func (getScore) Execute(message *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return nil
 	}
-	result, returnError := httpGetString("/getscore", map[string]string{"name": name, "operator": operatorName})
+	result, returnError := httpClient.HTTPGetString("/getscore", map[string]string{"name": name, "operator": operatorName})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if result == "差距太大，无法查询" {
 		return MessageChain{&Text{Text: getScoreFailResponse[rand.IntN(len(getScoreFailResponse))]}}
@@ -242,7 +243,7 @@ func (rankList) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) > 0 {
 		return nil
 	}
-	resp, err := restyClient.R().Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
+	resp, err := httpClient.RestyClient.R().Get(fengshengConfig.GetString("fengshengUrl") + "/ranklist")
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
@@ -274,7 +275,7 @@ func (seasonRankList) Execute(_ *GroupMessage, content string) MessageChain {
 		return nil
 	}
 	url := fengshengConfig.GetString("fengshengUrl") + "/ranklist"
-	resp, err := restyClient.R().SetQueryParam("season_rank", "true").Get(url)
+	resp, err := httpClient.RestyClient.R().SetQueryParam("season_rank", "true").Get(url)
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
@@ -305,7 +306,7 @@ func (winRate) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) > 0 {
 		return nil
 	}
-	resp, err := restyClient.R().Get(fengshengConfig.GetString("fengshengUrl") + "/winrate")
+	resp, err := httpClient.RestyClient.R().Get(fengshengConfig.GetString("fengshengUrl") + "/winrate")
 	if err != nil {
 		slog.Error("请求失败", "error", err)
 		return nil
@@ -344,10 +345,10 @@ func (register) Execute(msg *GroupMessage, content string) MessageChain {
 	if oldName := data[strconv.FormatInt(msg.Sender.UserId, 10)]; len(oldName) > 0 {
 		return MessageChain{&Text{Text: "你已经注册过：" + oldName}}
 	}
-	result, returnError := httpGetBool("/register", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetBool("/register", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !result {
 		return MessageChain{&Text{Text: "用户名重复"}}
@@ -378,12 +379,12 @@ func (addNotifyOnStart) Execute(msg *GroupMessage, content string) MessageChain 
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
-	result, returnError := httpGetBool("/addnotify", map[string]string{
+	result, returnError := httpClient.HTTPGetBool("/addnotify", map[string]string{
 		"qq": strconv.FormatInt(msg.Sender.UserId, 10),
 	})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !result {
 		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
@@ -409,13 +410,13 @@ func (addNotifyOnEnd) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
-	result, returnError := httpGetBool("/addnotify", map[string]string{
+	result, returnError := httpClient.HTTPGetBool("/addnotify", map[string]string{
 		"qq":   strconv.FormatInt(msg.Sender.UserId, 10),
 		"when": "1",
 	})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !result {
 		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
@@ -441,13 +442,13 @@ func (addNotifyOnEnd2) Execute(msg *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
-	result, returnError := httpGetBool("/addnotify", map[string]string{
+	result, returnError := httpClient.HTTPGetBool("/addnotify", map[string]string{
 		"qq":   strconv.FormatInt(msg.Sender.UserId, 10),
 		"when": "1",
 	})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !result {
 		return MessageChain{&Text{Text: "太多人预约了，不能再添加了"}}
@@ -513,7 +514,7 @@ func (resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 	name := strings.TrimSpace(content)
 	data := permData.GetStringMapString("playerMap")
 	var result string
-	var returnError *errorWithMessage
+	var returnError *botutil.ErrorWithMessage
 	if len(name) == 0 {
 		playerName := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 		if len(playerName) == 0 {
@@ -522,16 +523,16 @@ func (resetPwd) Execute(msg *GroupMessage, content string) MessageChain {
 			}
 			return MessageChain{&Text{Text: "重置密码 名字"}}
 		}
-		result, returnError = httpGetString("/resetpwd", map[string]string{"name": playerName})
+		result, returnError = httpClient.HTTPGetString("/resetpwd", map[string]string{"name": playerName})
 	} else {
 		if !isAdmin(msg.Sender.UserId) {
 			return nil
 		}
-		result, returnError = httpGetString("/resetpwd", map[string]string{"name": name})
+		result, returnError = httpClient.HTTPGetString("/resetpwd", map[string]string{"name": name})
 	}
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if len(result) == 0 {
 		return nil
@@ -576,20 +577,20 @@ func (sign) Execute(msg *GroupMessage, content string) MessageChain {
 			return MessageChain{&Text{Text: "今天已经签到过了，明天再来吧"}}
 		}
 	}
-	lastTime, returnError := httpGetInt("/getlasttime", map[string]string{"name": name})
+	lastTime, returnError := httpClient.HTTPGetInt("/getlasttime", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if lastTime >= 7*24*3600*1000 {
 		lastTime1 := time.Now().Add(-(time.Duration(lastTime) * time.Millisecond))
 		return MessageChain{&Text{Text: "一周内未进行过游戏，无法进行签到 最近时间为：" + lastTime1.Format("2006-01-02 15:04:05")}}
 	}
 	energy := rand.IntN(10)/3 + 1
-	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
+	success, returnError := httpClient.HTTPGetBool("/addenergy", map[string]string{"name": name, "energy": strconv.Itoa(energy)})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !success {
 		return MessageChain{&Text{Text: "签到失败"}}
@@ -813,8 +814,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()

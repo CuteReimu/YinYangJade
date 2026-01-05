@@ -75,10 +75,10 @@ func (bind) Execute(msg *GroupMessage, content string) MessageChain {
 			return MessageChain{&Text{Text: s}}
 		}
 	}
-	result, returnError := httpGetString("/getscore", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetString("/getscore", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if strings.HasSuffix(result, "已身死道消") {
 		return MessageChain{&Text{Text: "不存在的玩家"}}
@@ -144,10 +144,10 @@ func (unbindExpired) Execute(_ *GroupMessage, content string) MessageChain {
 	m1 := permData.GetStringMapString("playerMap")
 	m2 := make(map[string]string, len(m1))
 	for id, name := range m1 {
-		score, returnError := httpGetString("/getscore", map[string]string{"name": name})
+		score, returnError := httpClient.HTTPGetString("/getscore", map[string]string{"name": name})
 		if returnError != nil {
-			slog.Error("请求失败", "error", returnError.error)
-			return returnError.message
+			slog.Error("请求失败", "error", returnError)
+			return returnError.Message
 		}
 		if !strings.HasSuffix(score, "已身死道消") {
 			m2[id] = name
@@ -187,13 +187,13 @@ func (forbidPlayer) Execute(_ *GroupMessage, content string) MessageChain {
 	if _, err := strconv.ParseInt(strings.TrimSpace(c[spaceIndex+1:]), 10, 64); err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n封号 名字 小时"}}
 	}
-	result, returnError := httpGetString("/forbidplayer", map[string]string{
+	result, returnError := httpClient.HTTPGetString("/forbidplayer", map[string]string{
 		"name": name,
 		"hour": c[spaceIndex+1:],
 	})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return MessageChain{&Text{Text: result}}
 }
@@ -217,10 +217,10 @@ func (releasePlayer) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n解封 名字"}}
 	}
-	result, returnError := httpGetString("/releaseplayer", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetString("/releaseplayer", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return MessageChain{&Text{Text: result}}
 }
@@ -244,10 +244,10 @@ func (forbidRole) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n禁用角色 名字"}}
 	}
-	result, returnError := httpGetBool("/forbidrole", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetBool("/forbidrole", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if result {
 		return MessageChain{&Text{Text: "禁用成功"}}
@@ -274,10 +274,10 @@ func (releaseRole) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n启用角色 名字"}}
 	}
-	result, returnError := httpGetBool("/releaserole", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetBool("/releaserole", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if result {
 		return MessageChain{&Text{Text: "启用成功"}}
@@ -303,10 +303,10 @@ func (setVersion) Execute(_ *GroupMessage, content string) MessageChain {
 	if _, err := strconv.Atoi(content); err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n修改版本号 版本号"}}
 	}
-	returnError := httpGet("/setversion", map[string]string{"version": content})
+	returnError := httpClient.HTTPGet("/setversion", map[string]string{"version": content})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return MessageChain{&Text{Text: "版本号已修改为" + content}}
 }
@@ -329,10 +329,10 @@ func (forceEnd) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(strings.TrimSpace(content)) > 0 {
 		return nil
 	}
-	returnError := httpGet("/forceend", nil)
+	returnError := httpClient.HTTPGet("/forceend", nil)
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return MessageChain{&Text{Text: "已执行"}}
 }
@@ -356,10 +356,10 @@ func (setNotice) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(content) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n修改公告 公告内容"}}
 	}
-	returnError := httpGet("/setnotice", map[string]string{"notice": content})
+	returnError := httpClient.HTTPGet("/setnotice", map[string]string{"notice": content})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return MessageChain{&Text{Text: "公告已变更"}}
 }
@@ -384,10 +384,10 @@ func (setWaitSecond) Execute(_ *GroupMessage, content string) MessageChain {
 	} else if second <= 0 {
 		return MessageChain{&Text{Text: "出牌时间必须大于0"}}
 	}
-	returnError := httpGet("/updatewaitsecond", map[string]string{"second": content})
+	returnError := httpClient.HTTPGet("/updatewaitsecond", map[string]string{"second": content})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	return MessageChain{&Text{Text: "默认出牌时间已修改为" + content + "秒"}}
 }
@@ -411,10 +411,10 @@ func (createAccount) Execute(_ *GroupMessage, content string) MessageChain {
 	if len(name) == 0 {
 		return MessageChain{&Text{Text: "命令格式：\n创号 名字"}}
 	}
-	result, returnError := httpGetBool("/register", map[string]string{"name": name})
+	result, returnError := httpClient.HTTPGetBool("/register", map[string]string{"name": name})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !result {
 		return MessageChain{&Text{Text: "用户名重复"}}
@@ -450,10 +450,10 @@ func (addEnergy) Execute(_ *GroupMessage, content string) MessageChain {
 	if err != nil {
 		return MessageChain{&Text{Text: "命令格式：\n增加精力 名字 数量"}}
 	}
-	success, returnError := httpGetBool("/addenergy", map[string]string{"name": name, "energy": energy})
+	success, returnError := httpClient.HTTPGetBool("/addenergy", map[string]string{"name": name, "energy": energy})
 	if returnError != nil {
-		slog.Error("请求失败", "error", returnError.error)
-		return returnError.message
+		slog.Error("请求失败", "error", returnError)
+		return returnError.Message
 	}
 	if !success {
 		return MessageChain{&Text{Text: "增加精力失败"}}
