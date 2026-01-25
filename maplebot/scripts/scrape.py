@@ -106,7 +106,11 @@ def request_from_name_list():
             "raidPower": legion_raid,
         }
         
-        player_dict['img'] = img64
+        if img64 == '':
+            if 'img' not in player_dict:
+                player_dict['img'] = ""
+        else:
+            player_dict['img'] = img64
         
         last_dict = player_dict['data'][-1] if len(player_dict['data']) > 0 else None
         if last_dict is not None and same_dict(last_dict, cur_dict):
