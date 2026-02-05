@@ -67,7 +67,7 @@ def days_to_level(dated_exps, current_exp, current_lvl, lvl_single):
     avg_exp = sum(filtered_exps) / len(filtered_exps)
     exp_needed = lvl_single[str(current_lvl)] - current_exp
     if avg_exp > 100:
-        days_needed = round(exp_needed / avg_exp)
+        days_needed = min(round(exp_needed / avg_exp),  10000) # Cap at a large number to avoid meaningless predictions
     else:
         days_needed = 10000  # Arbitrary large number indicating no progress
     return days_needed, cur_exp_percent
