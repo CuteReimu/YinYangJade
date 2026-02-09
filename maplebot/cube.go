@@ -664,7 +664,7 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 	}
 
 	f := func(cubeDataLine []any) []any {
-		var ret []any
+		ret := make([]any, 0, len(cubeDataLine))
 		for _, e := range cubeDataLine {
 			var (
 				arr         = e.([]any)
