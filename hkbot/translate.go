@@ -100,6 +100,7 @@ func init() {
 	translateDict.Put("Slab%", "监狱钟道%")
 	translateDict.Put("Jailed", "被锁住")
 	translateDict.Put("Bellbeast", "钟道兽")
+	translateDict.Put("Furyless", "无亡怒")
 }
 
 func translate(s string) string {
