@@ -15,7 +15,9 @@ import (
 	. "github.com/CuteReimu/onebot"
 )
 
-var httpClient = botutil.NewHTTPClient(fengshengConfig.GetString("fengshengUrl"))
+var httpClient = botutil.NewHTTPClient(func() string {
+	return fengshengConfig.GetString("fengshengUrl")
+})
 
 // B 是风声机器人使用的 OneBot 实例
 var B *Bot

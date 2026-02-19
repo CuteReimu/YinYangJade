@@ -12,12 +12,12 @@ import (
 
 // HTTPClient 是一个用于发送 HTTP 请求的客户端
 type HTTPClient struct {
-	urlPrefix   string
+	urlPrefix   func() string
 	RestyClient *resty.Client
 }
 
 // NewHTTPClient 创建一个 HTTPClient 实例
-func NewHTTPClient(urlPrefix string) *HTTPClient {
+func NewHTTPClient(urlPrefix func() string) *HTTPClient {
 	restyClient := resty.New()
 	restyClient.SetRedirectPolicy(resty.NoRedirectPolicy())
 	restyClient.SetTimeout(20 * time.Second)
@@ -68,7 +68,7 @@ func (c *HTTPClient) HTTPGetInt(endPoint string, queryParams map[string]string) 
 }
 
 func (c *HTTPClient) get(endPoint string, queryParams map[string]string) (string, *ErrorWithMessage) {
-	resp, err := c.RestyClient.R().SetQueryParams(queryParams).Get(c.urlPrefix + endPoint)
+	resp, err := c.RestyClient.R().SetQueryParams(queryParams).Get(c.urlPrefix() + endPoint)
 	if err != nil {
 		return "", &ErrorWithMessage{error: err}
 	}
