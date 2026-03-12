@@ -15,46 +15,58 @@ import (
 
 func init() {
 	cmd := &speedrunLeaderboards{
-		availableInputs: []string{"Any%", "TE", "100%", "Judgement", "Low%", "AB", "Twisted%", "苔穴", "PoP", "白宫"},
-		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白色宫殿"},
+		availableInputs: []string{"Any%", "TE", "100%", "第一幕", "Low%", "AB", "Twisted%", "苔穴", "PoP", "白宫"},
+		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白色宫殿", "act1"},
 		url: map[string]string{
 			"anylp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=qj70747q",
 			"anyrp":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/zd39j4nd?var-ylq4yvzn=qzne828q&var-rn1kmmvl=10vzvmol",
 			"te":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/n2y0m18d?var-dloed1dn=qyzod221",
 			"100noab":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=1w4p4dmq",
 			"100ab":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/rkl6zprk?var-rn1k7xol=lx5o7641&var-38dg4448=qoxpx35q",
-			"judgement": "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wk6544o2?var-jlz631q8=1w4ozxvq",
-			"low":       "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1",
-			"ab":        "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl",
+			"judgement": "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wk6544o2?var-jlz631q8=1w4ozxvq&var-j8415y58=qox0j35q",
+			"sinner":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wk6544o2?var-jlz631q8=1w4ozxvq&var-j8415y58=1390xmr1",
+			"lowst":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1&var-p850r65n=1923x9yq",
+			"lowte":     "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/wkp4r60k?var-9l7geqpl=1397dnx1&var-p850r65n=12vn9wdq",
+			"abact1":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=qvv7xrrq",
+			"abact2":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=le2on4ml",
+			"abact3":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=q5v6457l",
 			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
-			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
 			"pop":       "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/r9g1qop9/wkpq608d",
-			"白色宫殿":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
+			"白色宫殿":  "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
 		},
 		categoryNames: map[string]string{
-			"anylp":     "丝之歌 — Any% 新",
-			"anyrp":     "丝之歌 — Any% 旧",
+			"anylp":     "丝之歌 — Any% 斗篷",
+			"anyrp":     "丝之歌 — Any% 无斗篷",
 			"te":        "丝之歌 — True Ending",
 			"100noab":   "丝之歌 — 100% No AB",
 			"100ab":     "丝之歌 — 100% All Bosses",
-			"judgement": "丝之歌 — Judgement",
-			"low":       "丝之歌 — Low%",
-			"ab":        "丝之歌 — All Bosses",
+			"judgement": "丝之歌 — 第一幕 - 末代裁决者",
+			"sinner":    "丝之歌 — 第一幕 - 罪途",
+			"lowst":     "丝之歌 — Low%",
+			"lowte":     "丝之歌 — Low% True Ending",
+			"abact1":    "丝之歌 — All Bosses - Act1",
+			"abact2":    "丝之歌 — All Bosses - Act2",
+			"abact3":    "丝之歌 — All Bosses - Act3",
 			"twisted":   "丝之歌 — Twisted%",
-			"苔穴":        "丝之歌 — 苔穴",
+			"苔穴":      "丝之歌 — 苔穴",
 			"pop":       "空洞骑士 — 苦痛之路",
-			"白色宫殿":      "空洞骑士 — 白色宫殿 1.3.1.5+",
+			"白色宫殿":  "空洞骑士 — 白色宫殿 1.3.1.5+",
 		},
 		mapKeys: map[string][]string{
 			"any":        {"anyrp", "anylp"},
 			"100":        {"100noab", "100ab"},
-			"all bosses": {"ab"},
-			"all boss":   {"ab"},
-			"allbosses":  {"ab"},
-			"allboss":    {"ab"},
-			"苦痛之路":       {"pop"},
-			"苦痛":         {"pop"},
-			"白宫":         {"白色宫殿"},
+			"low":        {"lowst", "lowte"},
+			"ab":         {"abact1", "abact2", "abact3"},
+			"all bosses": {"abact1", "abact2", "abact3"},
+			"all boss":   {"abact1", "abact2", "abact3"},
+			"allbosses":  {"abact1", "abact2", "abact3"},
+			"allboss":    {"abact1", "abact2", "abact3"},
+			"苦痛之路":   {"pop"},
+			"苦痛":       {"pop"},
+			"白宫":       {"白色宫殿"},
+			"act1":       {"judgement", "sinner"},
+			"第一幕":     {"judgement", "sinner"},
 		},
 		resty: resty.New(),
 	}
@@ -234,6 +246,10 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 
 	var buf strings.Builder
 	_, _ = fmt.Fprintf(&buf, "=== %s — NMG ===\r\n", t.categoryNames[key])
+	if len(runs) == 0 {
+		buf.WriteString("暂无记录\r\n")
+		return buf.String(), nil
+	}
 	for _, entry := range runs {
 		place := entry.Place
 		run := entry.Run
