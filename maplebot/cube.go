@@ -214,10 +214,10 @@ func calculateCubeAll() MessageChain {
 	header := make([]string, 0, len(selections)+1)
 	header = append(header, "部位")
 	for _, it := range selections {
-		var target strings.Builder
+		target := new(strings.Builder)
 		for stat := range strings.SplitSeq(it, "&") {
 			arr := strings.Split(stat, "+")
-			_, _ = target.WriteString(fmt.Sprintf(statMap[arr[0]], arr[1]))
+			_, _ = fmt.Fprintf(target, statMap[arr[0]], arr[1])
 		}
 		header = append(header, target.String())
 	}
@@ -292,10 +292,10 @@ func calculateCube(s string) MessageChain {
 			styles = append(styles, &Style{FillColor: drawing.Color{R: 147, G: 21, B: 152, A: 96}})
 			cost = black
 		}
-		var target strings.Builder
+		target := new(strings.Builder)
 		for stat := range strings.SplitSeq(it, "&") {
 			arr := strings.Split(stat, "+")
-			_, _ = target.WriteString(fmt.Sprintf(statMap[arr[0]], arr[1]))
+			_, _ = fmt.Fprintf(target, statMap[arr[0]], arr[1])
 		}
 		ss = append(ss, []string{target.String(), formatInt64(cost)})
 	}
@@ -682,7 +682,7 @@ func convertCubeDataForLevel(cubeData [][]any, itemLevel int) [][]any {
 		}
 		return ret
 	}
-	return [][]any{f(cubeData[0]), f(cubeData[1]), f(cubeData[2])} //nolint:gosec
+	return [][]any{f(cubeData[0]), f(cubeData[1]), f(cubeData[2])}
 }
 
 // calculateTotal 计算属性的总值

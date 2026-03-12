@@ -54,7 +54,8 @@ func FindRoleBackground() {
 		slog.Error("角色数据预抓取失败", "error", err, "output", string(output))
 		notifyGroups := config.GetIntSlice("notify_groups")
 		notifyQQ := config.GetIntSlice("notify_qq")
-		msg := MessageChain{&Text{Text: "角色数据预抓取失败"}}
+		msg := make(MessageChain, 0, 1+len(notifyQQ))
+		msg = append(msg, &Text{Text: "角色数据预抓取失败"})
 		for _, qq := range notifyQQ {
 			msg = append(msg, &At{QQ: strconv.Itoa(qq)})
 		}
