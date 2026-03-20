@@ -83,7 +83,10 @@ func findRole(name string) MessageChain {
 		} else if pythonData.Status == "success" {
 			var messageChain MessageChain
 			if pythonData.Profile != "" {
-				messageChain = append(messageChain, &Image{File: "base64://" + pythonData.Profile})
+				raw, err := base64.StdEncoding.DecodeString(pythonData.Profile)
+				if err == nil && strings.HasPrefix(http.DetectContentType(raw), "image/") {
+					messageChain = append(messageChain, &Image{File: "base64://" + pythonData.Profile})
+				}
 			}
 			if pythonData.Text != "" {
 				messageChain = append(messageChain, &Text{Text: pythonData.Text})
