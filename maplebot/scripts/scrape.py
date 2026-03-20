@@ -89,7 +89,13 @@ def request_from_name_list():
         
         try:
             response = requests.get(img_url)
-            img64 = base64.b64encode(response.content).decode('utf-8')
+            assert response.status_code == 200
+            if response.headers.get('Content-Type', '').startswith('image/'):
+                img64 = base64.b64encode(response.content).decode('utf-8')
+            else:
+                img64 = ""
+                logging.warning(f"URL for {player_name} does not point to an image, content type: {response.headers.get('Content-Type', 'N/A')}")
+                
         except Exception as e:
             img64 = ""
             logging.warning(f"Error fetching image for {player_name}: {e}")
