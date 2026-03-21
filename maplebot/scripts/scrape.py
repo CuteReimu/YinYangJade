@@ -89,7 +89,8 @@ def request_from_name_list():
         
         try:
             response = requests.get(img_url)
-            assert response.status_code == 200
+            if response.status_code != 200:
+                raise Exception(f"Failed to fetch image, status: {response.status_code}")
             if response.headers.get('Content-Type', '').startswith('image/'):
                 img64 = base64.b64encode(response.content).decode('utf-8')
             else:
