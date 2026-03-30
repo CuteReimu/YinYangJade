@@ -15,6 +15,7 @@ import (
 
 	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/db"
+	"github.com/CuteReimu/YinYangJade/dict"
 	"github.com/CuteReimu/YinYangJade/fengsheng"
 	"github.com/CuteReimu/YinYangJade/hkbot"
 	"github.com/CuteReimu/YinYangJade/imageutil"
@@ -103,6 +104,8 @@ func main() {
 		panic(err)
 	}
 	B.SetLimiter("drop", rate.NewLimiter(rate.Every(3*time.Second), 5))
+	B.ListenGroupMessage(statistics)
+	B.ListenPrivateMessage(testStatistics)
 	tfcc.Init(B)
 	fengsheng.Init(B)
 	maplebot.Init(B)
@@ -216,5 +219,30 @@ func handleBroadcastRequest(message *onebot.PrivateMessage) bool {
 		return true
 	}
 	go botutil.HandleBroadcastRequest(B, message)
+	return true
+}
+
+func statistics(message *onebot.GroupMessage) bool {
+	if len(message.Message) == 1 {
+		if text, ok := message.Message[0].(*onebot.Text); ok {
+			dict.AddIntoDict(text.Text)
+		}
+	}
+	return true
+}
+
+func testStatistics(message *onebot.PrivateMessage) bool {
+	if message.Sender.UserId != mainConfig.GetInt64("super_admin") {
+		return true
+	}
+	if len(message.Message) == 1 {
+		if text, ok := message.Message[0].(*onebot.Text); ok {
+			arr := strings.SplitN(text.Text, " ", 3)
+			if len(arr) == 3 && arr[0] == "测试" {
+				v := dict.GetTextRelativity(arr[1], arr[2])
+				_, _ = B.SendPrivateMessage(message.Sender.UserId, onebot.MessageChain{&onebot.Text{Text: fmt.Sprintf("相似度: %.4f", v)}})
+			}
+		}
+	}
 	return true
 }
