@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/iface"
 	. "github.com/CuteReimu/onebot"
 	"github.com/go-resty/resty/v2"
@@ -47,6 +48,7 @@ func Init(b *Bot) {
 	}()
 	B.ListenGroupMessage(cmdHandleFunc)
 	B.ListenGroupMessage(handleDictionary)
+	botutil.AddBroadcastGroup(hkConfig.GetIntSlice("speedrun_push_qq_group"))
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)

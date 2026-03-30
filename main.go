@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/db"
 	"github.com/CuteReimu/YinYangJade/fengsheng"
 	"github.com/CuteReimu/YinYangJade/hkbot"
@@ -76,6 +77,7 @@ func init() {
 	mainConfig.SetDefault("verifyKey", "ABCDEFGHIJK")
 	mainConfig.SetDefault("qq", 123456789)
 	mainConfig.SetDefault("check_qq_groups", []int64(nil))
+	mainConfig.SetDefault("super_admin", 0)
 	if err := mainConfig.SafeWriteConfig(); err == nil {
 		fmt.Println("Already generated config.yaml. Please modify the config file and restart the program.")
 		os.Exit(0)
@@ -108,6 +110,7 @@ func main() {
 	imageutil.Init(B)
 	B.ListenFriendRequest(handleNewFriendRequest)
 	B.ListenGroupRequest(handleGroupRequest)
+	B.ListenPrivateMessage(handleBroadcastRequest)
 	checkQQGroups()
 	initCron()
 	ch := make(chan os.Signal, 1)
@@ -206,4 +209,12 @@ func initCron() {
 	_ = c.AddFunc("0 0 15 * * *", maplebot.FindRoleBackground)
 	_ = c.AddFunc("0 0 1 * * *", maplebot.FindRoleBackground)
 	c.Start()
+}
+
+func handleBroadcastRequest(message *onebot.PrivateMessage) bool {
+	if message.Sender.UserId != mainConfig.GetInt64("super_admin") {
+		return true
+	}
+	go botutil.HandleBroadcastRequest(B, message)
+	return true
 }

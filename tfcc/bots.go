@@ -33,6 +33,7 @@ func Init(b *Bot) {
 	bot = b
 	bot.ListenGroupMessage(cmdHandleFunc)
 	bot.ListenGroupMessage(bilibiliAnalysis)
+	botutil.AddBroadcastGroup(tfccConfig.GetIntSlice("qq.qq_group"))
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)

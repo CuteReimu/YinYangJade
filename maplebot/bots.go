@@ -44,6 +44,7 @@ func Init(b *Bot) {
 	bot.ListenGroupMessage(cmdHandleFunc)
 	bot.ListenGroupMessage(handleDictionary)
 	bot.ListenGroupMessage(searchAt)
+	botutil.AddBroadcastGroup(config.GetIntSlice("qq_groups"))
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)

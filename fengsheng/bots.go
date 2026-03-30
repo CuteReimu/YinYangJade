@@ -36,6 +36,7 @@ func Init(b *Bot) {
 	B.ListenGroupMessage(searchAt)
 	B.ListenGroupRequest(handleGroupRequest)
 	B.ListenPrivateMessage(handlePrivateRequest)
+	botutil.AddBroadcastGroup(fengshengConfig.GetIntSlice("qq.qq_group"))
 }
 
 var cmdMap = make(map[string]iface.CmdHandler)
