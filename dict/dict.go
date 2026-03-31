@@ -231,7 +231,7 @@ func GetFamiliarValue(m map[string]string, key string) string {
 	}
 
 	var cache []pair
-	for k, _ := range m {
+	for k := range m {
 		v := GetTextRelativity(k, key)
 		if v >= 0.65 {
 			cache = append(cache, pair{k: k, v: v})
