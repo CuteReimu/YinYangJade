@@ -2,8 +2,10 @@
 package dict
 
 import (
+	"cmp"
 	"log/slog"
 	"math"
+	"slices"
 	"strconv"
 	"time"
 	"unicode"
@@ -216,4 +218,30 @@ func GetTextRelativity(text1, text2 string) float64 {
 	}
 
 	return dot / (math.Sqrt(norm1) * math.Sqrt(norm2))
+}
+
+func GetFamiliarValue(m map[string]string, key string) string {
+	if v, ok := m[key]; ok {
+		return v
+	}
+
+	type pair struct {
+		k string
+		v float64
+	}
+
+	var cache []pair
+	for k, _ := range m {
+		v := GetTextRelativity(k, key)
+		if v >= 0.65 {
+			cache = append(cache, pair{k: k, v: v})
+		}
+	}
+	slices.SortFunc(cache, func(a, b pair) int {
+		return cmp.Compare(b.v, a.v)
+	})
+	if len(cache) > 0 && cache[0].v >= 0.9 || len(cache) > 1 && cache[1].v >= 0.8 || len(cache) > 2 {
+		return m[cache[0].k]
+	}
+	return ""
 }

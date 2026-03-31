@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/CuteReimu/YinYangJade/botutil"
+	"github.com/CuteReimu/YinYangJade/dict"
 	. "github.com/CuteReimu/onebot"
 )
 
@@ -92,7 +93,7 @@ func handleDictionary(message *GroupMessage) bool {
 		if len(message.Message) == 1 {
 			if text, ok := message.Message[0].(*Text); ok {
 				m := qunDb.GetStringMapString("data")
-				s := m[botutil.DealKey(text.Text)]
+				s := dict.GetFamiliarValue(m, botutil.DealKey(text.Text))
 				if len(s) > 0 {
 					var ms MessageChain
 					if err := json.Unmarshal([]byte(s), &ms); err != nil {
