@@ -19,11 +19,9 @@ import (
 	"github.com/CuteReimu/YinYangJade/fengsheng"
 	"github.com/CuteReimu/YinYangJade/hkbot"
 	"github.com/CuteReimu/YinYangJade/imageutil"
-	"github.com/CuteReimu/YinYangJade/maplebot"
 	"github.com/CuteReimu/YinYangJade/tfcc"
 	"github.com/CuteReimu/onebot"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/robfig/cron"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
 )
@@ -108,14 +106,12 @@ func main() {
 	B.ListenPrivateMessage(testStatistics)
 	tfcc.Init(B)
 	fengsheng.Init(B)
-	maplebot.Init(B)
 	hkbot.Init(B)
 	imageutil.Init(B)
 	B.ListenFriendRequest(handleNewFriendRequest)
 	B.ListenGroupRequest(handleGroupRequest)
 	B.ListenPrivateMessage(handleBroadcastRequest)
 	checkQQGroups()
-	initCron()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
 	<-ch
@@ -204,14 +200,6 @@ func handleGroupRequest(request *onebot.GroupRequest) bool {
 		}
 	}
 	return true
-}
-
-func initCron() {
-	c := cron.New()
-	_ = c.AddFunc("0 0 9 * * *", maplebot.FindRoleBackground)
-	_ = c.AddFunc("0 0 15 * * *", maplebot.FindRoleBackground)
-	_ = c.AddFunc("0 0 1 * * *", maplebot.FindRoleBackground)
-	c.Start()
 }
 
 func handleBroadcastRequest(message *onebot.PrivateMessage) bool {

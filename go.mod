@@ -13,9 +13,7 @@ require (
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-rod/rod v0.116.2
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.9.1
-	github.com/robfig/cron v1.2.0
 	github.com/spf13/viper v1.21.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/vicanso/go-charts/v2 v2.6.10
@@ -70,6 +68,7 @@ require (
 
 ignore (
 	./assets
+	./maplebot // 屏蔽 maplebot ，它现在不用了
 	__pycache__
 	libs
 	player_data
