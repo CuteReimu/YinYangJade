@@ -652,8 +652,8 @@ func (frequency) Execute(message *GroupMessage, _ string) MessageChain {
 	    	() => {
 	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
 	    	}`)
-		slog.Debug("等待1秒")
-		time.Sleep(time.Second)
+		slog.Debug("等待2秒")
+		time.Sleep(2 * time.Second)
 		slog.Debug("正在截图")
 		img, err := png.Decode(bytes.NewReader(page.MustScreenshot()))
 		if err != nil {
@@ -723,8 +723,8 @@ func (winRate2) Execute(message *GroupMessage, _ string) MessageChain {
 	    	() => {
 	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
 	    	}`)
-		slog.Debug("等待1秒")
-		time.Sleep(time.Second)
+		slog.Debug("等待2秒")
+		time.Sleep(2 * time.Second)
 		slog.Debug("正在截图")
 		img, err := png.Decode(bytes.NewReader(page.MustScreenshot()))
 		if err != nil {
@@ -784,8 +784,8 @@ func (watch) Execute(message *GroupMessage, _ string) MessageChain {
 		}
 		slog.Debug("点击按钮")
 		e.MustClick()
-		slog.Debug("等待1秒")
-		time.Sleep(time.Second)
+		slog.Debug("等待2秒")
+		time.Sleep(2 * time.Second)
 		slog.Debug("正在截图")
 		buf := page.MustScreenshotFullPage()
 		if len(buf) == 0 {
@@ -814,8 +814,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()
