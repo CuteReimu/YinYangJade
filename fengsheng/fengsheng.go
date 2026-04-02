@@ -163,7 +163,7 @@ func (getMyScore) Execute(msg *GroupMessage, content string) MessageChain {
 	data := permData.GetStringMapString("playerMap")
 	name := data[strconv.FormatInt(msg.Sender.UserId, 10)]
 	if len(name) == 0 {
-		return MessageChain{&Text{Text: "请先绑定"}}
+		return MessageChain{&Text{Text: "请先注册"}}
 	}
 	result, returnError := httpClient.HTTPGetString("/getscore", map[string]string{"name": name})
 	if returnError != nil {
@@ -814,8 +814,8 @@ func init() {
 			slog.Error("rod init failed", "error", err)
 		}).DefaultDevice(device).
 			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
+				Headless(true). // 强制无头模式
+				NoSandbox(true). // 禁用沙箱
 				Set("disable-gpu", ""). // 禁用 GPU 加速
 				MustLaunch()).
 			MustConnect()
