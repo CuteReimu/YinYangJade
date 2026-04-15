@@ -104,6 +104,7 @@ func init() {
 	translateDict.Put("All Bellways", "全钟道")
 	translateDict.Put("Cloakless", "无斗篷")
 	translateDict.Put("No Major Glitches Cloak", "无主要邪道 斗篷线")
+	translateDict.Put("Sinner", "罪途")
 }
 
 func translate(s string) string {
