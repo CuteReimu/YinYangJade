@@ -220,6 +220,7 @@ func GetTextRelativity(text1, text2 string) float64 {
 	return dot / (math.Sqrt(norm1) * math.Sqrt(norm2))
 }
 
+// GetFamiliarValue 从词典中匹配相似的词
 func GetFamiliarValue(m map[string]string, key string) string {
 	if v, ok := m[key]; ok {
 		return v
