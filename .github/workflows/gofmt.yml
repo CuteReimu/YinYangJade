@@ -28,7 +28,7 @@ jobs:
         run: gofmt -s -l -w .
 
       - name: Build
-        run: go build -v ./...
+        run: GOOS=linux GOARCH=amd64 go build -v ./...
 
       - name: Submit if there are changes
         uses: stefanzweifel/git-auto-commit-action@v7
