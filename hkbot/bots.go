@@ -91,7 +91,8 @@ func cmdHandleFunc(message *GroupMessage) bool {
 			if len(groupMsg) > 0 {
 				sendGroupMessage(message, groupMsg...)
 			}
-			return false
+			_, ok = h.(*dictionaryCommand)
+			return ok
 		}
 	}
 	return true
