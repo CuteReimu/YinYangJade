@@ -1,14 +1,14 @@
 module github.com/CuteReimu/YinYangJade
 
-go 1.25.4
+go 1.26.2
 
 require (
 	github.com/CuteReimu/bilibili/v2 v2.5.1
-	github.com/CuteReimu/goutil v0.0.0-20260126093051-3f31efa570ac
-	github.com/CuteReimu/neuquant v0.0.0-20240410080316-c01be0b1e2bb
-	github.com/CuteReimu/onebot v0.0.0-20251201151712-c38ab9a341e1
+	github.com/CuteReimu/goutil v0.0.0-20260422123512-b447079b3afe
+	github.com/CuteReimu/neuquant v0.0.0-20260422122435-5979c1b71f25
+	github.com/CuteReimu/onebot v0.0.0-20260422123748-4b553a338f6d
 	github.com/dgraph-io/badger/v4 v4.9.1
-	github.com/dlclark/regexp2 v1.11.5
+	github.com/dlclark/regexp2 v1.12.0
 	github.com/go-ego/gse v1.0.2
 	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-rod/rod v0.116.2
@@ -38,7 +38,7 @@ require (
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/lestrrat-go/strftime v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
@@ -55,14 +55,14 @@ require (
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.42.0 // indirect
-	go.opentelemetry.io/otel/metric v1.42.0 // indirect
-	go.opentelemetry.io/otel/trace v1.42.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
+	go.opentelemetry.io/otel/metric v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/image v0.38.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/image v0.39.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
