@@ -69,7 +69,7 @@ func screenshotAndSend(message *GroupMessage, htmlFile string) {
 				slog.Error("panic recovered", "error", err)
 			}
 		}()
-		page, err := makePageWithURL(htmlFile, fengshengConfig.GetString("fengshengBrowserUrl"))
+		page, err := makePageWithURL(htmlFile, fengshengConfig.GetString("fengshengUrl"))
 		if err != nil {
 			slog.Error("注册页面失败", "error", err)
 			sendGroupMessage(message, &Text{Text: "内部错误"})
