@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>活跃度统计</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            width: fit-content;
+        }
+        .chart-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-wrapper">
+        <canvas id="chart1" width="800" height="400"></canvas>
+    </div>
+    <div class="chart-wrapper">
+        <canvas id="chart2" width="800" height="300"></canvas>
+    </div>
+    <script>
+        const API_BASE = '__API_BASE__';
+
+        fetch(API_BASE + '/frequency')
+            .then(r => r.json())
+            .then(resp => {
+                const rawData = resp.data;
+                const hoursRaw = resp.hours;
+
+                // ---- 近期每日活跃度（折线 + 柱混合）----
+                const maxDate = new Date(rawData[rawData.length - 1].date);
+                const minDate = new Date(maxDate);
+                minDate.setDate(minDate.getDate() - 30);
+
+                const completeData = [];
+                const cur = new Date(minDate);
+                for (let i = 0; i <= 30; i++) {
+                    const ds = cur.toISOString().slice(0, 10);
+                    const found = rawData.find(v => v.date === ds);
+                    completeData.push(found || {date: ds, count: 0, pc: 0});
+                    cur.setDate(cur.getDate() + 1);
+                    if (cur > maxDate) break;
+                }
+
+                // 计算近 30 天均值（不含今天，即最后一条）
+                const statData = completeData.slice(0, completeData.length - 1);
+                let sumCount = 0, sumPc = 0;
+                statData.forEach(d => { sumCount += d.count; sumPc += d.pc; });
+                const n = statData.length || 1;
+                const aveCount   = Math.round(sumCount / n * 10) / 10;
+                const avePc      = Math.round(sumPc / n * 10) / 10;
+                const avePcCount = Math.round((sumPc - sumCount) / n * 10) / 10;
+
+                // 注解：周日竖线 + 三条均值横线
+                const annotations = {};
+                completeData.forEach((d, i) => {
+                    if (new Date(d.date).getDay() === 0) {
+                        annotations['sun' + i] = {
+                            type: 'line',
+                            xMin: d.date.slice(5), xMax: d.date.slice(5),
+                            borderColor: 'rgb(59,169,120)', borderWidth: 1, borderDash: [5, 4],
+                            label: { display: true, content: '周日', position: 'end', backgroundColor: 'rgba(59,169,120,0.5)' }
+                        };
+                    }
+                });
+                annotations.avePcCount = {
+                    type: 'line', yMin: avePcCount, yMax: avePcCount,
+                    borderColor: 'rgba(59,169,120,0.4)', borderWidth: 2, borderDash: [6, 6],
+                    label: { display: true, content: String(avePcCount), position: 'start', backgroundColor: 'rgba(59,169,120,0.7)' }
+                };
+                annotations.avePc = {
+                    type: 'line', yMin: avePc, yMax: avePc,
+                    borderColor: 'rgba(41,50,225,0.9)', borderWidth: 2, borderDash: [6, 6],
+                    label: { display: true, content: String(avePc), position: 'start', backgroundColor: 'rgba(41,50,225,0.7)' }
+                };
+                annotations.aveCount = {
+                    type: 'line', yMin: aveCount, yMax: aveCount,
+                    borderColor: 'rgba(225,6,2,0.9)', borderWidth: 2, borderDash: [6, 6],
+                    label: { display: true, content: String(aveCount), position: 'start', backgroundColor: 'rgba(225,6,2,0.7)' }
+                };
+
+                new Chart(document.getElementById('chart1'), {
+                    type: 'line',
+                    data: {
+                        labels: completeData.map(d => d.date.slice(5)),
+                        datasets: [
+                            {
+                                label: '场次',
+                                data: completeData.map(d => d.count),
+                                borderColor: '#e10602', backgroundColor: '#e10602', tension: 0.4,
+                            },
+                            {
+                                label: '参与人次',
+                                data: completeData.map(d => d.pc),
+                                borderColor: '#2932e1', backgroundColor: '#2932e1', tension: 0.4,
+                            },
+                            {
+                                label: '活人局系数',
+                                type: 'bar',
+                                data: completeData.map(d => d.pc - d.count),
+                                backgroundColor: 'rgba(59,169,120,0.4)',
+                                borderColor: 'rgba(59,169,120,0.4)',
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: false,
+                        animation: false,
+                        transitions: { active: { animation: { duration: 0 } } },
+                        scales: {
+                            x: {
+                                ticks: { autoSkip: true, maxRotation: 0 },
+                                grid: { offset: false },
+                            },
+                            y: {
+                                border: { display: false },
+                                position: 'right',
+                                grid: { drawTicks: false },
+                            },
+                        },
+                        plugins: {
+                            title: { display: true, text: '近期每日活跃度', font: { size: 20 } },
+                            legend: {
+                                labels: { usePointStyle: true, pointStyle: 'rect', boxHeight: 8, borderWidth: 0 },
+                            },
+                            tooltip: {
+                                usePointStyle: true, borderWidth: 0, boxWidth: 8, boxPadding: 5,
+                                itemSort: (a, b) => {
+                                    if (a.datasetIndex <= 1 && b.datasetIndex <= 1)
+                                        return b.datasetIndex - a.datasetIndex;
+                                    return a.datasetIndex - b.datasetIndex;
+                                },
+                            },
+                            annotation: { annotations },
+                        },
+                        interaction: { intersect: false, mode: 'index' },
+                    },
+                });
+
+                // ---- 全天活跃度（柱状图）----
+                const total = hoursRaw.reduce((s, v) => s + v, 0) || 1;
+                new Chart(document.getElementById('chart2'), {
+                    type: 'bar',
+                    data: {
+                        labels: hoursRaw.map((_, i) => i + 0.5),
+                        datasets: [{
+                            label: '活跃系数',
+                            data: hoursRaw.map(v => Math.round(v / total * 10000) / 100),
+                            backgroundColor: 'rgba(54,162,235,0.4)',
+                            borderColor: 'rgba(54,162,235,1)',
+                            barPercentage: 1.0,
+                            categoryPercentage: 1.0,
+                        }],
+                    },
+                    options: {
+                        responsive: false,
+                        animation: false,
+                        transitions: { active: { animation: { duration: 0 } } },
+                        scales: {
+                            x: {
+                                grid: { offset: false },
+                                type: 'linear',
+                                min: 0, max: 24, offset: false,
+                                ticks: {
+                                    autoSkip: false, stepSize: 2,
+                                    callback: v => (typeof v === 'number' && Number.isInteger(v) && v % 2 === 0) ? v + ':00' : null,
+                                },
+                            },
+                            y: {
+                                title: { display: true, text: '活跃系数', font: { size: 18 } },
+                                beginAtZero: true,
+                            },
+                        },
+                        plugins: {
+                            title: { display: true, text: '全天活跃度', font: { size: 20 } },
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: ([ctx]) => {
+                                        const h = Math.floor(ctx.parsed.x);
+                                        return h + ':00 - ' + (h + 1) + ':00';
+                                    },
+                                },
+                            },
+                        },
+                    },
+                });
+
+                // 通知 chartshot 所有图表已渲染完成
+                document.body.dataset.chartshotReady = 'true';
+            })
+            .catch(err => {
+                console.error('加载失败:', err);
+                document.body.innerHTML = '<p style="color:red;padding:20px;font-size:16px">加载失败: ' + err + '</p>';
+                document.body.dataset.chartshotReady = 'true';
+            });
+    </script>
+</body>
+</html>
+

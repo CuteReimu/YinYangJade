@@ -1,28 +1,91 @@
 package fengsheng
 
 import (
-	"bytes"
+	"embed"
 	"encoding/base64"
 	"fmt"
-	"image"
-	"image/png"
+	"io/fs"
 	"log/slog"
 	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
-	"sync/atomic"
+	"testing/fstest"
 	"time"
 
 	"github.com/CuteReimu/YinYangJade/botutil"
+	"github.com/CuteReimu/YinYangJade/chartshot"
 	"github.com/CuteReimu/YinYangJade/db"
 	. "github.com/CuteReimu/onebot"
-	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/devices"
-	"github.com/go-rod/rod/lib/launcher"
-	"github.com/go-rod/rod/lib/utils"
 	. "github.com/vicanso/go-charts/v2"
 )
+
+//go:embed static
+var staticFS embed.FS
+
+// makePageWithURL 从嵌入的静态文件中读取 HTML 模板，将 __API_BASE__ 替换为实际地址，
+// 然后通过 chartshot 注册一个临时页面并返回。调用方在截图完成后应调用 page.Close()。
+func makePageWithURL(htmlFile, apiBase string) (*chartshot.Page, error) {
+	subFS, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpl, err := fs.ReadFile(subFS, htmlFile)
+	if err != nil {
+		return nil, err
+	}
+	content := strings.ReplaceAll(string(tmpl), "__API_BASE__", apiBase)
+
+	// 将 static/ 目录下所有文件（含 vendor/）都加入 MapFS，
+	// 只把目标 HTML 替换为注入了 API_BASE 的内容。
+	memFS := fstest.MapFS{}
+	err = fs.WalkDir(subFS, ".", func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil || d.IsDir() {
+			return walkErr
+		}
+		if path == htmlFile {
+			memFS[path] = &fstest.MapFile{Data: []byte(content)}
+		} else {
+			data, readErr := fs.ReadFile(subFS, path)
+			if readErr != nil {
+				return readErr
+			}
+			memFS[path] = &fstest.MapFile{Data: data}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return chartshot.Register(memFS, htmlFile)
+}
+
+// screenshotAndSend 是 frequency、winRate2、watch 三个命令共用的截图逻辑。
+func screenshotAndSend(message *GroupMessage, htmlFile string) {
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				slog.Error("panic recovered", "error", err)
+			}
+		}()
+		page, err := makePageWithURL(htmlFile, fengshengConfig.GetString("fengshengBrowserUrl"))
+		if err != nil {
+			slog.Error("注册页面失败", "error", err)
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
+		}
+		defer page.Close()
+		slog.Debug("正在截图", "url", page.URL())
+		imgData, err := chartshot.ScreenshotFullPage(page)
+		if err != nil {
+			slog.Error("截图失败", "error", err)
+			sendGroupMessage(message, &Text{Text: "内部错误"})
+			return
+		}
+		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(imgData)})
+	}()
+}
 
 var tierName = map[string]string{
 	"🥉":  "青铜",
@@ -134,6 +197,7 @@ func init() {
 	addCmdListener(sign{})
 	addCmdListener(frequency{})
 	addCmdListener(winRate2{})
+	addCmdListener(identityWinRate{})
 	addCmdListener(watch{})
 }
 
@@ -623,60 +687,7 @@ func (frequency) CheckAuth(int64, int64) bool {
 }
 
 func (frequency) Execute(message *GroupMessage, _ string) MessageChain {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error("panic recovered", "error", err)
-			}
-		}()
-		b := browser.Load()
-		if b == nil {
-			sendGroupMessage(message, &Text{Text: "功能暂时无法使用，请稍后再试"})
-			return
-		}
-		url := fengshengConfig.GetString("fengshengPageUrl") + "/game/frequency.html"
-		slog.Debug("准备开始加载页面", "url", url)
-		page := b.MustPage(url)
-		if page == nil {
-			sendGroupMessage(message, &Text{Text: "获取页面失败"})
-			return
-		}
-		defer page.MustClose()
-		slog.Debug("等待页面加载")
-		canvas := page.MustElement("canvas")
-		if canvas == nil {
-			sendGroupMessage(message, &Text{Text: "获取页面超时"})
-			return
-		}
-		canvas.MustWait(`
-	    	() => {
-	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
-	    	}`)
-		slog.Debug("等待2秒")
-		time.Sleep(2 * time.Second)
-		slog.Debug("正在截图")
-		img, err := png.Decode(bytes.NewReader(page.MustScreenshot()))
-		if err != nil {
-			slog.Error("png.Decode failed", "error", err)
-			sendGroupMessage(message, &Text{Text: "内部错误"})
-			return
-		}
-
-		slog.Debug("正在处理图片")
-		if croppedImg, ok := img.(interface {
-			SubImage(r image.Rectangle) image.Image
-		}); ok {
-			img = croppedImg.SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1740))
-		}
-
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, img); err != nil {
-			slog.Error("png.Encode failed", "error", err)
-			sendGroupMessage(message, &Text{Text: "内部错误"})
-			return
-		}
-		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf.Bytes())})
-	}()
+	screenshotAndSend(message, "frequency.html")
 	return nil
 }
 
@@ -695,58 +706,26 @@ func (winRate2) CheckAuth(int64, int64) bool {
 }
 
 func (winRate2) Execute(message *GroupMessage, _ string) MessageChain {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error("panic recovered", "error", err)
-			}
-		}()
-		b := browser.Load()
-		if b == nil {
-			sendGroupMessage(message, &Text{Text: "功能暂时无法使用，请稍后再试"})
-			return
-		}
-		slog.Debug("等待页面加载")
-		page := b.MustPage(fengshengConfig.GetString("fengshengPageUrl") + "/game/winrate.html")
-		if page == nil {
-			sendGroupMessage(message, &Text{Text: "获取页面失败"})
-			return
-		}
-		defer page.MustClose()
-		slog.Debug("等待页面加载")
-		canvas := page.MustElement("canvas")
-		if canvas == nil {
-			sendGroupMessage(message, &Text{Text: "获取页面超时"})
-			return
-		}
-		canvas.MustWait(`
-	    	() => {
-	 		    return this.getAttribute('width') !== null && this.getAttribute('height') !== null;
-	    	}`)
-		slog.Debug("等待2秒")
-		time.Sleep(2 * time.Second)
-		slog.Debug("正在截图")
-		img, err := png.Decode(bytes.NewReader(page.MustScreenshot()))
-		if err != nil {
-			slog.Error("png.Decode failed", "error", err)
-			sendGroupMessage(message, &Text{Text: "内部错误"})
-			return
-		}
+	screenshotAndSend(message, "winrate.html")
+	return nil
+}
 
-		if croppedImg, ok := img.(interface {
-			SubImage(r image.Rectangle) image.Image
-		}); ok {
-			img = croppedImg.SubImage(image.Rect(0, 330, img.Bounds().Dx(), 1690))
-		}
+type identityWinRate struct{}
 
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, img); err != nil {
-			slog.Error("png.Encode failed", "error", err)
-			sendGroupMessage(message, &Text{Text: "内部错误"})
-			return
-		}
-		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf.Bytes())})
-	}()
+func (identityWinRate) Name() string {
+	return "身份胜率"
+}
+
+func (identityWinRate) ShowTips(int64, int64) string {
+	return ""
+}
+
+func (identityWinRate) CheckAuth(int64, int64) bool {
+	return true
+}
+
+func (identityWinRate) Execute(message *GroupMessage, _ string) MessageChain {
+	screenshotAndSend(message, "identity_winrate.html")
 	return nil
 }
 
@@ -765,66 +744,6 @@ func (watch) CheckAuth(int64, int64) bool {
 }
 
 func (watch) Execute(message *GroupMessage, _ string) MessageChain {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error("panic recovered", "error", err)
-			}
-		}()
-		page := gameStatusPage.Load()
-		if page == nil {
-			sendGroupMessage(message, &Text{Text: "获取页面失败"})
-			return
-		}
-		slog.Debug("寻找按钮")
-		e := page.MustElement(".el-button")
-		if e == nil {
-			sendGroupMessage(message, &Text{Text: "获取页面超时"})
-			return
-		}
-		slog.Debug("点击按钮")
-		e.MustClick()
-		slog.Debug("等待2秒")
-		time.Sleep(2 * time.Second)
-		slog.Debug("正在截图")
-		buf := page.MustScreenshotFullPage()
-		if len(buf) == 0 {
-			slog.Error("screenshot failed")
-			sendGroupMessage(message, &Text{Text: "内部错误"})
-			return
-		}
-		sendGroupMessage(message, &Image{File: "base64://" + base64.StdEncoding.EncodeToString(buf)})
-	}()
+	screenshotAndSend(message, "game_status.html")
 	return nil
-}
-
-var (
-	browser        atomic.Pointer[rod.Browser]
-	gameStatusPage atomic.Pointer[rod.Page]
-)
-
-func init() {
-	device := devices.SurfaceDuo.Landscape()
-	device.Screen.Horizontal.Width--
-	device.Screen.Horizontal.Height = 860
-	go func() {
-		b := rod.New().Sleeper(func() utils.Sleeper {
-			return utils.EachSleepers(rod.DefaultSleeper(), utils.CountSleeper(30))
-		}).WithPanic(func(err any) {
-			slog.Error("rod init failed", "error", err)
-		}).DefaultDevice(device).
-			ControlURL(launcher.New().
-				Headless(true).         // 强制无头模式
-				NoSandbox(true).        // 禁用沙箱
-				Set("disable-gpu", ""). // 禁用 GPU 加速
-				MustLaunch()).
-			MustConnect()
-		browser.Store(b)
-		page := b.MustPage(fengshengConfig.GetString("fengshengPageUrl") + "/game/game_status.html")
-		if page == nil {
-			slog.Error("获取页面失败")
-			return
-		}
-		gameStatusPage.Store(page)
-	}()
 }

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>游戏状态</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.9.7/dist/index.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.9.7/dist/index.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            width: fit-content;
+            min-width: 640px;
+        }
+        .room-title { margin: 10px 0 6px; font-size: 14px; color: #303133; }
+        .room { margin-bottom: 20px; }
+        /* 去掉表格单元格边框，只保留行分隔线 */
+        .el-table th.el-table__cell { border-right: none; }
+        .el-table td.el-table__cell { border-right: none; }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- 用 x-template 防止浏览器预解析破坏 Vue slot 语法 -->
+<script type="text/x-template" id="tpl">
+    <div>
+        <template v-if="rooms.length === 0">
+            <el-text size="large" style="margin-top: 10px">当前没有房间</el-text>
+        </template>
+        <div v-for="game in rooms" :key="game.id" class="room">
+            <p class="room-title">房间-{{ game.id }}（{{
+                game.turn === 0
+                    ? '未开局'
+                    : '第' + game.turn + '回合，已开局' + (game.play_time / 60000).toFixed(0) + '分钟'
+            }}）</p>
+            <el-table :data="game.players" border style="width: 100%">
+                <el-table-column label="玩家" :min-width="140">
+                    <template #default="{ row }">{{ row.name }}</template>
+                </el-table-column>
+                <el-table-column prop="role_name" label="角色" :min-width="90" />
+                <el-table-column label="状态" :min-width="60">
+                    <template #default="{ row }">
+                        <span v-if="!row.alive" style="color:#909399">已死亡</span>
+                        <span v-else-if="row.is_turn">回合</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="cards" label="手牌数" :min-width="60" />
+                <el-table-column label="情报" :min-width="150">
+                    <template #default="{ row }">
+                        <template v-if="row.message_cards && row.message_cards.length >= 3">
+                            <el-button type="danger"  circle size="small">{{ row.message_cards[1] }}</el-button>
+                            <el-button type="primary" circle size="small">{{ row.message_cards[2] }}</el-button>
+                            <el-button type="info"    circle size="small">{{ row.message_cards[0] }}</el-button>
+                        </template>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+    </div>
+</script>
+
+<script>
+    const { createApp, ref, onMounted, nextTick } = Vue;
+    const API_BASE = '__API_BASE__';
+
+    createApp({
+        template: document.getElementById('tpl').innerHTML,
+        setup() {
+            const rooms = ref([]);
+
+            onMounted(() => {
+                fetch(API_BASE + '/getallgames')
+                    .then(r => r.json())
+                    .then(data => { rooms.value = data || []; })
+                    .catch(err => console.error('加载失败:', err))
+                    .finally(() => {
+                        nextTick(() => {
+                            document.body.dataset.chartshotReady = 'true';
+                        });
+                    });
+            });
+
+            return { rooms };
+        }
+    })
+    .use(ElementPlus)
+    .mount('#app');
+</script>
+</body>
+</html>

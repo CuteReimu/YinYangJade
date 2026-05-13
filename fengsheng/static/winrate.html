@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>胜率统计</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            width: fit-content;
+        }
+        .chart-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-wrapper">
+        <canvas id="chart1" width="800" height="800"></canvas>
+    </div>
+    <script>
+        Chart.register(ChartDataLabels);
+
+        const API_BASE = '__API_BASE__';
+
+        // 角色分类（与 WinRate.vue 保持一致）
+        const roleCategories = [
+            ["张一挺","黄济仁","裴玲","阿芙罗拉","李醒","小九","商玉","邵秀","肥原龙川","李宁玉","白沧浪","连鸢","韩梅","SP顾小梦","端木静","SP李宁玉","王富贵","鄭文先","程小蝶"," 顾小梦","鬼脚","老鳖","白小年","老汉","王魁","白菲菲","白昆山","吴志国","金生火","玄青子","毛不拔","王田香"],
+            ["秦圆圆","SP程小蝶","老虎","钱敏","SP连鸢","盛老板","简先生","高桥智子","玛利亚","青年小九","青年韩梅","池镜海","SP端木静"],
+            ["陈安娜","凌素秋","成年韩梅","哑炮","陈大耳","边云疆","金自来","间谍阿芙罗拉","小铃铛","SP白菲菲","李书云","成年小九","秦无命","SP韩梅","SP小九","孙守謨","王响"]
+        ];
+        const categoryColors = ["rgb(59,169,120)", "#e10602", "#2932e1"];
+
+        function getRoleColor(name) {
+            for (let i = 0; i < roleCategories.length; i++) {
+                if (roleCategories[i].includes(name)) return categoryColors[i];
+            }
+            return "#999";
+        }
+
+        fetch(API_BASE + '/winrate2')
+            .then(r => r.json())
+            .then(resp => {
+                const roleData = resp.data;
+
+                // ---- 角色出场率与胜率分布（散点图）----
+                const entries = Object.entries(roleData).filter(([, v]) => v[0] > 0);
+                const points = entries.map(([name, v]) => ({
+                    x: v[0],
+                    y: Math.round(v[1] / v[0] * 10000) / 100,
+                    label: name,
+                    color: getRoleColor(name),
+                }));
+
+                // 计算胜率中位数
+                const sortedY = points.map(p => p.y).sort((a, b) => a - b);
+                const mid = Math.floor(sortedY.length / 2);
+                let medianY = 0;
+                if (sortedY.length > 0) {
+                    medianY = sortedY.length % 2 !== 0
+                        ? sortedY[mid]
+                        : (sortedY[mid - 1] + sortedY[mid]) / 2;
+                    medianY = Math.round(medianY * 100) / 100;
+                }
+
+                new Chart(document.getElementById('chart1'), {
+                    type: 'scatter',
+                    data: {
+                        labels: points.map(p => p.label),
+                        datasets: [{
+                            data: points,
+                            backgroundColor: points.map(p => p.color),
+                        }],
+                    },
+                    options: {
+                        responsive: false,
+                        animation: false,
+                        transitions: { active: { animation: { duration: 0 } } },
+                        layout: { clip: false },
+                        plugins: {
+                            title: { display: true, text: '角色出场率与胜率分布', font: { size: 20 } },
+                            legend: {
+                                display: true,
+                                labels: {
+                                    usePointStyle: true, pointStyle: 'circle',
+                                    boxWidth: 5, boxHeight: 5,
+                                    generateLabels: () => [
+                                        { text: '二扩角色', fontColor: '#2932e1', fillStyle: '#2932e1', lineWidth: 0 },
+                                        { text: '一扩角色', fontColor: '#e10602', fillStyle: '#e10602', lineWidth: 0 },
+                                        { text: '基础角色', fontColor: 'rgb(59,169,120)', fillStyle: 'rgb(59,169,120)', lineWidth: 0 },
+                                    ],
+                                },
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: items => items.map(i => i.label).join(' '),
+                                    label: ctx => {
+                                        const p = ctx.raw;
+                                        return ['出场次数：' + p.x, '胜率：' + p.y.toFixed(2) + '%'];
+                                    },
+                                },
+                            },
+                            datalabels: {
+                                display: true,
+                                color: ctx => ctx.dataset.data[ctx.dataIndex].color,
+                                anchor: 'center',
+                                align: 'top',
+                                font: { size: 11 },
+                                formatter: v => v.label,
+                            },
+                            annotation: {
+                                annotations: {
+                                    medianLine: {
+                                        type: 'line',
+                                        yMin: medianY, yMax: medianY,
+                                        borderColor: 'rgba(255,87,34,0.65)',
+                                        borderWidth: 2, borderDash: [6, 6],
+                                        label: {
+                                            display: true, content: String(medianY),
+                                            position: 'start', backgroundColor: 'rgba(255,87,34,0.8)',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        scales: {
+                            x: { title: { display: true, text: '出场次数', font: { size: 18 } } },
+                            y: {
+                                title: { display: true, text: '胜率（%）', font: { size: 18 } },
+                                ticks: { autoSkip: true, stepSize: 2.5 },
+                            },
+                        },
+                        interaction: { intersect: false, mode: 'nearest' },
+                    },
+                });
+
+
+                document.body.dataset.chartshotReady = 'true';
+            })
+            .catch(err => {
+                console.error('加载失败:', err);
+                document.body.innerHTML = '<p style="color:red;padding:20px;font-size:16px">加载失败: ' + err + '</p>';
+                document.body.dataset.chartshotReady = 'true';
+            });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>身份胜率统计</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            width: fit-content;
+        }
+        .chart-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-wrapper">
+        <canvas id="chart" width="800" height="400"></canvas>
+    </div>
+    <script>
+        Chart.register(ChartDataLabels);
+
+        const API_BASE = '__API_BASE__';
+
+        fetch(API_BASE + '/winrate2')
+            .then(r => r.json())
+            .then(resp => {
+                const ratesData = resp.rates;
+
+                const rates = ratesData.map(([identity, total, wins]) => ({
+                    identity,
+                    rate: Math.round(wins / total * 10000) / 100,
+                }));
+                const ave = rates.find(r => r.identity === '总胜率')?.rate;
+                const annotations = {};
+                if (ave != null) {
+                    annotations.aveLine = {
+                        type: 'line',
+                        yMin: ave, yMax: ave,
+                        borderColor: 'rgba(255,87,34)', borderWidth: 2, borderDash: [6, 6],
+                    };
+                }
+
+                new Chart(document.getElementById('chart'), {
+                    type: 'bar',
+                    data: {
+                        labels: rates.map(r => r.identity),
+                        datasets: [{
+                            label: '胜率',
+                            data: rates.map(r => r.rate),
+                            backgroundColor: '#9ad0f5',
+                        }],
+                    },
+                    options: {
+                        responsive: false,
+                        animation: false,
+                        transitions: { active: { animation: { duration: 0 } } },
+                        scales: {
+                            x: {
+                                border: { color: '#e5e5e5' },
+                                grid: { display: false },
+                            },
+                            y: {
+                                border: { display: false },
+                                grid: { color: '#e5e5e5' },
+                                title: { display: true, text: '胜率（%）', font: { size: 18 } },
+                                beginAtZero: true,
+                            },
+                        },
+                        plugins: {
+                            title: { display: true, text: '各身份胜率统计', font: { size: 20 } },
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: { label: ctx => '胜率: ' + ctx.raw + '%' },
+                            },
+                            datalabels: {
+                                display: true,
+                                color: '#333',
+                                anchor: 'end',
+                                align: 'end',
+                                font: { size: 12 },
+                                formatter: v => (typeof v === 'number' ? v.toFixed(1) : '') + '%',
+                            },
+                            annotation: { annotations },
+                        },
+                    },
+                });
+
+                document.body.dataset.chartshotReady = 'true';
+            })
+            .catch(err => {
+                console.error('加载失败:', err);
+                document.body.innerHTML = '<p style="color:red;padding:20px;font-size:16px">加载失败: ' + err + '</p>';
+                document.body.dataset.chartshotReady = 'true';
+            });
+    </script>
+</body>
+</html>
+
