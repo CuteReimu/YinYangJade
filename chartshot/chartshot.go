@@ -177,8 +177,8 @@ func ScreenshotFullPage(p *Page) (imgData []byte, err error) {
 
 	slog.Debug("chartshot: waiting for chartshotReady", "url", p.URL())
 
-	// 最多等待 30 秒，超时时抛出 panic 被上方 recover 捕获并返回 error
-	page.Timeout(30 * time.Second).MustElement("body").MustWait(`
+	// 最多等待 60 秒，超时时抛出 panic 被上方 recover 捕获并返回 error
+	page.Timeout(time.Minute).MustElement("body").MustWait(`
 		() => { return this.dataset.chartshotReady === 'true'; }`)
 
 	slog.Debug("chartshot: page ready, taking screenshot")
