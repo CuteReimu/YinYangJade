@@ -152,7 +152,6 @@ func (p *Page) URL() string {
 
 // ─── Screenshot ───────────────────────────────────────────────────────────────
 
-
 // ScreenshotFullPage renders p in a headless browser and returns a full-page
 // PNG screenshot.
 //
