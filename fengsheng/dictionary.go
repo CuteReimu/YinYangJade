@@ -36,35 +36,34 @@ func handleDictionary(message *GroupMessage) bool {
 	if !slices.Contains(fengshengConfig.GetIntSlice("qq.qq_group"), int(message.GroupId)) {
 		return true
 	}
-	if len(message.Message) != 1 {
-		return true
-	}
-	if text, ok := message.Message[0].(*Text); ok {
-		if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
-			key := botutil.DealKey(text.Text[len("搜索词条"):])
-			if len(key) > 0 {
-				dealSearchDict(message, key)
+	if len(message.Message) == 1 {
+		if text, ok := message.Message[0].(*Text); ok {
+			if strings.HasPrefix(text.Text, "查询词条 ") || strings.HasPrefix(text.Text, "搜索词条 ") {
+				key := botutil.DealKey(text.Text[len("搜索词条"):])
+				if len(key) > 0 {
+					dealSearchDict(message, key)
+				}
+				return true
 			}
-			return true
-		}
-		if isWhitelist(message.Sender.UserId) {
-			switch {
-			case strings.HasPrefix(text.Text, "添加词条 "):
-				key := botutil.DealKey(text.Text[len("添加词条"):])
-				dealAddDict(message, key)
-				return true
-			case strings.HasPrefix(text.Text, "修改词条 "):
-				key := botutil.DealKey(text.Text[len("修改词条"):])
-				if len(key) > 0 {
-					dealModifyDict(message, key)
+			if isWhitelist(message.Sender.UserId) {
+				switch {
+				case strings.HasPrefix(text.Text, "添加词条 "):
+					key := botutil.DealKey(text.Text[len("添加词条"):])
+					dealAddDict(message, key)
+					return true
+				case strings.HasPrefix(text.Text, "修改词条 "):
+					key := botutil.DealKey(text.Text[len("修改词条"):])
+					if len(key) > 0 {
+						dealModifyDict(message, key)
+					}
+					return true
+				case strings.HasPrefix(text.Text, "删除词条 "):
+					key := botutil.DealKey(text.Text[len("删除词条"):])
+					if len(key) > 0 {
+						dealRemoveDict(message, key)
+					}
+					return true
 				}
-				return true
-			case strings.HasPrefix(text.Text, "删除词条 "):
-				key := botutil.DealKey(text.Text[len("删除词条"):])
-				if len(key) > 0 {
-					dealRemoveDict(message, key)
-				}
-				return true
 			}
 		}
 	}
