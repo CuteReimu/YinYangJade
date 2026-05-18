@@ -30,7 +30,7 @@ func init() {
 			"abact1":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=qvv7xrrq",
 			"abact2":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=le2on4ml",
 			"abact3":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=q5v6457l",
-			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/9kvvl0ok?var-yn26pzel=le2z97kl",
+			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/category/5dwm145k?var-wle492kn=10v8m0pl",
 			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
 			"pop":       "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/r9g1qop9/wkpq608d",
 			"白色宫殿":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
