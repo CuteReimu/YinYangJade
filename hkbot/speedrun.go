@@ -31,9 +31,9 @@ func init() {
 			"abact2":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=le2on4ml",
 			"abact3":    "https://www.speedrun.com/api/v1/leaderboards/y65r7g81/category/w206ox52?var-kn0eyxz8=10vzo8wl&var-rn16z5p8=q5v6457l",
 			"twisted":   "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/category/5dwm145k?var-wle492kn=10v8m0pl",
-			"苔穴":        "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
+			"苔穴":      "https://www.speedrun.com/api/v1/leaderboards/yd4r2x51/level/9m58yezd/xd1ypjwd?var-r8r69958=qvvpvrrq",
 			"pop":       "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/r9g1qop9/wkpq608d",
-			"白色宫殿":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
+			"白色宫殿":  "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/69znevg9/wkpq608d?var-r8r11k7n=klr8rr21",
 		},
 		categoryNames: map[string]string{
 			"anylp":     "丝之歌 — Any% 斗篷",
@@ -49,9 +49,9 @@ func init() {
 			"abact2":    "丝之歌 — All Bosses - Act2",
 			"abact3":    "丝之歌 — All Bosses - Act3",
 			"twisted":   "丝之歌 — Twisted%",
-			"苔穴":        "丝之歌 — 苔穴",
+			"苔穴":      "丝之歌 — 苔穴",
 			"pop":       "空洞骑士 — 苦痛之路",
-			"白色宫殿":      "空洞骑士 — 白色宫殿 1.3.1.5+",
+			"白色宫殿":  "空洞骑士 — 白色宫殿 1.3.1.5+",
 		},
 		mapKeys: map[string][]string{
 			"any":        {"anyrp", "anylp"},
@@ -62,11 +62,11 @@ func init() {
 			"all boss":   {"abact1", "abact2", "abact3"},
 			"allbosses":  {"abact1", "abact2", "abact3"},
 			"allboss":    {"abact1", "abact2", "abact3"},
-			"苦痛之路":       {"pop"},
-			"苦痛":         {"pop"},
-			"白宫":         {"白色宫殿"},
+			"苦痛之路":   {"pop"},
+			"苦痛":       {"pop"},
+			"白宫":       {"白色宫殿"},
 			"act1":       {"judgement", "sinner"},
-			"第一幕":        {"judgement", "sinner"},
+			"第一幕":     {"judgement", "sinner"},
 		},
 		resty: resty.New(),
 	}
@@ -144,7 +144,11 @@ type speedrunRunData struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
 		} `json:"players"`
-		Date string `json:"date"`
+		Date      string `json:"date"`
+		Submitted string `json:"submitted"`
+		Status    struct {
+			VerifyDate string `json:"verify-date"`
+		} `json:"status"`
 	} `json:"run"`
 }
 
@@ -250,6 +254,7 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 		buf.WriteString("暂无记录\r\n")
 		return buf.String(), nil
 	}
+	var totalDiffDate, totalDate float64
 	for _, entry := range runs {
 		place := entry.Place
 		run := entry.Run
@@ -263,7 +268,19 @@ func (t *speedrunLeaderboards) fetch(key string) (string, error) {
 		if run.Date != "" {
 			rel = " — " + formatRelativeDate(run.Date)
 		}
+		if run.Submitted != "" && run.Status.VerifyDate != "" {
+			submittedTime, err1 := time.Parse(time.RFC3339, run.Submitted)
+			verifyDate, err2 := time.Parse(time.RFC3339, run.Status.VerifyDate)
+			if err1 == nil && err2 == nil {
+				diff := verifyDate.Sub(submittedTime).Hours() / 24
+				totalDiffDate += diff
+				totalDate++
+			}
+		}
 		_, _ = fmt.Fprintf(&buf, "%d. %s — %s%s\r\n", place, playerName, timeStr, rel)
+	}
+	if totalDate > 0 && totalDiffDate/totalDate >= 0.5 {
+		_, _ = fmt.Fprintf(&buf, "平均审核时间: %.0f天\r\n", totalDiffDate/totalDate)
 	}
 	return buf.String(), nil
 }
@@ -282,5 +299,5 @@ func (t *speedrunLeaderboards) requestSpeedrun(arg string) (string, error) {
 		}
 		ss = append(ss, s)
 	}
-	return strings.Join(ss, ""), nil
+	return strings.Join(ss, "\r\n"), nil
 }
