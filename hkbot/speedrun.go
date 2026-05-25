@@ -15,8 +15,9 @@ import (
 
 func init() {
 	cmd := &speedrunLeaderboards{
-		availableInputs: []string{"Any%", "HKAny%", "TE", "HKTE", "HKLow", "HKAB", "100%", "112%", "107%", "全技能", "全成就", "钢魂", "GE", "第一幕", "Low%", "AB", "Twisted%", "苔穴", "PoP", "白色宫殿"},
-		aliasInputs:     []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白宫", "act1", "as", "aa", "ss"},
+		availableInputs: []string{"Any%", "HKAny%", "TE", "HKTE", "HKLow", "HKAB", "100%", "112%", "107%", "全技能",
+			"全成就", "钢魂", "GE", "第一幕", "Low%", "AB", "Twisted%", "苔穴", "PoP", "白色宫殿"},
+		aliasInputs: []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白宫", "act1", "as", "aa", "ss"},
 		url: map[string]string{
 			"hkany":     "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/category/02q8o4p2?var-yn2p3085=21gyy061",
 			"hklow":     "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/category/w20w0v5d?var-5lyjjd2l=4lxz6641",

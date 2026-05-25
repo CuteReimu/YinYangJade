@@ -35,6 +35,8 @@ linters:
     - maintidx
     - nonamedreturns
     - goconst
+    - gomodguard
+    - gomodguard_v2
   settings:
     staticcheck:
       checks:
