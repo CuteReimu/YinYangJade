@@ -105,6 +105,11 @@ func init() {
 	translateDict.Put("Cloakless", "无斗篷")
 	translateDict.Put("No Major Glitches Cloak", "无主要邪道 斗篷线")
 	translateDict.Put("Sinner", "罪途")
+	translateDict.Put("106% TE", "106%")
+	translateDict.Put("107% AB", "107%")
+	translateDict.Put("112% APB", "112%")
+	translateDict.Put("Abyss Climb", "深渊攀爬")
+	translateDict.Put("1.4.3.2+", "当前版本")
 }
 
 func translate(s string) string {
