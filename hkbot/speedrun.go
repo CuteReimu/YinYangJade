@@ -20,7 +20,7 @@ func init() {
 			"一门", "二门", "三门", "四门", "五门", "jjc"},
 		aliasInputs: []string{"all bosses", "all boss", "allbosses", "allboss", "苦痛", "苦痛之路", "白宫", "act1", "as", "aa", "ss",
 			"jjc1", "jjc2", "jjc3"},
-		url: map[string]string{
+		url: map[string]string{ //nolint:dupl
 			"hkany":     "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/category/02q8o4p2?var-yn2p3085=21gyy061",
 			"hklow":     "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/category/w20w0v5d?var-5lyjjd2l=4lxz6641",
 			"aa":        "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/category/q25epyg2?var-onv7r95n=21g8poml",
@@ -71,7 +71,7 @@ func init() {
 			"jjc2":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/nwlp4ve9/wkpq608d",
 			"jjc3":      "https://www.speedrun.com/api/v1/leaderboards/76rqmld8/level/ywemx77d/wkpq608d",
 		},
-		categoryNames: map[string]string{
+		categoryNames: map[string]string{ //nolint:dupl
 			"hkany":     "空洞骑士 — Any% 当前版本",
 			"hklow":     "空洞骑士 — Low% 当前版本",
 			"aa":        "空洞骑士 — 全成就",
