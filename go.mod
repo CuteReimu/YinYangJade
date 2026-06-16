@@ -7,7 +7,7 @@ require (
 	github.com/CuteReimu/goutil v0.0.0-20260422123512-b447079b3afe
 	github.com/CuteReimu/neuquant v0.0.0-20260422122435-5979c1b71f25
 	github.com/CuteReimu/onebot v0.0.0-20260422123748-4b553a338f6d
-	github.com/dgraph-io/badger/v4 v4.9.1
+	github.com/dgraph-io/badger/v4 v4.9.2
 	github.com/dlclark/regexp2 v1.12.0
 	github.com/go-ego/gse v1.0.2
 	github.com/go-resty/resty/v2 v2.17.2
@@ -18,7 +18,7 @@ require (
 	github.com/tidwall/gjson v1.19.0
 	github.com/vicanso/go-charts/v2 v2.6.10
 	github.com/wcharczuk/go-chart/v2 v2.1.2
-	golang.org/x/sync v0.20.0
+	golang.org/x/sync v0.21.0
 	golang.org/x/time v0.15.0
 )
 
@@ -36,8 +36,8 @@ require (
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
-	github.com/lestrrat-go/strftime v1.1.1 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/lestrrat-go/strftime v1.2.0 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
@@ -55,14 +55,14 @@ require (
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.43.0 // indirect
-	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	go.opentelemetry.io/otel/trace v1.43.0 // indirect
+	go.opentelemetry.io/otel v1.44.0 // indirect
+	go.opentelemetry.io/otel/metric v1.44.0 // indirect
+	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/image v0.40.0 // indirect
-	golang.org/x/net v0.54.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/image v0.42.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
