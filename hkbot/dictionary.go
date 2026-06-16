@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/CuteReimu/YinYangJade/botutil"
 	"github.com/CuteReimu/YinYangJade/dict"
@@ -69,6 +70,14 @@ func handleDictionary(message *GroupMessage) bool {
 	}
 	if key, ok := addDbQQList[message.Sender.UserId]; ok { // 添加词条
 		delete(addDbQQList, message.Sender.UserId)
+		for _, e := range message.Message {
+			if text, ok := e.(*Text); ok {
+				if utf8.RuneCountInString(text.Text) > 100 && !isAdmin(message.Sender.UserId) {
+					sendGroupMessage(message, &Text{Text: "如需增加长文本，请联系管理员"})
+					return true
+				}
+			}
+		}
 		msg, err := saveImage(message.Message)
 		if err != nil {
 			sendGroupMessage(message, &Text{Text: "编辑词条失败，" + err.Error()})
