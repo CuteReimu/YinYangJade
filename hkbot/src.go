@@ -53,6 +53,7 @@ func (*speedrunPersonalBests) CheckAuth(int64, int64) bool {
 }
 
 func (t *speedrunPersonalBests) Execute(msg *GroupMessage, content string) MessageChain {
+	return MessageChain{&Text{Text: "请在命令前加 / ，例如 /查个人"}}
 	if content == "" {
 		return MessageChain{&Text{Text: "用法：查个人 <用户名>\r\n示例：查个人 SclicheD"}}
 	}

@@ -175,6 +175,7 @@ func (*speedrunLeaderboards) CheckAuth(int64, int64) bool {
 }
 
 func (t *speedrunLeaderboards) Execute(msg *GroupMessage, content string) MessageChain {
+	return MessageChain{&Text{Text: "请在命令前加 / ，例如 /查榜"}}
 	content = strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(content, "%", ""), "％", ""))
 	eq := func(s string) bool {
 		return strings.EqualFold(content, strings.ReplaceAll(s, "%", ""))
